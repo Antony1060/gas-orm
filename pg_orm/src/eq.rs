@@ -1,5 +1,21 @@
 use crate::condition::{Condition, EqExpression};
-use crate::sql::{Field, PgEq, PgParams};
+use crate::{Field, PgParams};
+
+pub trait PgEq<T> {
+    fn eq(&self, other: T) -> EqExpression;
+
+    fn neq(&self, other: T) -> EqExpression;
+
+    fn lt(&self, other: T) -> EqExpression;
+
+    fn lte(&self, other: T) -> EqExpression;
+
+    fn gt(&self, other: T) -> EqExpression;
+
+    fn gte(&self, other: T) -> EqExpression;
+
+    fn one_of(&self, other: &[T]) -> EqExpression;
+}
 
 impl PgEq<&str> for Field<String> {
     fn eq(&self, other: &str) -> EqExpression {

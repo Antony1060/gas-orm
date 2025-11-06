@@ -1,4 +1,4 @@
-use crate::sql::{AsSql, PgParams};
+use crate::{AsSql, PgParams};
 use std::ops::{BitAnd, BitOr};
 
 #[derive(Debug, Clone)]

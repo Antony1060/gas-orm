@@ -1,5 +1,5 @@
 pub mod user {
-    use crate::sql::{Field, ModelOps, PgType};
+    use pg_orm::{Field, ModelOps, PgType};
 
     pub const username: Field<String> = Field::new("username", PgType::TEXT);
     pub const email: Field<String> = Field::new("email", PgType::TEXT);

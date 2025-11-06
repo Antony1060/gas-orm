@@ -2,6 +2,10 @@ use crate::builder::SelectBuilder;
 use crate::condition::EqExpression;
 use std::marker::PhantomData;
 
+pub mod builder;
+pub mod condition;
+pub mod eq;
+
 pub enum PgType {
     TEXT,
     INT,
@@ -33,7 +37,7 @@ impl<T> Field<T> {
 }
 
 pub trait AsSql {
-    fn as_sql(self: &Self) -> String;
+    fn as_sql(&self) -> String;
 }
 
 pub trait ModelOps {
@@ -45,20 +49,4 @@ pub trait ModelOps {
             filter: Some(cond_fn()),
         }
     }
-}
-
-pub trait PgEq<T> {
-    fn eq(&self, other: T) -> EqExpression;
-
-    fn neq(&self, other: T) -> EqExpression;
-
-    fn lt(&self, other: T) -> EqExpression;
-
-    fn lte(&self, other: T) -> EqExpression;
-
-    fn gt(&self, other: T) -> EqExpression;
-
-    fn gte(&self, other: T) -> EqExpression;
-
-    fn one_of(&self, other: &[T]) -> EqExpression;
 }

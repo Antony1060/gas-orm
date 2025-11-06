@@ -1,5 +1,5 @@
 use crate::condition::EqExpression;
-use crate::sql::AsSql;
+use crate::AsSql;
 
 #[derive(Debug, Clone)]
 pub struct SelectBuilder {

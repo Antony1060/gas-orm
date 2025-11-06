@@ -1,11 +1,7 @@
-use crate::model::user;
-use crate::sql::{AsSql, ModelOps, PgEq};
+use crate::models::user;
+use pg_orm::{eq::PgEq, AsSql, ModelOps};
 
-mod builder;
-mod condition;
-mod eq;
-mod model;
-mod sql;
+mod models;
 
 fn main() {
     let builder = user::Model::filter(|| {

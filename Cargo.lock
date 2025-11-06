@@ -3,5 +3,12 @@
 version = 4
 
 [[package]]
-name = "untitled"
+name = "demo"
+version = "0.1.0"
+dependencies = [
+ "pg_orm",
+]
+
+[[package]]
+name = "pg_orm"
 version = "0.1.0"
