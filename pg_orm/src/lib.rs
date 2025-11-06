@@ -1,3 +1,5 @@
+pub use pg_orm_macros::*;
+
 use crate::builder::SelectBuilder;
 use crate::condition::EqExpression;
 use std::marker::PhantomData;

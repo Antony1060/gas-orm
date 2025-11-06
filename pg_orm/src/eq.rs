@@ -80,3 +80,63 @@ impl PgEq<&str> for Field<String> {
         )
     }
 }
+
+impl PgEq<i32> for Field<String> {
+    fn eq(&self, other: i32) -> EqExpression {
+        EqExpression::new(
+            Condition::Basic(format!("{}=?", self.name)),
+            vec![PgParams::I(other)],
+        )
+    }
+
+    fn neq(&self, other: i32) -> EqExpression {
+        EqExpression::new(
+            Condition::Basic(format!("{}!=?", self.name)),
+            vec![PgParams::I(other)],
+        )
+    }
+
+    fn lt(&self, other: i32) -> EqExpression {
+        EqExpression::new(
+            Condition::Basic(format!("{}<?", self.name)),
+            vec![PgParams::I(other)],
+        )
+    }
+
+    fn lte(&self, other: i32) -> EqExpression {
+        EqExpression::new(
+            Condition::Basic(format!("{}<=?", self.name)),
+            vec![PgParams::I(other)],
+        )
+    }
+
+    fn gt(&self, other: i32) -> EqExpression {
+        EqExpression::new(
+            Condition::Basic(format!("{}>?", self.name)),
+            vec![PgParams::I(other)],
+        )
+    }
+
+    fn gte(&self, other: i32) -> EqExpression {
+        EqExpression::new(
+            Condition::Basic(format!("{}>=?", self.name)),
+            vec![PgParams::I(other)],
+        )
+    }
+
+    fn one_of(&self, other: &[i32]) -> EqExpression {
+        let condition: String = format!(
+            "{} IN ({})",
+            self.name,
+            other
+                .iter()
+                .map(|_| '?')
+                .fold(String::new(), |acc, curr| format!("{acc}, {curr}"))
+        );
+
+        EqExpression::new(
+            Condition::Basic(condition),
+            other.iter().cloned().map(PgParams::I).collect(),
+        )
+    }
+}

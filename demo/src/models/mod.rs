@@ -1,19 +1,14 @@
-pub mod user {
-    use pg_orm::{Field, ModelOps, PgType};
+#[pg_orm::model]
+pub struct Student {
+    pub id: u64,
+    pub first_name: String,
+    pub last_name: String,
+    pub email: String,
+}
 
-    pub const username: Field<String> = Field::new("username", PgType::TEXT);
-    pub const email: Field<String> = Field::new("email", PgType::TEXT);
-    pub const password: Field<String> = Field::new("password", PgType::TEXT);
-
-    pub struct Model {
-        pub username: String,
-        pub email: String,
-        pub password: String,
-    }
-
-    impl ModelOps for Model {
-        fn table_name() -> &'static str {
-            "users"
-        }
-    }
+#[pg_orm::model]
+pub struct User {
+    pub username: String,
+    pub email: String,
+    pub password: String,
 }
