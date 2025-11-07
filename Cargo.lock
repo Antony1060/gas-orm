@@ -6,18 +6,18 @@ version = 4
 name = "demo"
 version = "0.1.0"
 dependencies = [
- "pg_orm",
+ "gas",
 ]
 
 [[package]]
-name = "pg_orm"
+name = "gas"
 version = "0.1.0"
 dependencies = [
- "pg_orm-macros",
+ "gas-macros",
 ]
 
 [[package]]
-name = "pg_orm-macros"
+name = "gas-macros"
 version = "0.1.0"
 dependencies = [
  "proc-macro2",

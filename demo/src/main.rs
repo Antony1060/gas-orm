@@ -1,5 +1,5 @@
 use crate::models::user;
-use pg_orm::{eq::PgEq, AsSql, ModelOps};
+use gas::{eq::PgEq, AsSql, ModelOps};
 
 mod models;
 

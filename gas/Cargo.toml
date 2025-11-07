@@ -1,8 +1,7 @@
 [package]
-name = "demo"
+name = "gas"
 version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-gas = { path = "../gas" }
-
+gas-macros = { path = "../gas-macros" }

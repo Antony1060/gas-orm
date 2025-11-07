@@ -1,4 +1,4 @@
-pub use pg_orm_macros::*;
+pub use gas_macros::*;
 
 use crate::builder::SelectBuilder;
 use crate::condition::EqExpression;

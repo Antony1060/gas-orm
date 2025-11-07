@@ -1,7 +1,0 @@
-[package]
-name = "pg_orm"
-version = "0.1.0"
-edition = "2024"
-
-[dependencies]
-pg_orm-macros = { path = "../pg_orm-macros" }
