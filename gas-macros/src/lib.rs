@@ -2,7 +2,6 @@ use darling::FromMeta;
 use proc_macro::TokenStream;
 use proc_macro2::{Ident, Span};
 use quote::quote;
-use syn::parse::Parse;
 use syn::spanned::Spanned;
 
 fn proc_type_to_pg_type(ty: &syn::Type) -> Result<proc_macro2::TokenStream, syn::Error> {
@@ -44,6 +43,7 @@ fn model_impl(args: TokenStream, input: TokenStream) -> Result<TokenStream, syn:
     Ok(quote! {
         pub mod #mod_identifier {
             #![allow(non_upper_case_globals)]
+            use super::*;
             use gas::{Field, ModelOps, pg_type::PgType, pg_type::AsPgType};
 
             #(#fields)*

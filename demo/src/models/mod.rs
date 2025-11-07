@@ -1,4 +1,7 @@
+use gas::types::Decimal;
+
 #[gas::model(table_name = "students")]
+#[derive(Debug, Clone)]
 pub struct Student {
     pub id: i32,
     pub first_name: String,
@@ -7,10 +10,11 @@ pub struct Student {
 }
 
 #[gas::model(table_name = "users")]
+#[derive(Debug, Clone)]
 pub struct User {
     pub id: i32,
     pub username: String,
     pub email: String,
     pub password: String,
-    pub bank_account_balance: gas::types::Decimal,
+    pub bank_account_balance: Decimal,
 }
