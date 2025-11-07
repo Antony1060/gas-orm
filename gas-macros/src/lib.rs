@@ -1,6 +1,8 @@
+use darling::FromMeta;
 use proc_macro::TokenStream;
 use proc_macro2::{Ident, Span};
 use quote::quote;
+use syn::parse::Parse;
 use syn::spanned::Spanned;
 
 fn proc_type_to_pg_type(ty: &syn::Type) -> Result<proc_macro2::TokenStream, syn::Error> {
@@ -8,42 +10,49 @@ fn proc_type_to_pg_type(ty: &syn::Type) -> Result<proc_macro2::TokenStream, syn:
         Err(syn::Error::new(ty.span(), "type must be a path type"))?
     };
 
-    Ok(quote! {PgType::TEXT})
+    Ok(quote! {|| #ty::as_pg_type()})
 }
 
-fn model_impl(_args: TokenStream, input: TokenStream) -> Result<TokenStream, syn::Error> {
-    let mut input = syn::parse::<syn::ItemStruct>(input)?;
+#[derive(Debug, FromMeta)]
+#[darling(derive_syn_parse)]
+struct ModelArgs {
+    table_name: String,
+}
 
-    dbg!(&input);
+#[inline(always)]
+fn model_impl(args: TokenStream, input: TokenStream) -> Result<TokenStream, syn::Error> {
+    let args = syn::parse::<ModelArgs>(args)?;
+    let input = syn::parse::<syn::ItemStruct>(input)?;
 
     let mod_identifier = Ident::new(&input.ident.to_string().to_lowercase(), Span::call_site());
 
-    // TODO: correct PgType
     let fields = input
         .fields
         .iter()
         .filter_map(|field| Some((field.ident.clone()?, field.ty.clone())))
         .map(|(ident, ty)| {
-            let pg_type_str = proc_type_to_pg_type(&ty)?;
-            Ok(quote!(pub const #ident: Field<#ty> = Field::new(stringify!(#ident), #pg_type_str);))
+            let pg_type_tokens = proc_type_to_pg_type(&ty)?;
+            Ok(quote!(pub const #ident: Field<#ty> = Field::new(stringify!(#ident), #pg_type_tokens);))
         })
         .collect::<Result<Vec<_>, syn::Error>>()?;
 
-    input.ident = Ident::new("Model", Span::call_site());
+    let mut original_struct = input.clone();
+    original_struct.ident = Ident::new("Model", Span::call_site());
 
-    // TODO: better attrs support
+    let table_name = args.table_name;
+
     Ok(quote! {
         pub mod #mod_identifier {
             #![allow(non_upper_case_globals)]
-            use gas::{Field, ModelOps, PgType};
+            use gas::{Field, ModelOps, pg_type::PgType, pg_type::AsPgType};
 
             #(#fields)*
 
-            #input
+            #original_struct
 
             impl ModelOps for Model {
                 fn table_name() -> &'static str {
-                    concat!(stringify!(#mod_identifier), "s")
+                    #table_name
                 }
             }
         }

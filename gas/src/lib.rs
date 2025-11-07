@@ -2,18 +2,14 @@ pub use gas_macros::*;
 
 use crate::builder::SelectBuilder;
 use crate::condition::EqExpression;
+use crate::pg_type::PgType;
 use std::marker::PhantomData;
 
 pub mod builder;
 pub mod condition;
 pub mod eq;
-
-pub enum PgType {
-    TEXT,
-    INT,
-    // TODO: DECIMAL
-    FLOAT,
-}
+pub mod pg_type;
+pub mod types;
 
 #[derive(Debug, Clone)]
 pub enum PgParams {
@@ -24,12 +20,12 @@ pub enum PgParams {
 
 pub struct Field<T> {
     pub name: &'static str,
-    pub pg_type: PgType,
+    pub pg_type: fn() -> PgType,
     _mark: PhantomData<T>,
 }
 
 impl<T> Field<T> {
-    pub const fn new(name: &'static str, pg_type: PgType) -> Self {
+    pub const fn new(name: &'static str, pg_type: fn() -> PgType) -> Self {
         Self {
             name,
             pg_type,
