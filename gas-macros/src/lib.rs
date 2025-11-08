@@ -9,7 +9,8 @@ fn proc_type_to_pg_type(ty: &syn::Type) -> Result<proc_macro2::TokenStream, syn:
         Err(syn::Error::new(ty.span(), "type must be a path type"))?
     };
 
-    Ok(quote! {|| #ty::as_pg_type()})
+    // going through a generic function gives better errors compared to just `#path::PG_TYPE`
+    Ok(quote! {PgType::__to_pg_type::<#path>()})
 }
 
 #[derive(Debug, FromMeta)]
@@ -42,9 +43,9 @@ fn model_impl(args: TokenStream, input: TokenStream) -> Result<TokenStream, syn:
 
     Ok(quote! {
         pub mod #mod_identifier {
-            #![allow(non_upper_case_globals)]
+            #![allow(non_upper_case_globals, dead_code)]
             use super::*;
-            use gas::{Field, ModelOps, pg_type::PgType, pg_type::AsPgType};
+            use gas::{Field, ModelOps, pg_type::*};
 
             #(#fields)*
 

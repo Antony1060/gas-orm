@@ -1,23 +1,23 @@
 use crate::models::{student, user};
-use gas::{AsSql, ModelOps, eq::PgEq};
+use gas::{eq::PgEq, AsSql, ModelOps};
 
 mod models;
 
 fn main() {
-    let builder = user::Model::filter(|| {
-        user::username.eq("John")
-            & (user::email.eq("john.user.email") | user::password.eq("john.user.password"))
-    });
+    {
+        let select = user::Model::filter(|| {
+            user::username.eq("John")
+                & (user::email.eq("john.user.email") | user::bank_account_balance.gt(1000000i128))
+        });
 
-    let a: user::Model = user::Model {
-        id: 0,
-        username: "".to_string(),
-        email: "".to_string(),
-        password: "".to_string(),
-        bank_account_balance: Default::default(),
-    };
+        dbg!(&select);
+        println!("sql:\n{}", select.as_sql());
+    }
 
-    dbg!(&builder);
+    {
+        let select = student::Model::filter(|| student::id.lte(100) & student::last_name.eq("Doe"));
 
-    println!("sql:\n{}", builder.as_sql());
+        dbg!(&select);
+        println!("sql:\n{}", select.as_sql());
+    }
 }

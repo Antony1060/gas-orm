@@ -3,6 +3,7 @@ pub use gas_macros::*;
 use crate::builder::SelectBuilder;
 use crate::condition::EqExpression;
 use crate::pg_type::PgType;
+use rust_decimal::Decimal;
 use std::marker::PhantomData;
 
 pub mod builder;
@@ -13,23 +14,27 @@ pub mod types;
 
 #[derive(Debug, Clone)]
 pub enum PgParams {
-    T(String),
-    I(i32),
-    F(f64),
+    TEXT(String),
+    SMALLINT(i16),
+    INTEGER(i32),
+    BIGINT(i64),
+    REAL(f32),
+    DOUBLE(f64),
+    DECIMAL(Decimal),
 }
 
 pub struct Field<T> {
     pub name: &'static str,
-    pub pg_type: fn() -> PgType,
-    _mark: PhantomData<T>,
+    pub pg_type: PgType,
+    _marker: PhantomData<T>,
 }
 
 impl<T> Field<T> {
-    pub const fn new(name: &'static str, pg_type: fn() -> PgType) -> Self {
+    pub const fn new(name: &'static str, pg_type: PgType) -> Self {
         Self {
             name,
             pg_type,
-            _mark: PhantomData,
+            _marker: PhantomData,
         }
     }
 }

@@ -5,4 +5,4 @@ edition = "2024"
 
 [dependencies]
 gas-macros = { path = "../gas-macros" }
-rust_decimal = "1.39.0"
+rust_decimal = { version = "1.39.0", features = ["macros"] }

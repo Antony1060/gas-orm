@@ -2,35 +2,48 @@ use crate::types::Decimal;
 
 pub enum PgType {
     TEXT,
-    INT,
+    SMALLINT,
+    INTEGER,
+    BIGINT,
+    REAL,
+    DOUBLE,
     DECIMAL,
-    FLOAT,
+}
+
+impl PgType {
+    pub const fn __to_pg_type<T: AsPgType>() -> PgType {
+        T::PG_TYPE
+    }
 }
 
 pub trait AsPgType {
-    fn as_pg_type() -> PgType;
+    const PG_TYPE: PgType;
 }
 
 impl AsPgType for String {
-    fn as_pg_type() -> PgType {
-        PgType::TEXT
-    }
+    const PG_TYPE: PgType = PgType::TEXT;
+}
+
+impl AsPgType for i16 {
+    const PG_TYPE: PgType = PgType::SMALLINT;
 }
 
 impl AsPgType for i32 {
-    fn as_pg_type() -> PgType {
-        PgType::INT
-    }
+    const PG_TYPE: PgType = PgType::INTEGER;
+}
+
+impl AsPgType for i64 {
+    const PG_TYPE: PgType = PgType::BIGINT;
 }
 
 impl AsPgType for f32 {
-    fn as_pg_type() -> PgType {
-        PgType::FLOAT
-    }
+    const PG_TYPE: PgType = PgType::REAL;
+}
+
+impl AsPgType for f64 {
+    const PG_TYPE: PgType = PgType::DOUBLE;
 }
 
 impl AsPgType for Decimal {
-    fn as_pg_type() -> PgType {
-        PgType::DECIMAL
-    }
+    const PG_TYPE: PgType = PgType::DECIMAL;
 }
