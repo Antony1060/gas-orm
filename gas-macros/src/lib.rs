@@ -51,6 +51,7 @@ fn model_impl(args: TokenStream, input: TokenStream) -> Result<TokenStream, syn:
             #original_struct
 
             impl ModelOps for Model {
+                #[inline(always)]
                 fn table_name() -> &'static str {
                     #table_name
                 }

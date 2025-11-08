@@ -1,3 +1,4 @@
+use serde::{Deserialize, Serialize};
 use gas::types::Decimal;
 
 #[gas::model(table_name = "students")]
@@ -10,11 +11,13 @@ pub struct Student {
 }
 
 #[gas::model(table_name = "users")]
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all="PascalCase")]
 pub struct User {
     pub id: i32,
     pub username: String,
     pub email: String,
+    #[serde(rename="pw_hash")]
     pub password: String,
     pub bank_account_balance: Decimal,
 }
