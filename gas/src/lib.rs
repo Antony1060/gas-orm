@@ -23,17 +23,39 @@ pub enum PgParams {
     DECIMAL(Decimal),
 }
 
+pub enum Relationship {
+    OneToOne,
+    OneToMany,
+    ManyToMany,
+}
+
+#[repr(u8)]
+pub enum FieldFlags {
+    PrimaryKey = 0,
+    Serial,
+    Nullable,
+}
+
 pub struct Field<T> {
     pub name: &'static str,
     pub pg_type: PgType,
+    pub flags: u8,
+    pub relationship: Option<Relationship>,
     _marker: PhantomData<T>,
 }
 
 impl<T> Field<T> {
-    pub const fn new(name: &'static str, pg_type: PgType) -> Self {
+    pub const fn new(
+        name: &'static str,
+        pg_type: PgType,
+        flags: u8,
+        relationship: Option<Relationship>,
+    ) -> Self {
         Self {
             name,
             pg_type,
+            flags,
+            relationship,
             _marker: PhantomData,
         }
     }
