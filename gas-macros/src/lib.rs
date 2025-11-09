@@ -1,5 +1,4 @@
 use darling::FromMeta;
-use itertools::Itertools;
 use proc_macro::TokenStream;
 use proc_macro2::{Ident, Span};
 use quote::quote;
@@ -21,27 +20,18 @@ struct ModelArgs {
     table_name: String,
 }
 
-// return tuples (field, index of attr on field.attrs)
-fn find_fields_with_attr(fields: &Fields, target_attr: &'static str) -> Vec<(Field, usize)> {
+fn find_fields_with_attr(fields: &Fields, target_attr: &'static str) -> Vec<Ident> {
     fields
         .iter()
         .cloned()
         .filter_map(|field| {
-            let idx = field
+            field
                 .attrs
                 .iter()
-                .enumerate()
-                .find_map(|(i, attr)| attr.path().is_ident(target_attr).then_some(i))?;
-            Some((field, idx))
+                .find(|attr| attr.path().is_ident(target_attr))
+                .and_then(|_| field.ident.clone())
         })
         .collect()
-}
-
-fn attr_map_to_ident_list(atts_map: &[(Field, usize)]) -> Vec<Ident> {
-    atts_map
-        .iter()
-        .filter_map(|(field, _)| field.ident.clone())
-        .collect::<Vec<_>>()
 }
 
 struct ModelCtx<'a> {
@@ -86,36 +76,8 @@ fn model_impl(args: TokenStream, input: TokenStream) -> Result<TokenStream, syn:
     let input = syn::parse::<syn::ItemStruct>(input)?;
     let mod_identifier = Ident::new(&input.ident.to_string().to_lowercase(), Span::call_site());
 
-    // attr index is needed so I can remove it later
-    let primary_kes = find_fields_with_attr(&input.fields, "primary_key");
-    let serials = find_fields_with_attr(&input.fields, "serial");
-
-    let ctx = ModelCtx {
-        primary_keys: &attr_map_to_ident_list(&primary_kes),
-        serials: &attr_map_to_ident_list(&serials),
-    };
-
-    let fields = input
-        .fields
-        .iter()
-        .filter_map(|field| process_field(&ctx, field))
-        .collect::<Result<Vec<_>, syn::Error>>()?;
-
     let mut original_struct = input.clone();
     original_struct.ident = Ident::new("Model", Span::call_site());
-
-    // remove all attributes after parsing, cause rust throws a tantrum otherwise
-    for (field, idx) in [primary_kes, serials]
-        .into_iter()
-        .flat_map(|it| it.into_iter())
-        .sorted_by_key(|(_, idx)| -(*idx as isize))
-    {
-        original_struct
-            .fields
-            .iter_mut()
-            .find(|f| f.ident == field.ident)
-            .map(|f| f.attrs.remove(idx));
-    }
 
     let table_name = args.table_name;
 
@@ -125,8 +87,7 @@ fn model_impl(args: TokenStream, input: TokenStream) -> Result<TokenStream, syn:
             use super::*;
             use gas::{Field, FieldFlags, ModelOps, pg_type::*};
 
-            #(#fields)*
-
+            #[derive(gas::__model)]
             #original_struct
 
             impl ModelOps for Model {
@@ -140,7 +101,36 @@ fn model_impl(args: TokenStream, input: TokenStream) -> Result<TokenStream, syn:
     .into())
 }
 
+#[inline(always)]
+fn derive_model_impl(input: TokenStream) -> Result<TokenStream, syn::Error> {
+    let input = syn::parse::<syn::ItemStruct>(input)?;
+
+    let primary_keys = find_fields_with_attr(&input.fields, "primary_key");
+    let serials = find_fields_with_attr(&input.fields, "serial");
+
+    let ctx = ModelCtx {
+        primary_keys: &primary_keys,
+        serials: &serials,
+    };
+
+    let fields = input
+        .fields
+        .iter()
+        .filter_map(|field| process_field(&ctx, field))
+        .collect::<Result<Vec<_>, syn::Error>>()?;
+
+    Ok(quote! {
+        #(#fields)*
+    }
+    .into())
+}
+
 #[proc_macro_attribute]
 pub fn model(args: TokenStream, input: TokenStream) -> TokenStream {
     model_impl(args, input).unwrap_or_else(|err| err.to_compile_error().into())
+}
+
+#[proc_macro_derive(__model, attributes(primary_key, serial))]
+pub fn derive_model(input: TokenStream) -> TokenStream {
+    derive_model_impl(input).unwrap_or_else(|err| err.to_compile_error().into())
 }
