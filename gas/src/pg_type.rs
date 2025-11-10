@@ -1,5 +1,6 @@
 use crate::types::Decimal;
 
+#[derive(Debug)]
 pub enum PgType {
     TEXT,
     SMALLINT,

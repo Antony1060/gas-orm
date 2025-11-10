@@ -23,6 +23,7 @@ pub enum PgParams {
     DECIMAL(Decimal),
 }
 
+#[derive(Debug)]
 pub enum Relationship {
     OneToOne,
     OneToMany,
@@ -31,11 +32,12 @@ pub enum Relationship {
 
 #[repr(u8)]
 pub enum FieldFlags {
-    PrimaryKey = 0,
-    Serial,
-    Nullable,
+    PrimaryKey = 1 << 0,
+    Serial = 1 << 1,
+    Nullable = 1 << 2,
 }
 
+#[derive(Debug)]
 pub struct Field<T> {
     pub name: &'static str,
     pub pg_type: PgType,

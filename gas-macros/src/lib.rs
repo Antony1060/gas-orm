@@ -1,21 +1,22 @@
-use darling::FromMeta;
+use darling::FromDeriveInput;
 use proc_macro::TokenStream;
 use proc_macro2::{Ident, Span};
 use quote::quote;
 use syn::spanned::Spanned;
 use syn::{Field, Fields};
 
+#[inline(always)]
 fn proc_type_to_pg_type(ty: &syn::Type) -> Result<proc_macro2::TokenStream, syn::Error> {
     let syn::Type::Path(path) = ty else {
         Err(syn::Error::new(ty.span(), "type must be a path type"))?
     };
 
     // going through a generic function gives better errors compared to just `#path::PG_TYPE`
-    Ok(quote! {PgType::__to_pg_type::<#path>()})
+    Ok(quote! { PgType::__to_pg_type::<#path>() })
 }
 
-#[derive(Debug, FromMeta)]
-#[darling(derive_syn_parse)]
+#[derive(Debug, FromDeriveInput)]
+#[darling(attributes(__gas_meta))]
 struct ModelArgs {
     table_name: String,
 }
@@ -35,6 +36,7 @@ fn find_fields_with_attr(fields: &Fields, target_attr: &'static str) -> Vec<Iden
 }
 
 struct ModelCtx<'a> {
+    table_name: &'a str,
     primary_keys: &'a [Ident],
     serials: &'a [Ident],
 }
@@ -51,19 +53,21 @@ fn process_field(
 
         let mut flags: Vec<proc_macro2::TokenStream> = Vec::new();
 
-        flags.push(quote! {((FieldFlags::Nullable as u8) * <#ty as IsOptional>::FACTOR)});
+        flags.push(quote! { ((FieldFlags::Nullable as u8) * <#ty as IsOptional>::FACTOR) });
 
         if ctx.primary_keys.contains(&ident) {
-            flags.push(quote! {(FieldFlags::PrimaryKey as u8)})
+            flags.push(quote! { (FieldFlags::PrimaryKey as u8) })
         }
 
         if ctx.serials.contains(&ident) {
-            flags.push(quote! {(FieldFlags::Serial as u8)})
+            flags.push(quote! { (FieldFlags::Serial as u8) })
         }
 
-        Ok(
-            quote!(pub const #ident: Field<#ty> = Field::new(stringify!(#ident), #pg_type_tokens, #(#flags)|*, None);),
-        )
+        let table_name = ctx.table_name;
+
+        Ok(quote! {
+            pub const #ident: Field<#ty> = Field::new(concat!(#table_name, ".", stringify!(#ident)), #pg_type_tokens, #(#flags)|*, None);
+        })
     };
 
     Some(inner())
@@ -71,14 +75,12 @@ fn process_field(
 
 #[inline(always)]
 fn model_impl(args: TokenStream, input: TokenStream) -> Result<TokenStream, syn::Error> {
-    let args = syn::parse::<ModelArgs>(args)?;
+    let args: proc_macro2::TokenStream = args.into();
     let input = syn::parse::<syn::ItemStruct>(input)?;
     let mod_identifier = Ident::new(&input.ident.to_string().to_lowercase(), Span::call_site());
 
     let mut original_struct = input.clone();
     original_struct.ident = Ident::new("Model", Span::call_site());
-
-    let table_name = args.table_name;
 
     Ok(quote! {
         pub mod #mod_identifier {
@@ -87,27 +89,28 @@ fn model_impl(args: TokenStream, input: TokenStream) -> Result<TokenStream, syn:
             use gas::{Field, FieldFlags, ModelOps, pg_type::*};
 
             #[derive(gas::__model)]
+            #[__gas_meta(#args)]
             #original_struct
-
-            impl ModelOps for Model {
-                #[inline(always)]
-                fn table_name() -> &'static str {
-                    #table_name
-                }
-            }
         }
     }
     .into())
 }
 
 #[inline(always)]
-fn derive_model_impl(input: TokenStream) -> Result<TokenStream, syn::Error> {
-    let input = syn::parse::<syn::ItemStruct>(input)?;
+fn derive_model_impl(_input: TokenStream) -> Result<TokenStream, syn::Error> {
+    // TODO: there's probably a better way to do this without double parse
+    let derive_input = syn::parse::<syn::DeriveInput>(_input.clone())?;
+    let input = syn::parse::<syn::ItemStruct>(_input)?;
+
+    let meta: ModelArgs = FromDeriveInput::from_derive_input(&derive_input)?;
 
     let primary_keys = find_fields_with_attr(&input.fields, "primary_key");
     let serials = find_fields_with_attr(&input.fields, "serial");
 
+    let table_name = meta.table_name;
+
     let ctx = ModelCtx {
+        table_name: &table_name,
         primary_keys: &primary_keys,
         serials: &serials,
     };
@@ -120,6 +123,13 @@ fn derive_model_impl(input: TokenStream) -> Result<TokenStream, syn::Error> {
 
     Ok(quote! {
         #(#fields)*
+
+        impl ModelOps for Model {
+            #[inline(always)]
+            fn table_name() -> &'static str {
+                #table_name
+            }
+        }
     }
     .into())
 }
@@ -129,7 +139,7 @@ pub fn model(args: TokenStream, input: TokenStream) -> TokenStream {
     model_impl(args, input).unwrap_or_else(|err| err.to_compile_error().into())
 }
 
-#[proc_macro_derive(__model, attributes(primary_key, serial))]
+#[proc_macro_derive(__model, attributes(primary_key, serial, __gas_meta))]
 pub fn derive_model(input: TokenStream) -> TokenStream {
     derive_model_impl(input).unwrap_or_else(|err| err.to_compile_error().into())
 }
