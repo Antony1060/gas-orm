@@ -5,6 +5,7 @@ use crate::condition::EqExpression;
 use crate::pg_type::PgType;
 use rust_decimal::Decimal;
 use std::marker::PhantomData;
+use std::ops::Deref;
 
 pub mod builder;
 pub mod condition;
@@ -38,11 +39,16 @@ pub enum FieldFlags {
 }
 
 #[derive(Debug)]
-pub struct Field<T> {
+pub struct FieldMeta {
     pub name: &'static str,
     pub pg_type: PgType,
     pub flags: u8,
     pub relationship: Option<Relationship>,
+}
+
+#[derive(Debug)]
+pub struct Field<T> {
+    pub meta: FieldMeta,
     _marker: PhantomData<T>,
 }
 
@@ -54,12 +60,22 @@ impl<T> Field<T> {
         relationship: Option<Relationship>,
     ) -> Self {
         Self {
-            name,
-            pg_type,
-            flags,
-            relationship,
+            meta: FieldMeta {
+                name,
+                pg_type,
+                flags,
+                relationship,
+            },
             _marker: PhantomData,
         }
+    }
+}
+
+impl<T> Deref for Field<T> {
+    type Target = FieldMeta;
+
+    fn deref(&self) -> &Self::Target {
+        &self.meta
     }
 }
 

@@ -86,7 +86,7 @@ fn model_impl(args: TokenStream, input: TokenStream) -> Result<TokenStream, syn:
         pub mod #mod_identifier {
             #![allow(non_upper_case_globals, dead_code)]
             use super::*;
-            use gas::{Field, FieldFlags, ModelOps, pg_type::*};
+            use gas::{Field, FieldMeta, FieldFlags, ModelOps, pg_type::*};
 
             #[derive(gas::__model)]
             #[__gas_meta(#args)]
@@ -115,14 +115,18 @@ fn derive_model_impl(_input: TokenStream) -> Result<TokenStream, syn::Error> {
         serials: &serials,
     };
 
-    let fields = input
+    let field_consts = input
         .fields
         .iter()
         .filter_map(|field| process_field(&ctx, field))
         .collect::<Result<Vec<_>, syn::Error>>()?;
 
+    let field_list = input.fields.iter().filter_map(|field| field.ident.clone());
+
     Ok(quote! {
-        #(#fields)*
+        #(#field_consts)*
+
+        const __FIELDS: &'static [FieldMeta] = &[#(#field_list.meta),*];
 
         impl ModelOps for Model {
             #[inline(always)]
