@@ -50,16 +50,15 @@ fn process_field(
         let pg_type_tokens = proc_type_to_pg_type(&ty)?;
 
         let mut flags: Vec<proc_macro2::TokenStream> = Vec::new();
+
+        flags.push(quote! {((FieldFlags::Nullable as u8) * <#ty as IsOptional>::FACTOR)});
+
         if ctx.primary_keys.contains(&ident) {
             flags.push(quote! {(FieldFlags::PrimaryKey as u8)})
         }
 
         if ctx.serials.contains(&ident) {
             flags.push(quote! {(FieldFlags::Serial as u8)})
-        }
-
-        if flags.is_empty() {
-            flags.push(quote! {0});
         }
 
         Ok(
