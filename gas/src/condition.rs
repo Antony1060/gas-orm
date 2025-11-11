@@ -1,3 +1,4 @@
+use crate::sql_query::SqlQuery;
 use crate::{AsSql, PgParams};
 use std::ops::{BitAnd, BitOr};
 
@@ -64,11 +65,28 @@ impl BitOr for EqExpression {
 }
 
 impl AsSql for Condition {
-    fn as_sql(&self) -> String {
+    fn as_sql(&self) -> SqlQuery {
+        let mut sql = SqlQuery::new("");
+
         match self {
-            Condition::Basic(s) => s.to_string(),
-            Condition::And { lhs, rhs } => format!("({}) AND ({})", lhs.as_sql(), rhs.as_sql()),
-            Condition::Or { lhs, rhs } => format!("({}) OR ({})", lhs.as_sql(), rhs.as_sql()),
-        }
+            Condition::Basic(s) => sql.append_str(s),
+            Condition::And { lhs, rhs } => {
+                // eeeeh
+                sql.append_str("(");
+                sql.append_query(lhs.as_sql());
+                sql.append_str(") AND (");
+                sql.append_query(rhs.as_sql());
+                sql.append_str(")");
+            }
+            Condition::Or { lhs, rhs } => {
+                sql.append_str("(");
+                sql.append_query(lhs.as_sql());
+                sql.append_str(") OR (");
+                sql.append_query(rhs.as_sql());
+                sql.append_str(")");
+            }
+        };
+
+        sql
     }
 }

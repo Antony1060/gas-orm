@@ -3,14 +3,18 @@ pub use gas_macros::*;
 use crate::builder::SelectBuilder;
 use crate::condition::EqExpression;
 use crate::pg_type::PgType;
+use crate::sql_query::SqlQuery;
 use rust_decimal::Decimal;
 use std::marker::PhantomData;
 use std::ops::Deref;
 
 pub mod builder;
 pub mod condition;
+mod connection;
 pub mod eq;
+mod error;
 pub mod pg_type;
+mod sql_query;
 pub mod types;
 
 #[derive(Debug, Clone)]
@@ -79,8 +83,8 @@ impl<T> Deref for Field<T> {
     }
 }
 
-pub trait AsSql {
-    fn as_sql(&self) -> String;
+pub(crate) trait AsSql {
+    fn as_sql(&self) -> SqlQuery;
 }
 
 pub trait ModelOps {

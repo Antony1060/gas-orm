@@ -6,3 +6,7 @@ edition = "2024"
 [dependencies]
 gas-macros = { path = "../gas-macros" }
 rust_decimal = { version = "1.39.0", features = ["macros"] }
+sqlx = { version = "0.8.6", features = ["runtime-tokio", "rust_decimal", "postgres"] }
+thiserror = "2.0.17"
+regex = "1.12.2"
+lazy_static = "1.5.0"
