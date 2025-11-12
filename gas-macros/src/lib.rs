@@ -86,7 +86,7 @@ fn model_impl(args: TokenStream, input: TokenStream) -> Result<TokenStream, syn:
         pub mod #mod_identifier {
             #![allow(non_upper_case_globals, dead_code)]
             use super::*;
-            use gas::{Field, FieldMeta, FieldFlags, ModelOps, pg_type::*};
+            use gas::{Field, FieldMeta, FieldFlags, ModelMeta, pg_type::*};
 
             #[derive(gas::__model)]
             #[__gas_meta(#args)]
@@ -128,7 +128,7 @@ fn derive_model_impl(_input: TokenStream) -> Result<TokenStream, syn::Error> {
 
         const __FIELDS: &'static [FieldMeta] = &[#(#field_list.meta),*];
 
-        impl ModelOps for Model {
+        impl ModelMeta for Model {
             #[inline(always)]
             fn table_name() -> &'static str {
                 #table_name

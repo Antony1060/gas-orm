@@ -1,7 +1,6 @@
 pub use gas_macros::*;
 
 use crate::builder::SelectBuilder;
-use crate::condition::EqExpression;
 use crate::pg_type::PgType;
 use crate::sql_query::SqlQuery;
 use rust_decimal::Decimal;
@@ -10,9 +9,9 @@ use std::ops::Deref;
 
 pub mod builder;
 pub mod condition;
-mod connection;
+pub mod connection;
 pub mod eq;
-mod error;
+pub mod error;
 pub mod pg_type;
 mod sql_query;
 pub mod types;
@@ -87,13 +86,14 @@ pub(crate) trait AsSql {
     fn as_sql(&self) -> SqlQuery;
 }
 
-pub trait ModelOps {
+pub trait ModelMeta {
     fn table_name() -> &'static str;
+}
 
-    fn filter(cond_fn: fn() -> EqExpression) -> SelectBuilder {
-        SelectBuilder {
-            table: Self::table_name(),
-            filter: Some(cond_fn()),
-        }
+pub trait ModelOps<T: ModelMeta> {
+    fn query() -> SelectBuilder<T> {
+        SelectBuilder::new()
     }
 }
+
+impl<T: ModelMeta> ModelOps<T> for T {}

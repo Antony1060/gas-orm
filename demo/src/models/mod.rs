@@ -24,6 +24,7 @@ pub struct User {
 }
 
 #[gas::model(table_name = "things")]
+#[derive(Debug)]
 pub struct Thing {
     #[serial]
     #[primary_key]

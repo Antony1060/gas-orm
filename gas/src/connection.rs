@@ -32,6 +32,21 @@ impl PgConnection {
     }
 }
 
-pub trait PgExecutionContext {
+pub(crate) trait PgExecutionContext {
     async fn execute(&self, sql: SqlQuery, params: &[PgParams]) -> GasResult<()>;
+}
+
+impl PgExecutionContext for PgConnection {
+    async fn execute(&self, sql: SqlQuery, _params: &[PgParams]) -> GasResult<()> {
+        let _query = sql.finish()?;
+        todo!()
+    }
+}
+
+impl PgExecutionContext for PgTransaction {
+    async fn execute(&self, sql: SqlQuery, _params: &[PgParams]) -> GasResult<()> {
+        let _query = sql.finish()?;
+        let _a = &self.transaction; // mute warning for now
+        todo!()
+    }
 }

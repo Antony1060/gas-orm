@@ -7,4 +7,5 @@ edition = "2024"
 gas = { path = "../gas" }
 serde = { version = "1.0.228", features = ["derive"] }
 rust_decimal = "1.39.0"
+tokio = { version = "1.48.0", features = ["full", "tokio-macros"] }
 
