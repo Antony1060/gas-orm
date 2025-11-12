@@ -1,4 +1,5 @@
 pub use gas_macros::*;
+use std::fmt::{Display, Formatter};
 
 use crate::builder::SelectBuilder;
 use crate::pg_type::PgType;
@@ -25,6 +26,29 @@ pub enum PgParams {
     REAL(f32),
     DOUBLE(f64),
     DECIMAL(Decimal),
+}
+
+#[macro_export]
+macro_rules! pg_param_all {
+    ($param:ident, $ex:expr) => {
+        match $param {
+            PgParams::TEXT(value) => $ex("TEXT", value),
+            PgParams::SMALLINT(value) => $ex("SMALLINT", value),
+            PgParams::INTEGER(value) => $ex("INTEGER", value),
+            PgParams::BIGINT(value) => $ex("BIGINT", value),
+            PgParams::REAL(value) => $ex("REAL", value),
+            PgParams::DOUBLE(value) => $ex("DOUBLE", value),
+            PgParams::DECIMAL(value) => $ex("DECIMAL", value),
+        }
+    };
+}
+
+impl Display for PgParams {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        pg_param_all!(self, |variant, value| {
+            write!(f, "PgParams::{}({})", variant, value)
+        })
+    }
 }
 
 #[derive(Debug)]

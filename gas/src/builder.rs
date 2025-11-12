@@ -44,7 +44,7 @@ impl<T: ModelMeta> AsSql for SelectBuilder<T> {
         let mut sql = SqlQuery::from(format!("SELECT * FROM {}", T::table_name()));
 
         if let Some(ref filter) = self.filter {
-            sql.append_str("\n\tWHERE ");
+            sql.append_str(" WHERE ");
             sql.append_query(filter.condition.as_sql());
         }
 

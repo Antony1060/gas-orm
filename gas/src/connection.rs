@@ -1,7 +1,8 @@
 use crate::error::GasError;
 use crate::sql_query::SqlQuery;
-use crate::PgParams;
-use sqlx::postgres::PgPoolOptions;
+use crate::{pg_param_all, PgParams};
+use sqlx::postgres::{PgArguments, PgPoolOptions};
+use sqlx::Arguments;
 use sqlx::PgPool;
 
 pub type GasResult<T> = Result<T, GasError>;
@@ -38,8 +39,24 @@ pub(crate) trait PgExecutionContext {
 
 impl PgExecutionContext for PgConnection {
     async fn execute(&self, sql: SqlQuery, _params: &[PgParams]) -> GasResult<()> {
-        let _query = sql.finish()?;
-        todo!()
+        let query = sql.finish()?;
+
+        let mut arguments = PgArguments::default();
+        for param in _params {
+            // eh
+            let res = pg_param_all!(param, |_, value| arguments.add(value));
+
+            if let Err(_) = res {
+                return Err(GasError::TypeError(param.clone()));
+            }
+        }
+
+        // TODO:
+        let rows = sqlx::query_with(&query, arguments)
+            .fetch_all(&self.pool)
+            .await?;
+        dbg!(&rows);
+        Ok(())
     }
 }
 
