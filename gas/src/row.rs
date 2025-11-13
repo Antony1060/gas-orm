@@ -9,15 +9,13 @@ pub struct Row {
 
 impl From<PgRow> for Row {
     fn from(pg_row: PgRow) -> Self {
-        Row { pg_row }
+        Row { pg_row: pg_row }
     }
 }
 
 impl Row {
     pub fn try_get<T: AsPgType>(&self, index: &str) -> GasResult<T> {
-        let a: T = self.pg_row.try_get(index)?;
-
-        Ok(a)
+        Ok(self.pg_row.try_get::<T, &str>(index)?)
     }
 }
 

@@ -1,6 +1,6 @@
 use crate::condition::{Condition, EqExpression};
 use crate::types::Decimal;
-use crate::{Field, PgParams};
+use crate::{Field, PgParam};
 
 pub trait PgEq<T> {
     fn eq(&self, other: T) -> EqExpression;
@@ -105,99 +105,99 @@ macro_rules! pg_eq_impl {
 }
 
 // text
-pg_eq_impl!(String as &str, PgParams::TEXT);
-pg_eq_impl!(Option<String> as &str, PgParams::TEXT);
+pg_eq_impl!(String as &str, PgParam::TEXT);
+pg_eq_impl!(Option<String> as &str, PgParam::TEXT);
 
 // smallint
-pg_eq_impl!(i16 as i8, PgParams::SMALLINT);
-pg_eq_impl!(i16 as i16, PgParams::SMALLINT);
-pg_eq_impl!(i16 as u8, PgParams::SMALLINT);
-pg_eq_impl!(Option<i16> as i8, PgParams::SMALLINT);
-pg_eq_impl!(Option<i16> as i16, PgParams::SMALLINT);
-pg_eq_impl!(Option<i16> as u8, PgParams::SMALLINT);
+pg_eq_impl!(i16 as i8, PgParam::SMALLINT);
+pg_eq_impl!(i16 as i16, PgParam::SMALLINT);
+pg_eq_impl!(i16 as u8, PgParam::SMALLINT);
+pg_eq_impl!(Option<i16> as i8, PgParam::SMALLINT);
+pg_eq_impl!(Option<i16> as i16, PgParam::SMALLINT);
+pg_eq_impl!(Option<i16> as u8, PgParam::SMALLINT);
 
 // int
-pg_eq_impl!(i32 as i8, PgParams::INTEGER);
-pg_eq_impl!(i32 as i16, PgParams::INTEGER);
-pg_eq_impl!(i32 as i32, PgParams::INTEGER);
-pg_eq_impl!(i32 as u8, PgParams::INTEGER);
-pg_eq_impl!(i32 as u16, PgParams::INTEGER);
-pg_eq_impl!(Option<i32> as i8, PgParams::INTEGER);
-pg_eq_impl!(Option<i32> as i16, PgParams::INTEGER);
-pg_eq_impl!(Option<i32> as i32, PgParams::INTEGER);
-pg_eq_impl!(Option<i32> as u8, PgParams::INTEGER);
-pg_eq_impl!(Option<i32> as u16, PgParams::INTEGER);
+pg_eq_impl!(i32 as i8, PgParam::INTEGER);
+pg_eq_impl!(i32 as i16, PgParam::INTEGER);
+pg_eq_impl!(i32 as i32, PgParam::INTEGER);
+pg_eq_impl!(i32 as u8, PgParam::INTEGER);
+pg_eq_impl!(i32 as u16, PgParam::INTEGER);
+pg_eq_impl!(Option<i32> as i8, PgParam::INTEGER);
+pg_eq_impl!(Option<i32> as i16, PgParam::INTEGER);
+pg_eq_impl!(Option<i32> as i32, PgParam::INTEGER);
+pg_eq_impl!(Option<i32> as u8, PgParam::INTEGER);
+pg_eq_impl!(Option<i32> as u16, PgParam::INTEGER);
 
 // bigint
-pg_eq_impl!(i64 as i8, PgParams::BIGINT);
-pg_eq_impl!(i64 as i16, PgParams::BIGINT);
-pg_eq_impl!(i64 as i32, PgParams::BIGINT);
-pg_eq_impl!(i64 as i64, PgParams::BIGINT);
-pg_eq_impl!(i64 as u8, PgParams::BIGINT);
-pg_eq_impl!(i64 as u16, PgParams::BIGINT);
-pg_eq_impl!(i64 as u32, PgParams::BIGINT);
-pg_eq_impl!(Option<i64> as i8, PgParams::BIGINT);
-pg_eq_impl!(Option<i64> as i16, PgParams::BIGINT);
-pg_eq_impl!(Option<i64> as i32, PgParams::BIGINT);
-pg_eq_impl!(Option<i64> as i64, PgParams::BIGINT);
-pg_eq_impl!(Option<i64> as u8, PgParams::BIGINT);
-pg_eq_impl!(Option<i64> as u16, PgParams::BIGINT);
-pg_eq_impl!(Option<i64> as u32, PgParams::BIGINT);
+pg_eq_impl!(i64 as i8, PgParam::BIGINT);
+pg_eq_impl!(i64 as i16, PgParam::BIGINT);
+pg_eq_impl!(i64 as i32, PgParam::BIGINT);
+pg_eq_impl!(i64 as i64, PgParam::BIGINT);
+pg_eq_impl!(i64 as u8, PgParam::BIGINT);
+pg_eq_impl!(i64 as u16, PgParam::BIGINT);
+pg_eq_impl!(i64 as u32, PgParam::BIGINT);
+pg_eq_impl!(Option<i64> as i8, PgParam::BIGINT);
+pg_eq_impl!(Option<i64> as i16, PgParam::BIGINT);
+pg_eq_impl!(Option<i64> as i32, PgParam::BIGINT);
+pg_eq_impl!(Option<i64> as i64, PgParam::BIGINT);
+pg_eq_impl!(Option<i64> as u8, PgParam::BIGINT);
+pg_eq_impl!(Option<i64> as u16, PgParam::BIGINT);
+pg_eq_impl!(Option<i64> as u32, PgParam::BIGINT);
 
 // real
-pg_eq_impl!(f32 as f32, PgParams::REAL);
-pg_eq_impl!(f32 as i16, PgParams::REAL);
-pg_eq_impl!(f32 as i8, PgParams::REAL);
-pg_eq_impl!(f32 as u16, PgParams::REAL);
-pg_eq_impl!(f32 as u8, PgParams::REAL);
-pg_eq_impl!(Option<f32> as f32, PgParams::REAL);
-pg_eq_impl!(Option<f32> as i16, PgParams::REAL);
-pg_eq_impl!(Option<f32> as i8, PgParams::REAL);
-pg_eq_impl!(Option<f32> as u16, PgParams::REAL);
-pg_eq_impl!(Option<f32> as u8, PgParams::REAL);
+pg_eq_impl!(f32 as f32, PgParam::REAL);
+pg_eq_impl!(f32 as i16, PgParam::REAL);
+pg_eq_impl!(f32 as i8, PgParam::REAL);
+pg_eq_impl!(f32 as u16, PgParam::REAL);
+pg_eq_impl!(f32 as u8, PgParam::REAL);
+pg_eq_impl!(Option<f32> as f32, PgParam::REAL);
+pg_eq_impl!(Option<f32> as i16, PgParam::REAL);
+pg_eq_impl!(Option<f32> as i8, PgParam::REAL);
+pg_eq_impl!(Option<f32> as u16, PgParam::REAL);
+pg_eq_impl!(Option<f32> as u8, PgParam::REAL);
 
 // double
-pg_eq_impl!(f64 as f64, PgParams::DOUBLE);
-pg_eq_impl!(f64 as f32, PgParams::DOUBLE);
-pg_eq_impl!(f64 as i8, PgParams::DOUBLE);
-pg_eq_impl!(f64 as i16, PgParams::DOUBLE);
-pg_eq_impl!(f64 as i32, PgParams::DOUBLE);
-pg_eq_impl!(f64 as u8, PgParams::DOUBLE);
-pg_eq_impl!(f64 as u16, PgParams::DOUBLE);
-pg_eq_impl!(f64 as u32, PgParams::DOUBLE);
-pg_eq_impl!(Option<f64> as f64, PgParams::DOUBLE);
-pg_eq_impl!(Option<f64> as f32, PgParams::DOUBLE);
-pg_eq_impl!(Option<f64> as i8, PgParams::DOUBLE);
-pg_eq_impl!(Option<f64> as i16, PgParams::DOUBLE);
-pg_eq_impl!(Option<f64> as i32, PgParams::DOUBLE);
-pg_eq_impl!(Option<f64> as u8, PgParams::DOUBLE);
-pg_eq_impl!(Option<f64> as u16, PgParams::DOUBLE);
-pg_eq_impl!(Option<f64> as u32, PgParams::DOUBLE);
+pg_eq_impl!(f64 as f64, PgParam::DOUBLE);
+pg_eq_impl!(f64 as f32, PgParam::DOUBLE);
+pg_eq_impl!(f64 as i8, PgParam::DOUBLE);
+pg_eq_impl!(f64 as i16, PgParam::DOUBLE);
+pg_eq_impl!(f64 as i32, PgParam::DOUBLE);
+pg_eq_impl!(f64 as u8, PgParam::DOUBLE);
+pg_eq_impl!(f64 as u16, PgParam::DOUBLE);
+pg_eq_impl!(f64 as u32, PgParam::DOUBLE);
+pg_eq_impl!(Option<f64> as f64, PgParam::DOUBLE);
+pg_eq_impl!(Option<f64> as f32, PgParam::DOUBLE);
+pg_eq_impl!(Option<f64> as i8, PgParam::DOUBLE);
+pg_eq_impl!(Option<f64> as i16, PgParam::DOUBLE);
+pg_eq_impl!(Option<f64> as i32, PgParam::DOUBLE);
+pg_eq_impl!(Option<f64> as u8, PgParam::DOUBLE);
+pg_eq_impl!(Option<f64> as u16, PgParam::DOUBLE);
+pg_eq_impl!(Option<f64> as u32, PgParam::DOUBLE);
 
 // decimal
-pg_eq_impl!(Decimal as Decimal, PgParams::DECIMAL);
-pg_eq_impl!(Decimal as i8, PgParams::DECIMAL);
-pg_eq_impl!(Decimal as i16, PgParams::DECIMAL);
-pg_eq_impl!(Decimal as i32, PgParams::DECIMAL);
-pg_eq_impl!(Decimal as i64, PgParams::DECIMAL);
-pg_eq_impl!(Decimal as i128, PgParams::DECIMAL);
-pg_eq_impl!(Decimal as isize, PgParams::DECIMAL);
-pg_eq_impl!(Decimal as u8, PgParams::DECIMAL);
-pg_eq_impl!(Decimal as u16, PgParams::DECIMAL);
-pg_eq_impl!(Decimal as u32, PgParams::DECIMAL);
-pg_eq_impl!(Decimal as u64, PgParams::DECIMAL);
-pg_eq_impl!(Decimal as u128, PgParams::DECIMAL);
-pg_eq_impl!(Decimal as usize, PgParams::DECIMAL);
-pg_eq_impl!(Option<Decimal> as Decimal, PgParams::DECIMAL);
-pg_eq_impl!(Option<Decimal> as i8, PgParams::DECIMAL);
-pg_eq_impl!(Option<Decimal> as i16, PgParams::DECIMAL);
-pg_eq_impl!(Option<Decimal> as i32, PgParams::DECIMAL);
-pg_eq_impl!(Option<Decimal> as i64, PgParams::DECIMAL);
-pg_eq_impl!(Option<Decimal> as i128, PgParams::DECIMAL);
-pg_eq_impl!(Option<Decimal> as isize, PgParams::DECIMAL);
-pg_eq_impl!(Option<Decimal> as u8, PgParams::DECIMAL);
-pg_eq_impl!(Option<Decimal> as u16, PgParams::DECIMAL);
-pg_eq_impl!(Option<Decimal> as u32, PgParams::DECIMAL);
-pg_eq_impl!(Option<Decimal> as u64, PgParams::DECIMAL);
-pg_eq_impl!(Option<Decimal> as u128, PgParams::DECIMAL);
-pg_eq_impl!(Option<Decimal> as usize, PgParams::DECIMAL);
+pg_eq_impl!(Decimal as Decimal, PgParam::DECIMAL);
+pg_eq_impl!(Decimal as i8, PgParam::DECIMAL);
+pg_eq_impl!(Decimal as i16, PgParam::DECIMAL);
+pg_eq_impl!(Decimal as i32, PgParam::DECIMAL);
+pg_eq_impl!(Decimal as i64, PgParam::DECIMAL);
+pg_eq_impl!(Decimal as i128, PgParam::DECIMAL);
+pg_eq_impl!(Decimal as isize, PgParam::DECIMAL);
+pg_eq_impl!(Decimal as u8, PgParam::DECIMAL);
+pg_eq_impl!(Decimal as u16, PgParam::DECIMAL);
+pg_eq_impl!(Decimal as u32, PgParam::DECIMAL);
+pg_eq_impl!(Decimal as u64, PgParam::DECIMAL);
+pg_eq_impl!(Decimal as u128, PgParam::DECIMAL);
+pg_eq_impl!(Decimal as usize, PgParam::DECIMAL);
+pg_eq_impl!(Option<Decimal> as Decimal, PgParam::DECIMAL);
+pg_eq_impl!(Option<Decimal> as i8, PgParam::DECIMAL);
+pg_eq_impl!(Option<Decimal> as i16, PgParam::DECIMAL);
+pg_eq_impl!(Option<Decimal> as i32, PgParam::DECIMAL);
+pg_eq_impl!(Option<Decimal> as i64, PgParam::DECIMAL);
+pg_eq_impl!(Option<Decimal> as i128, PgParam::DECIMAL);
+pg_eq_impl!(Option<Decimal> as isize, PgParam::DECIMAL);
+pg_eq_impl!(Option<Decimal> as u8, PgParam::DECIMAL);
+pg_eq_impl!(Option<Decimal> as u16, PgParam::DECIMAL);
+pg_eq_impl!(Option<Decimal> as u32, PgParam::DECIMAL);
+pg_eq_impl!(Option<Decimal> as u64, PgParam::DECIMAL);
+pg_eq_impl!(Option<Decimal> as u128, PgParam::DECIMAL);
+pg_eq_impl!(Option<Decimal> as usize, PgParam::DECIMAL);

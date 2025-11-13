@@ -1,4 +1,4 @@
-use crate::PgParams;
+use crate::PgParam;
 
 #[derive(thiserror::Error, Debug)]
 pub enum GasError {
@@ -6,8 +6,11 @@ pub enum GasError {
     DriverError(#[from] sqlx::Error),
 
     #[error("failed to convert parameter: {0}")]
-    TypeError(PgParams),
+    TypeError(PgParam),
 
     #[error("invalid query format")]
     QueryFormatError,
+
+    #[error("unexpected response: {0}")]
+    UnexpectedResponse(String),
 }

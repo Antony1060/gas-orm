@@ -2,8 +2,9 @@
 
 use crate::condition::EqExpression;
 use crate::connection::PgExecutionContext;
+use crate::error::GasError;
 use crate::sql_query::SqlQuery;
-use crate::{AsSql, GasResult, ModelMeta};
+use crate::{AsSql, GasResult, ModelMeta, PgParam};
 use std::marker::PhantomData;
 
 #[derive(Debug, Clone, Default)]
@@ -25,16 +26,36 @@ impl<T: ModelMeta> SelectBuilder<T> {
         self
     }
 
-    pub async fn find_all(self, ctx: &impl PgExecutionContext) -> GasResult<Vec<T>> {
-        let params = self
-            .filter
-            .as_ref()
-            .map(|it| it.params.as_slice())
-            .unwrap_or_else(|| &[]);
-
-        let items = ctx.execute::<T>(self.as_sql(), params).await?;
+    pub async fn find_all<E: PgExecutionContext>(self, ctx: &E) -> GasResult<Vec<T>> {
+        let params = self.accumulate_params();
+        let items = ctx.execute_parsed::<T>(self.as_sql(), params).await?;
 
         Ok(items)
+    }
+
+    pub async fn find_one<E: PgExecutionContext>(self, ctx: &E) -> GasResult<Option<T>> {
+        let params = self.accumulate_params();
+
+        let mut sql = self.as_sql();
+        sql.append_str(" LIMIT 1");
+
+        let mut items = ctx.execute_parsed::<T>(sql, params).await?;
+
+        if items.len() > 1 {
+            return Err(GasError::UnexpectedResponse(format!(
+                "find_one: got {}, expected <= 1",
+                items.len()
+            )));
+        }
+
+        Ok(items.pop())
+    }
+
+    fn accumulate_params(&self) -> &[PgParam] {
+        self.filter
+            .as_ref()
+            .map(|it| it.params.as_slice())
+            .unwrap_or_else(|| &[])
     }
 }
 

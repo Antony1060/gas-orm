@@ -1,8 +1,12 @@
+#![allow(private_bounds)]
+
 pub use gas_macros::*;
 use std::fmt::{Display, Formatter};
 
-use crate::builder::SelectBuilder;
+use crate::connection::PgExecutionContext;
 use crate::error::GasError;
+use crate::ops::create::CreateOp;
+use crate::ops::select::SelectBuilder;
 use crate::pg_type::PgType;
 use crate::row::FromRow;
 use crate::sql_query::SqlQuery;
@@ -10,11 +14,11 @@ use rust_decimal::Decimal;
 use std::marker::PhantomData;
 use std::ops::Deref;
 
-pub mod builder;
 pub mod condition;
 pub mod connection;
 pub mod eq;
 pub mod error;
+mod ops;
 pub mod pg_type;
 pub mod row;
 mod sql_query;
@@ -23,7 +27,7 @@ pub mod types;
 pub type GasResult<T> = Result<T, GasError>;
 
 #[derive(Debug, Clone)]
-pub enum PgParams {
+pub enum PgParam {
     TEXT(String),
     SMALLINT(i16),
     INTEGER(i32),
@@ -33,22 +37,24 @@ pub enum PgParams {
     DECIMAL(Decimal),
 }
 
+// TODO: correct export
+// very good 👍
 #[macro_export]
 macro_rules! pg_param_all {
     ($param:ident, $ex:expr) => {
         match $param {
-            PgParams::TEXT(value) => $ex("TEXT", value),
-            PgParams::SMALLINT(value) => $ex("SMALLINT", value),
-            PgParams::INTEGER(value) => $ex("INTEGER", value),
-            PgParams::BIGINT(value) => $ex("BIGINT", value),
-            PgParams::REAL(value) => $ex("REAL", value),
-            PgParams::DOUBLE(value) => $ex("DOUBLE", value),
-            PgParams::DECIMAL(value) => $ex("DECIMAL", value),
+            PgParam::TEXT(value) => $ex("TEXT", value),
+            PgParam::SMALLINT(value) => $ex("SMALLINT", value),
+            PgParam::INTEGER(value) => $ex("INTEGER", value),
+            PgParam::BIGINT(value) => $ex("BIGINT", value),
+            PgParam::REAL(value) => $ex("REAL", value),
+            PgParam::DOUBLE(value) => $ex("DOUBLE", value),
+            PgParam::DECIMAL(value) => $ex("DECIMAL", value),
         }
     };
 }
 
-impl Display for PgParams {
+impl Display for PgParam {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         pg_param_all!(self, |variant, value| {
             write!(f, "PgParams::{}({})", variant, value)
@@ -68,6 +74,12 @@ pub enum FieldFlags {
     PrimaryKey = 1 << 0,
     Serial = 1 << 1,
     Nullable = 1 << 2,
+}
+
+impl FieldFlags {
+    pub fn in_bitmask(self, mask: u8) -> bool {
+        (mask & (self as u8)) != 0
+    }
 }
 
 #[derive(Debug)]
@@ -131,6 +143,14 @@ pub trait ModelMeta: FromRow {
 pub trait ModelOps<T: ModelMeta> {
     fn query() -> SelectBuilder<T> {
         SelectBuilder::new()
+    }
+
+    // some trait bounds cannot be enforced if I just do `async fn` here, idk
+    fn create_table<E: PgExecutionContext>(
+        ctx: &E,
+        ignore_existing: bool,
+    ) -> impl Future<Output = GasResult<()>> {
+        CreateOp::<T>::new(ignore_existing).run(ctx)
     }
 }
 

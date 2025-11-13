@@ -1,7 +1,7 @@
 use crate::error::GasError;
 use crate::row::{FromRow, Row};
 use crate::sql_query::SqlQuery;
-use crate::{pg_param_all, GasResult, PgParams};
+use crate::{pg_param_all, GasResult, PgParam};
 use sqlx::postgres::{PgArguments, PgPoolOptions};
 use sqlx::Arguments;
 use sqlx::PgPool;
@@ -33,11 +33,23 @@ impl PgConnection {
 }
 
 pub(crate) trait PgExecutionContext {
-    async fn execute<T: FromRow>(&self, sql: SqlQuery, params: &[PgParams]) -> GasResult<Vec<T>>;
+    async fn execute(&self, sql: SqlQuery, params: &[PgParam]) -> GasResult<Vec<Row>>;
+
+    async fn execute_parsed<T: FromRow>(
+        &self,
+        sql: SqlQuery,
+        params: &[PgParam],
+    ) -> GasResult<Vec<T>> {
+        let rows = self.execute(sql, params).await?;
+
+        rows.into_iter()
+            .map(|row| FromRow::from_row(&row))
+            .collect::<Result<Vec<T>, _>>()
+    }
 }
 
 impl PgExecutionContext for PgConnection {
-    async fn execute<T: FromRow>(&self, sql: SqlQuery, _params: &[PgParams]) -> GasResult<Vec<T>> {
+    async fn execute(&self, sql: SqlQuery, _params: &[PgParam]) -> GasResult<Vec<Row>> {
         let query = sql.finish()?;
 
         dbg!(&query);
@@ -56,15 +68,12 @@ impl PgExecutionContext for PgConnection {
             .fetch_all(&self.pool)
             .await?;
 
-        rows.into_iter()
-            .map(Row::from)
-            .map(|row| FromRow::from_row(&row))
-            .collect::<Result<Vec<T>, _>>()
+        Ok(rows.into_iter().map(Row::from).collect())
     }
 }
 
 impl PgExecutionContext for PgTransaction {
-    async fn execute<T: FromRow>(&self, sql: SqlQuery, _params: &[PgParams]) -> GasResult<Vec<T>> {
+    async fn execute(&self, sql: SqlQuery, _params: &[PgParam]) -> GasResult<Vec<Row>> {
         let _query = sql.finish()?;
         let _a = &self.transaction; // mute warning for now
         todo!()

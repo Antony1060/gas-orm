@@ -1,4 +1,4 @@
-use crate::models::student;
+use crate::models::person;
 use gas::connection::PgConnection;
 use gas::{GasResult, ModelOps};
 
@@ -10,7 +10,9 @@ async fn main() -> GasResult<()> {
         PgConnection::new_connection_pool("postgres://postgres:strong_password@localhost/postgres")
             .await?;
 
-    let students = student::Model::query().find_all(&conn).await?;
+    person::Model::create_table(&conn, true).await?;
+
+    let students = person::Model::query().find_all(&conn).await?;
 
     dbg!(&students);
 

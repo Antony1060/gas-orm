@@ -1,5 +1,5 @@
 use crate::sql_query::SqlQuery;
-use crate::{AsSql, PgParams};
+use crate::{AsSql, PgParam};
 use std::ops::{BitAnd, BitOr};
 
 #[derive(Debug, Clone)]
@@ -18,11 +18,11 @@ pub enum Condition {
 #[derive(Debug, Clone)]
 pub struct EqExpression {
     pub condition: Condition,
-    pub params: Vec<PgParams>,
+    pub params: Vec<PgParam>,
 }
 
 impl EqExpression {
-    pub(crate) const fn new(condition: Condition, params: Vec<PgParams>) -> EqExpression {
+    pub(crate) const fn new(condition: Condition, params: Vec<PgParam>) -> EqExpression {
         EqExpression { condition, params }
     }
 

@@ -16,6 +16,21 @@ impl PgType {
     pub const fn __to_pg_type<T: AsPgType>() -> PgType {
         T::PG_TYPE
     }
+
+    pub fn as_sql_type(&self, is_serial: bool) -> &'static str {
+        match self {
+            PgType::TEXT => "TEXT",
+            PgType::SMALLINT if is_serial => "SMALLSERIAL",
+            PgType::SMALLINT => "SMALLINT",
+            PgType::INTEGER if is_serial => "SERIAL",
+            PgType::INTEGER => "INTEGER",
+            PgType::BIGINT if is_serial => "BIGSERIAL",
+            PgType::BIGINT => "BIGINT",
+            PgType::REAL => "REAL",
+            PgType::DOUBLE => "DOUBLE",
+            PgType::DECIMAL => "DECIMAL",
+        }
+    }
 }
 
 pub trait AsPgType: for<'a> Decode<'a, sqlx::Postgres> + Type<sqlx::Postgres> {
