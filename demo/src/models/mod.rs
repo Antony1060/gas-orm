@@ -10,5 +10,6 @@ pub struct Person {
     pub last_name: String,
     pub email: String,
     pub phone_number: Option<String>,
+    #[column(name = "bank_balance")]
     pub bank_account_balance: Decimal,
 }

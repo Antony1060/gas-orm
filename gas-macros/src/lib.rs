@@ -8,14 +8,20 @@ use std::collections::HashMap;
 use syn::spanned::Spanned;
 use syn::{Field, Fields};
 
-#[inline(always)]
-fn proc_type_to_pg_type(ty: &syn::Type) -> Result<proc_macro2::TokenStream, syn::Error> {
-    let syn::Type::Path(path) = ty else {
-        Err(syn::Error::new(ty.span(), "type must be a path type"))?
-    };
+#[derive(Debug)]
+struct FieldNames {
+    column_name: String, // username
+    full_name: String,   // users.username
+    // alias is used in select queries so distinguishing columns on joined tables is easier
+    alias_name: String, // users_username
+}
 
-    // going through a generic function gives better errors compared to just `#path::PG_TYPE`
-    Ok(quote! { gas::pg_type::PgType::__to_pg_type::<#path>() })
+struct ModelCtx<'a> {
+    primary_keys: &'a [Ident],
+    serials: &'a [Ident],
+
+    // field.ident -> names
+    field_columns: HashMap<String, FieldNames>,
 }
 
 #[derive(Debug, FromDeriveInput)]
@@ -36,6 +42,21 @@ struct ModelArgsAttrib {
     mod_name: Option<String>,
 }
 
+#[derive(Debug, FromMeta)]
+struct ColumnArgs {
+    name: String,
+}
+
+#[inline(always)]
+fn proc_type_to_pg_type(ty: &syn::Type) -> Result<proc_macro2::TokenStream, syn::Error> {
+    let syn::Type::Path(path) = ty else {
+        Err(syn::Error::new(ty.span(), "type must be a path type"))?
+    };
+
+    // going through a generic function gives better errors compared to just `#path::PG_TYPE`
+    Ok(quote! { gas::pg_type::PgType::__to_pg_type::<#path>() })
+}
+
 fn find_fields_with_attr(fields: &Fields, target_attr: &'static str) -> Vec<Ident> {
     fields
         .iter()
@@ -50,19 +71,14 @@ fn find_fields_with_attr(fields: &Fields, target_attr: &'static str) -> Vec<Iden
         .collect()
 }
 
-struct ModelCtx<'a> {
-    table_name: &'a str,
-    primary_keys: &'a [Ident],
-    serials: &'a [Ident],
-    field_columns: HashMap<Ident, (String, String)>,
-}
-
 fn process_field(
     ctx: &ModelCtx<'_>,
     field: &Field,
 ) -> Option<Result<proc_macro2::TokenStream, syn::Error>> {
-    let ident = field.ident.clone()?;
+    let ident = field.ident.as_ref()?;
     let ty = field.ty.clone();
+
+    let field_names = ctx.field_columns.get(&ident.to_string())?;
 
     let pg_type_tokens = proc_type_to_pg_type(&ty);
     let pg_type_tokens = match pg_type_tokens {
@@ -84,18 +100,130 @@ fn process_field(
         flags.push(quote! { (gas::FieldFlags::Serial as u8) })
     }
 
-    let table_name = ctx.table_name;
+    let full_name = &field_names.full_name;
+    let name = &field_names.column_name;
+    let alias_name = &field_names.alias_name;
 
     Some(Ok(quote! {
         pub const #ident: gas::Field<#ty> = gas::Field::new(
-            concat!(#table_name, ".", stringify!(#ident)),
-            stringify!(#ident),
-            concat!(#table_name, "_", stringify!(#ident)),
-            #pg_type_tokens,
-            #(#flags)|*,
-            None
+            #full_name, #name, #alias_name,
+            #pg_type_tokens, #(#flags)|*, None
         );
     }))
+}
+
+fn generate_from_row(ctx: &ModelCtx) -> Result<proc_macro2::TokenStream, syn::Error> {
+    let field_defs = ctx
+        .field_columns
+        .iter()
+        .map(|(ident, FieldNames { alias_name, .. })| {
+            let ident = Ident::new(ident, Span::call_site());
+
+            quote! {
+                #ident: row.try_get(#alias_name)?,
+            }
+        })
+        .collect::<Vec<_>>();
+
+    Ok(quote! {
+        impl gas::row::FromRow for Model {
+            fn from_row(row: &gas::row::Row) -> gas::GasResult<Model> {
+                Ok(Self {
+                    #(#field_defs)*
+                })
+            }
+        }
+    })
+}
+
+fn get_col_name(field: &Field) -> Option<Result<String, syn::Error>> {
+    let attribute = field
+        .attrs
+        .iter()
+        .find(|attr| attr.path().is_ident("column"));
+
+    let Some(attr) = attribute else {
+        return field.ident.as_ref().map(|it| Ok(it.to_string()));
+    };
+
+    let column_args: Result<ColumnArgs, _> = FromMeta::from_meta(&attr.meta);
+    match column_args {
+        Ok(ColumnArgs { name }) => Some(Ok(name)),
+        Err(err) => Some(Err(err.into())),
+    }
+}
+
+fn parse_col_names(
+    table_name: &str,
+    fields: &Fields,
+) -> Result<HashMap<String, FieldNames>, syn::Error> {
+    fields
+        .iter()
+        .filter_map(|field| {
+            // None if field has nor attribute nor name
+            //  Result otherwise, will report errors of invalid usage of column attribute
+            let col_name = get_col_name(field)?;
+            let col_name = match col_name {
+                Ok(name) => name,
+                Err(err) => return Some(Err(err)),
+            };
+
+            Some(Ok((
+                field.ident.as_ref()?.to_string(),
+                FieldNames {
+                    full_name: format!("{}.{}", table_name, col_name),
+                    alias_name: format!("{}_{}", table_name, col_name),
+                    column_name: col_name,
+                },
+            )))
+        })
+        .collect::<Result<HashMap<_, _>, _>>()
+}
+
+#[inline(always)]
+fn derive_model_impl(_input: TokenStream) -> Result<TokenStream, syn::Error> {
+    // TODO(low priority): there's probably a better way to do this without double parse
+    let derive_input = syn::parse::<syn::DeriveInput>(_input.clone())?;
+    let input = syn::parse::<syn::ItemStruct>(_input)?;
+
+    let meta: ModelArgs = FromDeriveInput::from_derive_input(&derive_input)?;
+
+    let primary_keys = find_fields_with_attr(&input.fields, "primary_key");
+    let serials = find_fields_with_attr(&input.fields, "serial");
+
+    let table_name = meta.table_name;
+
+    let ctx = ModelCtx {
+        primary_keys: &primary_keys,
+        serials: &serials,
+        field_columns: parse_col_names(&table_name, &input.fields)?,
+    };
+
+    let field_consts = input
+        .fields
+        .iter()
+        .filter_map(|field| process_field(&ctx, field))
+        .collect::<Result<Vec<_>, syn::Error>>()?;
+
+    let field_list = input.fields.iter().filter_map(|field| field.ident.clone());
+
+    let from_row_impl = generate_from_row(&ctx)?;
+
+    Ok(quote! {
+        #(#field_consts)*
+
+        impl gas::ModelMeta for Model {
+            const TABLE_NAME: &'static str = #table_name;
+            const FIELDS: &'static [gas::FieldMeta] = &[#(#field_list.meta),*];
+        }
+
+        const _: () = {
+            assert!(<Model as gas::ModelMeta>::FIELDS.len() > 1, "struct must not be empty");
+        };
+
+        #from_row_impl
+    }
+    .into())
 }
 
 #[inline(always)]
@@ -128,97 +256,12 @@ fn model_impl(args: TokenStream, input: TokenStream) -> Result<TokenStream, syn:
     .into())
 }
 
-fn generate_from_row(ctx: &ModelCtx) -> Result<proc_macro2::TokenStream, syn::Error> {
-    let field_defs = ctx
-        .field_columns
-        .iter()
-        .map(|(ident, (_, alias_name))| {
-            quote! {
-                #ident: row.try_get(#alias_name)?,
-            }
-        })
-        .collect::<Vec<_>>();
-
-    Ok(quote! {
-        impl gas::row::FromRow for Model {
-            fn from_row(row: &gas::row::Row) -> gas::GasResult<Model> {
-                Ok(Self {
-                    #(#field_defs)*
-                })
-            }
-        }
-    })
-}
-
-fn parse_col_names(table_name: &str, fields: &Fields) -> HashMap<Ident, (String, String)> {
-    fields
-        .iter()
-        .filter_map(|field| {
-            Some((
-                field.ident.clone()?,
-                (
-                    format!("{}.{}", table_name, field.ident.as_ref()?),
-                    format!("{}_{}", table_name, field.ident.as_ref()?),
-                ),
-            ))
-        })
-        .collect()
-}
-
-#[inline(always)]
-fn derive_model_impl(_input: TokenStream) -> Result<TokenStream, syn::Error> {
-    // TODO(low priority): there's probably a better way to do this without double parse
-    let derive_input = syn::parse::<syn::DeriveInput>(_input.clone())?;
-    let input = syn::parse::<syn::ItemStruct>(_input)?;
-
-    let meta: ModelArgs = FromDeriveInput::from_derive_input(&derive_input)?;
-
-    let primary_keys = find_fields_with_attr(&input.fields, "primary_key");
-    let serials = find_fields_with_attr(&input.fields, "serial");
-
-    let table_name = meta.table_name;
-
-    let ctx = ModelCtx {
-        table_name: &table_name,
-        primary_keys: &primary_keys,
-        serials: &serials,
-        field_columns: parse_col_names(&table_name, &input.fields),
-    };
-
-    let field_consts = input
-        .fields
-        .iter()
-        .filter_map(|field| process_field(&ctx, field))
-        .collect::<Result<Vec<_>, syn::Error>>()?;
-
-    let field_list = input.fields.iter().filter_map(|field| field.ident.clone());
-
-    let from_row_impl = generate_from_row(&ctx)?;
-
-    Ok(quote! {
-        #(#field_consts)*
-
-        impl gas::ModelMeta for Model {
-            #[inline(always)]
-            const TABLE_NAME: &'static str = #table_name;
-            const FIELDS: &'static [gas::FieldMeta] = &[#(#field_list.meta),*];
-        }
-
-        const _: () = {
-            assert!(<Model as gas::ModelMeta>::FIELDS.len() > 1, "struct must not be empty");
-        };
-
-        #from_row_impl
-    }
-    .into())
-}
-
 #[proc_macro_attribute]
 pub fn model(args: TokenStream, input: TokenStream) -> TokenStream {
     model_impl(args, input).unwrap_or_else(|err| err.to_compile_error().into())
 }
 
-#[proc_macro_derive(__model, attributes(primary_key, serial, __gas_meta))]
+#[proc_macro_derive(__model, attributes(primary_key, serial, column, __gas_meta))]
 pub fn derive_model(input: TokenStream) -> TokenStream {
     derive_model_impl(input).unwrap_or_else(|err| err.to_compile_error().into())
 }
