@@ -148,6 +148,9 @@ pub trait ModelMeta: FromRow {
 //      ..user::default()
 //  }.update_by_key(key: K) // insert would be similar
 //  ```
+//
+// NOTE 2: maybe add aliases for all of these in the root of the namespace,
+//  so it can be used like user::query() or user::create_table()
 pub trait ModelOps<T: ModelMeta> {
     fn query() -> SelectBuilder<T> {
         SelectBuilder::new()
