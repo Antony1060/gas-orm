@@ -1,12 +1,12 @@
 #![allow(private_bounds)]
 
 use crate::condition::EqExpression;
-use crate::connection::{GasResult, PgExecutionContext};
+use crate::connection::PgExecutionContext;
 use crate::sql_query::SqlQuery;
-use crate::{AsSql, ModelMeta};
+use crate::{AsSql, GasResult, ModelMeta};
 use std::marker::PhantomData;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub struct SelectBuilder<T> {
     pub(crate) filter: Option<EqExpression>,
     _marker: PhantomData<T>,
@@ -32,10 +32,9 @@ impl<T: ModelMeta> SelectBuilder<T> {
             .map(|it| it.params.as_slice())
             .unwrap_or_else(|| &[]);
 
-        // TODO:
-        ctx.execute(self.as_sql(), params).await?;
+        let items = ctx.execute::<T>(self.as_sql(), params).await?;
 
-        Ok(vec![])
+        Ok(items)
     }
 }
 

@@ -1,7 +1,7 @@
 use gas::types::Decimal;
 
 #[gas::model(table_name = "students")]
-// #[derive(Debug, Clone)]
+#[derive(Debug, Clone)]
 pub struct Student {
     pub id: i64,
     pub first_name: String,
@@ -43,15 +43,4 @@ pub struct Thing {
     pub real_opt: Option<f32>,
     pub double_opt: Option<f64>,
     pub dec_opt: Option<Decimal>,
-}
-
-#[gas::model(table_name = "users")]
-#[derive(Debug)]
-pub struct JaspersUser {
-    pub id: i32,
-    pub oidc_id_token: String,
-    pub id_token_exp: i64,
-    pub email: String,
-    pub picture_url: String,
-    pub name: String,
 }

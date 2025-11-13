@@ -1,5 +1,5 @@
-use crate::connection::GasResult;
 use crate::error::GasError;
+use crate::GasResult;
 use lazy_static::lazy_static;
 
 lazy_static! {
@@ -7,6 +7,7 @@ lazy_static! {
 }
 
 // eh
+#[derive(Debug)]
 pub(crate) struct SqlQuery {
     query: String,
 }
@@ -18,8 +19,8 @@ impl SqlQuery {
         }
     }
 
-    pub(crate) fn append_query(&mut self, mut other: SqlQuery) {
-        self.query.push_str(&mut other.query);
+    pub(crate) fn append_query(&mut self, other: SqlQuery) {
+        self.query.push_str(&other.query);
     }
 
     pub(crate) fn append_str(&mut self, other: &str) {

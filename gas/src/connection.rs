@@ -1,11 +1,10 @@
 use crate::error::GasError;
+use crate::row::{FromRow, Row};
 use crate::sql_query::SqlQuery;
-use crate::{pg_param_all, PgParams};
+use crate::{pg_param_all, GasResult, PgParams};
 use sqlx::postgres::{PgArguments, PgPoolOptions};
 use sqlx::Arguments;
 use sqlx::PgPool;
-
-pub type GasResult<T> = Result<T, GasError>;
 
 pub struct PgConnection {
     pool: PgPool,
@@ -34,11 +33,11 @@ impl PgConnection {
 }
 
 pub(crate) trait PgExecutionContext {
-    async fn execute(&self, sql: SqlQuery, params: &[PgParams]) -> GasResult<()>;
+    async fn execute<T: FromRow>(&self, sql: SqlQuery, params: &[PgParams]) -> GasResult<Vec<T>>;
 }
 
 impl PgExecutionContext for PgConnection {
-    async fn execute(&self, sql: SqlQuery, _params: &[PgParams]) -> GasResult<()> {
+    async fn execute<T: FromRow>(&self, sql: SqlQuery, _params: &[PgParams]) -> GasResult<Vec<T>> {
         let query = sql.finish()?;
 
         let mut arguments = PgArguments::default();
@@ -46,22 +45,24 @@ impl PgExecutionContext for PgConnection {
             // eh
             let res = pg_param_all!(param, |_, value| arguments.add(value));
 
-            if let Err(_) = res {
+            if res.is_err() {
                 return Err(GasError::TypeError(param.clone()));
             }
         }
 
-        // TODO:
         let rows = sqlx::query_with(&query, arguments)
             .fetch_all(&self.pool)
             .await?;
-        dbg!(&rows);
-        Ok(())
+
+        rows.into_iter()
+            .map(Row::from)
+            .map(|row| FromRow::from_row(&row))
+            .collect::<Result<Vec<T>, _>>()
     }
 }
 
 impl PgExecutionContext for PgTransaction {
-    async fn execute(&self, sql: SqlQuery, _params: &[PgParams]) -> GasResult<()> {
+    async fn execute<T: FromRow>(&self, sql: SqlQuery, _params: &[PgParams]) -> GasResult<Vec<T>> {
         let _query = sql.finish()?;
         let _a = &self.transaction; // mute warning for now
         todo!()

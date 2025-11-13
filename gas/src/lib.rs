@@ -2,7 +2,9 @@ pub use gas_macros::*;
 use std::fmt::{Display, Formatter};
 
 use crate::builder::SelectBuilder;
+use crate::error::GasError;
 use crate::pg_type::PgType;
+use crate::row::FromRow;
 use crate::sql_query::SqlQuery;
 use rust_decimal::Decimal;
 use std::marker::PhantomData;
@@ -14,8 +16,11 @@ pub mod connection;
 pub mod eq;
 pub mod error;
 pub mod pg_type;
+pub mod row;
 mod sql_query;
 pub mod types;
+
+pub type GasResult<T> = Result<T, GasError>;
 
 #[derive(Debug, Clone)]
 pub enum PgParams {
@@ -110,7 +115,7 @@ pub(crate) trait AsSql {
     fn as_sql(&self) -> SqlQuery;
 }
 
-pub trait ModelMeta {
+pub trait ModelMeta: FromRow {
     fn table_name() -> &'static str;
 }
 

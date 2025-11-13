@@ -48,29 +48,29 @@ fn process_field(
     let ident = field.ident.clone()?;
     let ty = field.ty.clone();
 
-    let inner = move || {
-        let pg_type_tokens = proc_type_to_pg_type(&ty)?;
-
-        let mut flags: Vec<proc_macro2::TokenStream> = Vec::new();
-
-        flags.push(quote! { ((FieldFlags::Nullable as u8) * <#ty as IsOptional>::FACTOR) });
-
-        if ctx.primary_keys.contains(&ident) {
-            flags.push(quote! { (FieldFlags::PrimaryKey as u8) })
-        }
-
-        if ctx.serials.contains(&ident) {
-            flags.push(quote! { (FieldFlags::Serial as u8) })
-        }
-
-        let table_name = ctx.table_name;
-
-        Ok(quote! {
-            pub const #ident: Field<#ty> = Field::new(concat!(#table_name, ".", stringify!(#ident)), #pg_type_tokens, #(#flags)|*, None);
-        })
+    let pg_type_tokens = proc_type_to_pg_type(&ty);
+    let pg_type_tokens = match pg_type_tokens {
+        Ok(tokens) => tokens,
+        Err(err) => return Some(Err(err)),
     };
 
-    Some(inner())
+    let mut flags: Vec<proc_macro2::TokenStream> = Vec::new();
+
+    flags.push(quote! { ((FieldFlags::Nullable as u8) * <#ty as IsOptional>::FACTOR) });
+
+    if ctx.primary_keys.contains(&ident) {
+        flags.push(quote! { (FieldFlags::PrimaryKey as u8) })
+    }
+
+    if ctx.serials.contains(&ident) {
+        flags.push(quote! { (FieldFlags::Serial as u8) })
+    }
+
+    let table_name = ctx.table_name;
+
+    Some(Ok(quote! {
+        pub const #ident: Field<#ty> = Field::new(concat!(#table_name, ".", stringify!(#ident)), #pg_type_tokens, #(#flags)|*, None);
+    }))
 }
 
 #[inline(always)]
@@ -86,6 +86,7 @@ fn model_impl(args: TokenStream, input: TokenStream) -> Result<TokenStream, syn:
         pub mod #mod_identifier {
             #![allow(non_upper_case_globals, dead_code)]
             use super::*;
+            // TODO: don't use
             use gas::{Field, FieldMeta, FieldFlags, ModelMeta, pg_type::*};
 
             #[derive(gas::__model)]
@@ -94,6 +95,34 @@ fn model_impl(args: TokenStream, input: TokenStream) -> Result<TokenStream, syn:
         }
     }
     .into())
+}
+
+fn generate_from_row(fields: &Fields) -> Result<proc_macro2::TokenStream, syn::Error> {
+    // TODO: move to column name
+    let mut idx = 0usize;
+
+    let field_defs = fields
+        .iter()
+        .filter_map(|field| {
+            let ident = field.ident.clone()?;
+
+            idx += 1;
+
+            Some(quote! {
+                #ident: row.try_get(#idx - 1)?,
+            })
+        })
+        .collect::<Vec<_>>();
+
+    Ok(quote! {
+        impl gas::row::FromRow for Model {
+            fn from_row(row: &gas::row::Row) -> gas::GasResult<Model> {
+                Ok(Self {
+                    #(#field_defs)*
+                })
+            }
+        }
+    })
 }
 
 #[inline(always)]
@@ -123,6 +152,8 @@ fn derive_model_impl(_input: TokenStream) -> Result<TokenStream, syn::Error> {
 
     let field_list = input.fields.iter().filter_map(|field| field.ident.clone());
 
+    let from_row_impl = generate_from_row(&input.fields)?;
+
     Ok(quote! {
         #(#field_consts)*
 
@@ -134,6 +165,8 @@ fn derive_model_impl(_input: TokenStream) -> Result<TokenStream, syn::Error> {
                 #table_name
             }
         }
+
+        #from_row_impl
     }
     .into())
 }

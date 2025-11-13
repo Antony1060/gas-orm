@@ -1,4 +1,5 @@
 use crate::types::Decimal;
+use sqlx::{Decode, Type};
 
 #[derive(Debug)]
 pub enum PgType {
@@ -17,7 +18,7 @@ impl PgType {
     }
 }
 
-pub trait AsPgType {
+pub trait AsPgType: for<'a> Decode<'a, sqlx::Postgres> + Type<sqlx::Postgres> {
     const PG_TYPE: PgType;
 }
 
