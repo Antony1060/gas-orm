@@ -1,4 +1,6 @@
-use darling::FromDeriveInput;
+mod text_util;
+
+use darling::{FromDeriveInput, FromMeta};
 use proc_macro::TokenStream;
 use proc_macro2::{Ident, Span};
 use quote::quote;
@@ -19,6 +21,18 @@ fn proc_type_to_pg_type(ty: &syn::Type) -> Result<proc_macro2::TokenStream, syn:
 #[darling(attributes(__gas_meta))]
 struct ModelArgs {
     table_name: String,
+
+    #[allow(dead_code)]
+    mod_name: Option<String>,
+}
+
+// both derive and attribute macro arguments can't be derived from the same struct (I think)
+#[derive(Debug, FromMeta)]
+#[darling(derive_syn_parse)]
+struct ModelArgsAttrib {
+    #[allow(dead_code)]
+    table_name: String,
+    mod_name: Option<String>,
 }
 
 fn find_fields_with_attr(fields: &Fields, target_attr: &'static str) -> Vec<Ident> {
@@ -77,9 +91,17 @@ fn process_field(
 
 #[inline(always)]
 fn model_impl(args: TokenStream, input: TokenStream) -> Result<TokenStream, syn::Error> {
-    let args: proc_macro2::TokenStream = args.into();
+    let args_tokens: proc_macro2::TokenStream = args.clone().into();
     let input = syn::parse::<syn::ItemStruct>(input)?;
-    let mod_identifier = Ident::new(&input.ident.to_string().to_lowercase(), Span::call_site());
+
+    let args: ModelArgsAttrib = syn::parse::<ModelArgsAttrib>(args)?;
+
+    let mod_identifier_name = match args.mod_name {
+        Some(ident) => ident,
+        None => text_util::pascal_to_snake_case(&input.ident.to_string()),
+    };
+
+    let mod_identifier = Ident::new(&mod_identifier_name, Span::call_site());
 
     let mut original_struct = input.clone();
     original_struct.ident = Ident::new("Model", Span::call_site());
@@ -90,7 +112,7 @@ fn model_impl(args: TokenStream, input: TokenStream) -> Result<TokenStream, syn:
             use super::*;
 
             #[derive(gas::__model)]
-            #[__gas_meta(#args)]
+            #[__gas_meta(#args_tokens)]
             #original_struct
         }
     }

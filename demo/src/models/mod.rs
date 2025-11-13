@@ -12,7 +12,7 @@ pub struct Student {
 #[gas::model(table_name = "users")]
 //#[derive(Debug, Clone, Serialize)]
 // #[serde(rename_all = "PascalCase")]
-pub struct User {
+pub struct SpecialUser {
     #[serial]
     #[primary_key]
     pub id: i64,
