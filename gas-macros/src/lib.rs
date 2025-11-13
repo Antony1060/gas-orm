@@ -247,9 +247,13 @@ fn model_impl(args: TokenStream, input: TokenStream) -> Result<TokenStream, syn:
             #![allow(non_upper_case_globals, dead_code)]
             use super::*;
 
-            #[derive(gas::__model)]
+            #[derive(gas::__model, Default)]
             #[__gas_meta(#args_tokens)]
             #original_struct
+
+            pub fn default() -> Model {
+                Default::default()
+            }
         }
     }
     .into())

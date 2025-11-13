@@ -140,6 +140,14 @@ pub trait ModelMeta: FromRow {
     const FIELDS: &'static [FieldMeta];
 }
 
+// NOTE: maybe add ByKeyOps<T: ModelMeta, Key> that will implement find_by_key, delete_by_key and update_by_key
+//  update_by_key would probably be used something like
+//  ```
+//  user::Model {
+//      username: "user1234".to_string(),
+//      ..user::default()
+//  }.update_by_key(key: K) // insert would be similar
+//  ```
 pub trait ModelOps<T: ModelMeta> {
     fn query() -> SelectBuilder<T> {
         SelectBuilder::new()
@@ -151,6 +159,14 @@ pub trait ModelOps<T: ModelMeta> {
         ignore_existing: bool,
     ) -> impl Future<Output = GasResult<()>> {
         CreateOp::<T>::new(ignore_existing).run(ctx)
+    }
+
+    fn update<E: PgExecutionContext>(&self, _ctx: &E) -> impl Future<Output = GasResult<()>> {
+        async { todo!() }
+    }
+
+    fn delete<E: PgExecutionContext>(&self, _ctx: &E) -> impl Future<Output = GasResult<()>> {
+        async { todo!() }
     }
 }
 
