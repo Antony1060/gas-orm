@@ -37,9 +37,7 @@ pub enum PgParam {
     DECIMAL(Decimal),
 }
 
-// TODO: correct export
 // very good 👍
-#[macro_export]
 macro_rules! pg_param_all {
     ($param:ident, $ex:expr) => {
         match $param {
@@ -53,6 +51,8 @@ macro_rules! pg_param_all {
         }
     };
 }
+
+pub(crate) use pg_param_all;
 
 impl Display for PgParam {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {

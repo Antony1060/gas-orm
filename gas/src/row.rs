@@ -9,7 +9,7 @@ pub struct Row {
 
 impl From<PgRow> for Row {
     fn from(pg_row: PgRow) -> Self {
-        Row { pg_row: pg_row }
+        Row { pg_row }
     }
 }
 

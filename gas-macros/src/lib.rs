@@ -92,11 +92,11 @@ fn process_field(
         quote! { ((gas::FieldFlags::Nullable as u8) * <#ty as gas::pg_type::IsOptional>::FACTOR) },
     );
 
-    if ctx.primary_keys.contains(&ident) {
+    if ctx.primary_keys.contains(ident) {
         flags.push(quote! { (gas::FieldFlags::PrimaryKey as u8) })
     }
 
-    if ctx.serials.contains(&ident) {
+    if ctx.serials.contains(ident) {
         flags.push(quote! { (gas::FieldFlags::Serial as u8) })
     }
 
@@ -182,7 +182,6 @@ fn parse_col_names(
 
 #[inline(always)]
 fn derive_model_impl(_input: TokenStream) -> Result<TokenStream, syn::Error> {
-    // TODO(low priority): there's probably a better way to do this without double parse
     let derive_input = syn::parse::<syn::DeriveInput>(_input.clone())?;
     let input = syn::parse::<syn::ItemStruct>(_input)?;
 

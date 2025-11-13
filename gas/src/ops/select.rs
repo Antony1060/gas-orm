@@ -63,7 +63,7 @@ impl<T: ModelMeta> AsSql for SelectBuilder<T> {
     fn as_sql(&self) -> SqlQuery {
         let fields = T::FIELDS
             .iter()
-            .map(|f| format!("{} AS {}", f.full_name, f.alias_name.to_string()))
+            .map(|f| format!("{} AS {}", f.full_name, f.alias_name))
             .reduce(|acc, cur| format!("{}, {}", acc, cur))
             .expect("no fields");
 
