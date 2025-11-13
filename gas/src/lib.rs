@@ -72,7 +72,10 @@ pub enum FieldFlags {
 
 #[derive(Debug)]
 pub struct FieldMeta {
-    pub name: &'static str,
+    // a lot of names
+    pub full_name: &'static str,  // table.column
+    pub name: &'static str,       // column
+    pub alias_name: &'static str, // table_column
     pub pg_type: PgType,
     pub flags: u8,
     pub relationship: Option<Relationship>,
@@ -86,14 +89,19 @@ pub struct Field<T> {
 
 impl<T> Field<T> {
     pub const fn new(
+        // eh
+        full_name: &'static str,
         name: &'static str,
+        alias_name: &'static str,
         pg_type: PgType,
         flags: u8,
         relationship: Option<Relationship>,
     ) -> Self {
         Self {
             meta: FieldMeta {
+                full_name,
                 name,
+                alias_name,
                 pg_type,
                 flags,
                 relationship,
@@ -116,7 +124,8 @@ pub(crate) trait AsSql {
 }
 
 pub trait ModelMeta: FromRow {
-    fn table_name() -> &'static str;
+    const TABLE_NAME: &'static str;
+    const FIELDS: &'static [FieldMeta];
 }
 
 pub trait ModelOps<T: ModelMeta> {

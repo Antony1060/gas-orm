@@ -40,7 +40,13 @@ impl<T: ModelMeta> SelectBuilder<T> {
 
 impl<T: ModelMeta> AsSql for SelectBuilder<T> {
     fn as_sql(&self) -> SqlQuery {
-        let mut sql = SqlQuery::from(format!("SELECT * FROM {}", T::table_name()));
+        let fields = T::FIELDS
+            .iter()
+            .map(|f| format!("{} AS {}", f.full_name, f.alias_name.to_string()))
+            .reduce(|acc, cur| format!("{}, {}", acc, cur))
+            .expect("no fields");
+
+        let mut sql = SqlQuery::from(format!("SELECT {} FROM {}", fields, T::TABLE_NAME));
 
         if let Some(ref filter) = self.filter {
             sql.append_str(" WHERE ");

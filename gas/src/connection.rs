@@ -40,6 +40,8 @@ impl PgExecutionContext for PgConnection {
     async fn execute<T: FromRow>(&self, sql: SqlQuery, _params: &[PgParams]) -> GasResult<Vec<T>> {
         let query = sql.finish()?;
 
+        dbg!(&query);
+
         let mut arguments = PgArguments::default();
         for param in _params {
             // eh

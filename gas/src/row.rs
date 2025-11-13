@@ -14,7 +14,7 @@ impl From<PgRow> for Row {
 }
 
 impl Row {
-    pub fn try_get<T: AsPgType>(&self, index: usize) -> GasResult<T> {
+    pub fn try_get<T: AsPgType>(&self, index: &str) -> GasResult<T> {
         let a: T = self.pg_row.try_get(index)?;
 
         Ok(a)

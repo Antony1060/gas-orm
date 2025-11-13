@@ -4,6 +4,7 @@ use darling::{FromDeriveInput, FromMeta};
 use proc_macro::TokenStream;
 use proc_macro2::{Ident, Span};
 use quote::quote;
+use std::collections::HashMap;
 use syn::spanned::Spanned;
 use syn::{Field, Fields};
 
@@ -53,6 +54,7 @@ struct ModelCtx<'a> {
     table_name: &'a str,
     primary_keys: &'a [Ident],
     serials: &'a [Ident],
+    field_columns: HashMap<Ident, (String, String)>,
 }
 
 fn process_field(
@@ -85,7 +87,14 @@ fn process_field(
     let table_name = ctx.table_name;
 
     Some(Ok(quote! {
-        pub const #ident: gas::Field<#ty> = gas::Field::new(concat!(#table_name, ".", stringify!(#ident)), #pg_type_tokens, #(#flags)|*, None);
+        pub const #ident: gas::Field<#ty> = gas::Field::new(
+            concat!(#table_name, ".", stringify!(#ident)),
+            stringify!(#ident),
+            concat!(#table_name, "_", stringify!(#ident)),
+            #pg_type_tokens,
+            #(#flags)|*,
+            None
+        );
     }))
 }
 
@@ -119,20 +128,14 @@ fn model_impl(args: TokenStream, input: TokenStream) -> Result<TokenStream, syn:
     .into())
 }
 
-fn generate_from_row(fields: &Fields) -> Result<proc_macro2::TokenStream, syn::Error> {
-    // TODO: move to column name
-    let mut idx = 0usize;
-
-    let field_defs = fields
+fn generate_from_row(ctx: &ModelCtx) -> Result<proc_macro2::TokenStream, syn::Error> {
+    let field_defs = ctx
+        .field_columns
         .iter()
-        .filter_map(|field| {
-            let ident = field.ident.clone()?;
-
-            idx += 1;
-
-            Some(quote! {
-                #ident: row.try_get(#idx - 1)?,
-            })
+        .map(|(ident, (_, alias_name))| {
+            quote! {
+                #ident: row.try_get(#alias_name)?,
+            }
         })
         .collect::<Vec<_>>();
 
@@ -145,6 +148,21 @@ fn generate_from_row(fields: &Fields) -> Result<proc_macro2::TokenStream, syn::E
             }
         }
     })
+}
+
+fn parse_col_names(table_name: &str, fields: &Fields) -> HashMap<Ident, (String, String)> {
+    fields
+        .iter()
+        .filter_map(|field| {
+            Some((
+                field.ident.clone()?,
+                (
+                    format!("{}.{}", table_name, field.ident.as_ref()?),
+                    format!("{}_{}", table_name, field.ident.as_ref()?),
+                ),
+            ))
+        })
+        .collect()
 }
 
 #[inline(always)]
@@ -164,6 +182,7 @@ fn derive_model_impl(_input: TokenStream) -> Result<TokenStream, syn::Error> {
         table_name: &table_name,
         primary_keys: &primary_keys,
         serials: &serials,
+        field_columns: parse_col_names(&table_name, &input.fields),
     };
 
     let field_consts = input
@@ -174,19 +193,20 @@ fn derive_model_impl(_input: TokenStream) -> Result<TokenStream, syn::Error> {
 
     let field_list = input.fields.iter().filter_map(|field| field.ident.clone());
 
-    let from_row_impl = generate_from_row(&input.fields)?;
+    let from_row_impl = generate_from_row(&ctx)?;
 
     Ok(quote! {
         #(#field_consts)*
 
-        const __FIELDS: &'static [gas::FieldMeta] = &[#(#field_list.meta),*];
-
         impl gas::ModelMeta for Model {
             #[inline(always)]
-            fn table_name() -> &'static str {
-                #table_name
-            }
+            const TABLE_NAME: &'static str = #table_name;
+            const FIELDS: &'static [gas::FieldMeta] = &[#(#field_list.meta),*];
         }
+
+        const _: () = {
+            assert!(<Model as gas::ModelMeta>::FIELDS.len() > 1, "struct must not be empty");
+        };
 
         #from_row_impl
     }
