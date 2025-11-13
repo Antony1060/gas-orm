@@ -12,7 +12,7 @@ fn proc_type_to_pg_type(ty: &syn::Type) -> Result<proc_macro2::TokenStream, syn:
     };
 
     // going through a generic function gives better errors compared to just `#path::PG_TYPE`
-    Ok(quote! { PgType::__to_pg_type::<#path>() })
+    Ok(quote! { gas::pg_type::PgType::__to_pg_type::<#path>() })
 }
 
 #[derive(Debug, FromDeriveInput)]
@@ -56,20 +56,22 @@ fn process_field(
 
     let mut flags: Vec<proc_macro2::TokenStream> = Vec::new();
 
-    flags.push(quote! { ((FieldFlags::Nullable as u8) * <#ty as IsOptional>::FACTOR) });
+    flags.push(
+        quote! { ((gas::FieldFlags::Nullable as u8) * <#ty as gas::pg_type::IsOptional>::FACTOR) },
+    );
 
     if ctx.primary_keys.contains(&ident) {
-        flags.push(quote! { (FieldFlags::PrimaryKey as u8) })
+        flags.push(quote! { (gas::FieldFlags::PrimaryKey as u8) })
     }
 
     if ctx.serials.contains(&ident) {
-        flags.push(quote! { (FieldFlags::Serial as u8) })
+        flags.push(quote! { (gas::FieldFlags::Serial as u8) })
     }
 
     let table_name = ctx.table_name;
 
     Some(Ok(quote! {
-        pub const #ident: Field<#ty> = Field::new(concat!(#table_name, ".", stringify!(#ident)), #pg_type_tokens, #(#flags)|*, None);
+        pub const #ident: gas::Field<#ty> = gas::Field::new(concat!(#table_name, ".", stringify!(#ident)), #pg_type_tokens, #(#flags)|*, None);
     }))
 }
 
@@ -86,8 +88,6 @@ fn model_impl(args: TokenStream, input: TokenStream) -> Result<TokenStream, syn:
         pub mod #mod_identifier {
             #![allow(non_upper_case_globals, dead_code)]
             use super::*;
-            // TODO: don't use
-            use gas::{Field, FieldMeta, FieldFlags, ModelMeta, pg_type::*};
 
             #[derive(gas::__model)]
             #[__gas_meta(#args)]
@@ -127,7 +127,7 @@ fn generate_from_row(fields: &Fields) -> Result<proc_macro2::TokenStream, syn::E
 
 #[inline(always)]
 fn derive_model_impl(_input: TokenStream) -> Result<TokenStream, syn::Error> {
-    // TODO: there's probably a better way to do this without double parse
+    // TODO(low priority): there's probably a better way to do this without double parse
     let derive_input = syn::parse::<syn::DeriveInput>(_input.clone())?;
     let input = syn::parse::<syn::ItemStruct>(_input)?;
 
@@ -157,9 +157,9 @@ fn derive_model_impl(_input: TokenStream) -> Result<TokenStream, syn::Error> {
     Ok(quote! {
         #(#field_consts)*
 
-        const __FIELDS: &'static [FieldMeta] = &[#(#field_list.meta),*];
+        const __FIELDS: &'static [gas::FieldMeta] = &[#(#field_list.meta),*];
 
-        impl ModelMeta for Model {
+        impl gas::ModelMeta for Model {
             #[inline(always)]
             fn table_name() -> &'static str {
                 #table_name
