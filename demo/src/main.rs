@@ -1,5 +1,6 @@
 use crate::models::person;
 use gas::connection::PgConnection;
+use gas::eq::{PgEq, PgEqNone};
 use gas::{GasResult, ModelOps};
 
 mod models;
@@ -12,9 +13,15 @@ async fn main() -> GasResult<()> {
 
     person::Model::create_table(&conn, true).await?;
 
-    let students = person::Model::query().find_all(&conn).await?;
+    let persons = person::Model::query()
+        .filter(|| {
+            (person::bank_account_balance.gte(6000) & person::phone_number.is_not_null())
+                | (person::id.gte(18) & person::phone_number.is_null())
+        })
+        .find_all(&conn)
+        .await?;
 
-    dbg!(&students);
+    dbg!(&persons);
 
     Ok(())
 }
