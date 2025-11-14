@@ -4,7 +4,6 @@ use darling::{FromDeriveInput, FromMeta};
 use proc_macro::TokenStream;
 use proc_macro2::{Ident, Span};
 use quote::quote;
-use std::collections::HashMap;
 use syn::spanned::Spanned;
 use syn::{Field, Fields};
 
@@ -21,7 +20,7 @@ struct ModelCtx<'a> {
     serials: &'a [Ident],
 
     // field.ident -> names
-    field_columns: HashMap<String, FieldNames>,
+    field_columns: &'a [(String, FieldNames)],
 }
 
 #[derive(Debug, FromDeriveInput)]
@@ -78,7 +77,12 @@ fn process_field(
     let ident = field.ident.as_ref()?;
     let ty = field.ty.clone();
 
-    let field_names = ctx.field_columns.get(&ident.to_string())?;
+    // I love O(n)
+    let field_names = ctx
+        .field_columns
+        .iter()
+        .find(|(it, _)| *it == ident.to_string())
+        .map(|(_, v)| v)?;
 
     let pg_type_tokens = proc_type_to_pg_type(&ty);
     let pg_type_tokens = match pg_type_tokens {
@@ -156,7 +160,7 @@ fn get_col_name(field: &Field) -> Option<Result<String, syn::Error>> {
 fn parse_col_names(
     table_name: &str,
     fields: &Fields,
-) -> Result<HashMap<String, FieldNames>, syn::Error> {
+) -> Result<Vec<(String, FieldNames)>, syn::Error> {
     fields
         .iter()
         .filter_map(|field| {
@@ -177,7 +181,7 @@ fn parse_col_names(
                 },
             )))
         })
-        .collect::<Result<HashMap<_, _>, _>>()
+        .collect::<Result<Vec<_>, _>>()
 }
 
 #[inline(always)]
@@ -195,7 +199,7 @@ fn derive_model_impl(_input: TokenStream) -> Result<TokenStream, syn::Error> {
     let ctx = ModelCtx {
         primary_keys: &primary_keys,
         serials: &serials,
-        field_columns: parse_col_names(&table_name, &input.fields)?,
+        field_columns: &parse_col_names(&table_name, &input.fields)?,
     };
 
     let field_consts = input
@@ -213,7 +217,7 @@ fn derive_model_impl(_input: TokenStream) -> Result<TokenStream, syn::Error> {
         !ctx.serials
             .iter()
             .map(|it| it.to_string())
-            .any(|it| *field_name == &it)
+            .any(|it| *field_name == it)
     });
 
     let field_count = insert_field_names.clone().count();

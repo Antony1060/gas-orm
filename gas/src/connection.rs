@@ -53,8 +53,7 @@ impl PgExecutionContext for PgConnection {
     async fn execute(&self, sql: SqlQuery, params: &[PgParam]) -> GasResult<Vec<Row>> {
         let query = sql.finish()?;
 
-        dbg!(&query);
-        dbg!(&params);
+        tracing::trace!(sql = query, params = ?params, "executing query");
 
         let mut arguments = PgArguments::default();
         for param in params {

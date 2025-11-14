@@ -1,13 +1,17 @@
 use crate::models::person;
+use crate::tracing_util::setup_tracing;
 use gas::connection::PgConnection;
 use gas::eq::PgEq;
 use gas::types::dec;
 use gas::{GasResult, ModelOps};
 
 mod models;
+mod tracing_util;
 
 #[tokio::main]
 async fn main() -> GasResult<()> {
+    setup_tracing();
+
     let conn =
         PgConnection::new_connection_pool("postgres://postgres:strong_password@localhost/postgres")
             .await?;
@@ -23,11 +27,11 @@ async fn main() -> GasResult<()> {
         ..person::default()
     };
 
-    dbg!(&new);
+    tracing_dbg!("before insert", new);
 
     new.insert(&conn).await?;
 
-    dbg!(&new);
+    tracing_dbg!("after insert", new);
 
     let persons = person::Model::query()
         // .filter(|| {
@@ -38,7 +42,7 @@ async fn main() -> GasResult<()> {
         .find_all(&conn)
         .await?;
 
-    dbg!(&persons);
+    tracing_dbg!(persons);
 
     Ok(())
 }

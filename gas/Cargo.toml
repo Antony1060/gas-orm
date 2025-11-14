@@ -10,3 +10,4 @@ sqlx = { version = "0.8.6", features = ["runtime-tokio", "rust_decimal", "postgr
 thiserror = "2.0.17"
 regex = "1.12.2"
 lazy_static = "1.5.0"
+tracing = "0.1.41"
