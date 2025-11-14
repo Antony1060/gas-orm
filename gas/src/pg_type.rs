@@ -1,3 +1,4 @@
+use crate::pg_param::PgParam;
 use crate::types::Decimal;
 use sqlx::{Decode, Type};
 
@@ -46,7 +47,7 @@ impl<T: AsPgType> IsOptional for Option<T> {
 }
 
 macro_rules! pg_type_impl {
-    ($field_type:ty as $pg_type:expr) => {
+    ($field_type:ty as $pg_type:expr, $pg_param_conv:expr) => {
         impl AsPgType for $field_type {
             const PG_TYPE: PgType = $pg_type;
         }
@@ -59,13 +60,28 @@ macro_rules! pg_type_impl {
         impl IsOptional for $field_type {
             const FACTOR: u8 = 0;
         }
+
+        impl From<$field_type> for PgParam {
+            fn from(value: $field_type) -> Self {
+                $pg_param_conv(value)
+            }
+        }
+
+        impl From<Option<$field_type>> for PgParam {
+            fn from(value: Option<$field_type>) -> Self {
+                match value {
+                    Some(value) => PgParam::from(value),
+                    None => PgParam::NULL,
+                }
+            }
+        }
     };
 }
 
-pg_type_impl!(String as PgType::TEXT);
-pg_type_impl!(i16 as PgType::SMALLINT);
-pg_type_impl!(i32 as PgType::INTEGER);
-pg_type_impl!(i64 as PgType::BIGINT);
-pg_type_impl!(f32 as PgType::REAL);
-pg_type_impl!(f64 as PgType::DOUBLE);
-pg_type_impl!(Decimal as PgType::DECIMAL);
+pg_type_impl!(String as PgType::TEXT, PgParam::TEXT);
+pg_type_impl!(i16 as PgType::SMALLINT, PgParam::SMALLINT);
+pg_type_impl!(i32 as PgType::INTEGER, PgParam::INTEGER);
+pg_type_impl!(i64 as PgType::BIGINT, PgParam::BIGINT);
+pg_type_impl!(f32 as PgType::REAL, PgParam::REAL);
+pg_type_impl!(f64 as PgType::DOUBLE, PgParam::DOUBLE);
+pg_type_impl!(Decimal as PgType::DECIMAL, PgParam::DECIMAL);

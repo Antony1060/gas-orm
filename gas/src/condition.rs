@@ -1,5 +1,6 @@
+use crate::pg_param::PgParam;
 use crate::sql_query::SqlQuery;
-use crate::{AsSql, PgParam};
+use crate::AsSql;
 use std::ops::{BitAnd, BitOr};
 
 #[derive(Debug, Clone)]

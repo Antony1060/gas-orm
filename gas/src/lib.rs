@@ -2,16 +2,15 @@
 #![allow(private_interfaces)]
 
 pub use gas_macros::*;
-use std::fmt::{Display, Formatter};
 
 use crate::connection::PgExecutionContext;
 use crate::error::GasError;
 use crate::ops::create::CreateOp;
+use crate::ops::insert::InsertOp;
 use crate::ops::select::SelectBuilder;
 use crate::pg_type::PgType;
 use crate::row::FromRow;
 use crate::sql_query::{SqlQuery, SqlStatement};
-use rust_decimal::Decimal;
 use std::marker::PhantomData;
 use std::ops::Deref;
 
@@ -20,49 +19,13 @@ pub mod connection;
 pub mod eq;
 pub mod error;
 mod ops;
+pub mod pg_param;
 pub mod pg_type;
 pub mod row;
 pub mod sql_query;
 pub mod types;
 
 pub type GasResult<T> = Result<T, GasError>;
-
-#[derive(Debug, Clone)]
-pub enum PgParam {
-    TEXT(String),
-    SMALLINT(i16),
-    INTEGER(i32),
-    BIGINT(i64),
-    REAL(f32),
-    DOUBLE(f64),
-    DECIMAL(Decimal),
-}
-
-// very good 👍
-macro_rules! pg_param_all {
-    ($param:ident, $ex:expr) => {
-        match $param {
-            PgParam::TEXT(value) => $ex("TEXT", value),
-            PgParam::SMALLINT(value) => $ex("SMALLINT", value),
-            PgParam::INTEGER(value) => $ex("INTEGER", value),
-            PgParam::BIGINT(value) => $ex("BIGINT", value),
-            PgParam::REAL(value) => $ex("REAL", value),
-            PgParam::DOUBLE(value) => $ex("DOUBLE", value),
-            PgParam::DECIMAL(value) => $ex("DECIMAL", value),
-        }
-    };
-}
-
-use crate::ops::insert::InsertOp;
-pub(crate) use pg_param_all;
-
-impl Display for PgParam {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        pg_param_all!(self, |variant, value| {
-            write!(f, "PgParams::{}({})", variant, value)
-        })
-    }
-}
 
 #[derive(Debug)]
 pub enum Relationship {

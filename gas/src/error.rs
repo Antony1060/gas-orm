@@ -1,4 +1,4 @@
-use crate::PgParam;
+use crate::pg_param::PgParam;
 
 #[derive(thiserror::Error, Debug)]
 pub enum GasError {

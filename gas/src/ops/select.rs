@@ -3,8 +3,9 @@
 use crate::condition::EqExpression;
 use crate::connection::PgExecutionContext;
 use crate::error::GasError;
+use crate::pg_param::PgParam;
 use crate::sql_query::SqlQuery;
-use crate::{AsSql, GasResult, ModelMeta, PgParam};
+use crate::{AsSql, GasResult, ModelMeta};
 use std::marker::PhantomData;
 
 #[derive(Debug, Clone, Default)]

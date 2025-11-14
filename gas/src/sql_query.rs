@@ -1,5 +1,6 @@
 use crate::error::GasError;
-use crate::{GasResult, PgParam};
+use crate::pg_param::PgParam;
+use crate::GasResult;
 use lazy_static::lazy_static;
 
 lazy_static! {
