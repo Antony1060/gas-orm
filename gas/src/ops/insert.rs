@@ -21,7 +21,7 @@ impl<'a, T: ModelMeta> InsertOp<'a, T> {
     pub(crate) async fn run<E: PgExecutionContext>(self, ctx: &E) -> GasResult<()> {
         let (sql, params) = self.object.gen_insert_sql();
 
-        let mut rows = ctx.execute_parsed::<T>(sql, params).await?;
+        let mut rows = ctx.execute_parsed::<T>(sql, params.as_ref()).await?;
         let inserted = rows
             .pop()
             .ok_or_else(|| GasError::UnexpectedResponse("no returned row on insert".to_string()))?;

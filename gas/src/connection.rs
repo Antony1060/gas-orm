@@ -50,13 +50,14 @@ pub(crate) trait PgExecutionContext {
 }
 
 impl PgExecutionContext for PgConnection {
-    async fn execute(&self, sql: SqlQuery, _params: &[PgParam]) -> GasResult<Vec<Row>> {
+    async fn execute(&self, sql: SqlQuery, params: &[PgParam]) -> GasResult<Vec<Row>> {
         let query = sql.finish()?;
 
         dbg!(&query);
+        dbg!(&params);
 
         let mut arguments = PgArguments::default();
-        for param in _params {
+        for param in params {
             // eh
             let res = pg_param_all!(param, |_, value| arguments.add(value));
 

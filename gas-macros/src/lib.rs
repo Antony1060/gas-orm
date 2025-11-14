@@ -208,6 +208,51 @@ fn derive_model_impl(_input: TokenStream) -> Result<TokenStream, syn::Error> {
 
     let from_row_impl = generate_from_row(&ctx)?;
 
+    // TODO: move to seperate method to gen these
+    let insert_field_names = ctx.field_columns.iter().filter(|(field_name, _)| {
+        !ctx.serials
+            .iter()
+            .map(|it| it.to_string())
+            .any(|it| *field_name == &it)
+    });
+
+    let field_count = insert_field_names.clone().count();
+
+    let field_full_list: Option<String> = insert_field_names
+        .clone()
+        .map(|(_, FieldNames { column_name, .. })| column_name.to_string())
+        .reduce(|acc, curr| format!("{}, {}", acc, curr));
+
+    let field_insert_qs: Option<String> = insert_field_names
+        .clone()
+        .map(|_| "?".to_string())
+        .reduce(|acc, curr| format!("{}, {}", acc, curr));
+
+    let field_insert_params: Vec<proc_macro2::TokenStream> = insert_field_names
+        .map(|(field_path, _)| {
+            let ident = Ident::new(field_path, Span::call_site());
+
+            quote! {
+                params.push(PgParam::from(self.#ident.clone()));
+            }
+        })
+        .collect();
+
+    let all_returning = ctx
+        .field_columns
+        .iter()
+        .map(
+            |(
+                _,
+                FieldNames {
+                    full_name,
+                    alias_name,
+                    ..
+                },
+            )| format!("{} AS {}", full_name, alias_name),
+        )
+        .reduce(|acc, curr| format!("{}, {}", acc, curr));
+
     Ok(quote! {
         #(#field_consts)*
 
@@ -216,7 +261,20 @@ fn derive_model_impl(_input: TokenStream) -> Result<TokenStream, syn::Error> {
             const FIELDS: &'static [gas::FieldMeta] = &[#(#field_list.meta),*];
 
             fn gen_insert_sql(&self) -> gas::sql_query::SqlStatement {
-                todo!()
+                use gas::sql_query::SqlQuery;
+                use gas::pg_param::PgParam;
+
+                let mut sql = SqlQuery::new("INSERT INTO ");
+                sql.append_str(Self::TABLE_NAME);
+                sql.append_str(concat!("(", #field_full_list, ")"));
+                sql.append_str(" VALUES ");
+                sql.append_str(concat!("(", #field_insert_qs, ")"));
+                sql.append_str(concat!(" RETURNING ", #all_returning));
+
+                let mut params: Vec<PgParam> = Vec::with_capacity(#field_count);
+                #(#field_insert_params)*
+
+                (sql, std::sync::Arc::from(params.as_ref()))
             }
 
             fn gen_update_sql(&self) -> gas::sql_query::SqlStatement {

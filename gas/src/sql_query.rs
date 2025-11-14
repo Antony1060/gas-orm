@@ -2,6 +2,7 @@ use crate::error::GasError;
 use crate::pg_param::PgParam;
 use crate::GasResult;
 use lazy_static::lazy_static;
+use std::sync::Arc;
 
 lazy_static! {
     static ref PG_PARAMATER_REGEX: regex::Regex = regex::Regex::new(r"\$\d+").unwrap();
@@ -13,7 +14,7 @@ pub struct SqlQuery {
     query: String,
 }
 
-pub type SqlStatement<'a> = (SqlQuery, &'a [PgParam]);
+pub type SqlStatement = (SqlQuery, Arc<[PgParam]>);
 
 impl SqlQuery {
     pub fn new<T: AsRef<str>>(query: T) -> Self {
