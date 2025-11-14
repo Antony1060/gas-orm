@@ -74,8 +74,6 @@ impl<T: ModelMeta> AsSql for SelectBuilder<T> {
             sql.append_query(filter.condition.as_sql());
         }
 
-        sql.append_str(";");
-
         sql
     }
 }

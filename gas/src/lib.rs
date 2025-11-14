@@ -1,4 +1,5 @@
 #![allow(private_bounds)]
+#![allow(private_interfaces)]
 
 pub use gas_macros::*;
 use std::fmt::{Display, Formatter};
@@ -9,7 +10,7 @@ use crate::ops::create::CreateOp;
 use crate::ops::select::SelectBuilder;
 use crate::pg_type::PgType;
 use crate::row::FromRow;
-use crate::sql_query::SqlQuery;
+use crate::sql_query::{SqlQuery, SqlStatement};
 use rust_decimal::Decimal;
 use std::marker::PhantomData;
 use std::ops::Deref;
@@ -21,7 +22,7 @@ pub mod error;
 mod ops;
 pub mod pg_type;
 pub mod row;
-mod sql_query;
+pub mod sql_query;
 pub mod types;
 
 pub type GasResult<T> = Result<T, GasError>;
@@ -52,6 +53,7 @@ macro_rules! pg_param_all {
     };
 }
 
+use crate::ops::insert::InsertOp;
 pub(crate) use pg_param_all;
 
 impl Display for PgParam {
@@ -135,9 +137,15 @@ pub(crate) trait AsSql {
     fn as_sql(&self) -> SqlQuery;
 }
 
-pub trait ModelMeta: FromRow {
+pub trait ModelMeta: Sized + FromRow {
     const TABLE_NAME: &'static str;
     const FIELDS: &'static [FieldMeta];
+
+    fn gen_insert_sql(&'_ self) -> SqlStatement<'_>;
+
+    fn gen_update_sql(&'_ self) -> SqlStatement<'_>;
+
+    fn gen_delete_sql(&'_ self) -> SqlStatement<'_>;
 }
 
 // NOTE: maybe add ByKeyOps<T: ModelMeta, Key> that will implement find_by_key, delete_by_key and update_by_key
@@ -151,8 +159,8 @@ pub trait ModelMeta: FromRow {
 //
 // NOTE 2: maybe add aliases for all of these in the root of the namespace,
 //  so it can be used like user::query() or user::create_table()
-pub trait ModelOps<T: ModelMeta> {
-    fn query() -> SelectBuilder<T> {
+pub trait ModelOps: ModelMeta {
+    fn query() -> SelectBuilder<Self> {
         SelectBuilder::new()
     }
 
@@ -161,7 +169,12 @@ pub trait ModelOps<T: ModelMeta> {
         ctx: &E,
         ignore_existing: bool,
     ) -> impl Future<Output = GasResult<()>> {
-        CreateOp::<T>::new(ignore_existing).run(ctx)
+        CreateOp::<Self>::new(ignore_existing).run(ctx)
+    }
+
+    // consume self and return an entry that is inserted
+    fn insert<E: PgExecutionContext>(&mut self, ctx: &E) -> impl Future<Output = GasResult<()>> {
+        InsertOp::<Self>::new(self).run(ctx)
     }
 
     fn update<E: PgExecutionContext>(&self, _ctx: &E) -> impl Future<Output = GasResult<()>> {
@@ -173,4 +186,4 @@ pub trait ModelOps<T: ModelMeta> {
     }
 }
 
-impl<T: ModelMeta> ModelOps<T> for T {}
+impl<T: ModelMeta> ModelOps for T {}

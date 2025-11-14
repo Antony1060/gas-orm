@@ -1,5 +1,5 @@
 use crate::error::GasError;
-use crate::GasResult;
+use crate::{GasResult, PgParam};
 use lazy_static::lazy_static;
 
 lazy_static! {
@@ -8,9 +8,11 @@ lazy_static! {
 
 // eh
 #[derive(Debug)]
-pub(crate) struct SqlQuery {
+pub struct SqlQuery {
     query: String,
 }
+
+pub type SqlStatement<'a> = (SqlQuery, &'a [PgParam]);
 
 impl SqlQuery {
     pub fn new<T: AsRef<str>>(query: T) -> Self {
@@ -19,11 +21,11 @@ impl SqlQuery {
         }
     }
 
-    pub(crate) fn append_query(&mut self, other: SqlQuery) {
+    pub fn append_query(&mut self, other: SqlQuery) {
         self.query.push_str(&other.query);
     }
 
-    pub(crate) fn append_str(&mut self, other: &str) {
+    pub fn append_str(&mut self, other: &str) {
         self.query.push_str(other);
     }
 
@@ -42,6 +44,10 @@ impl SqlQuery {
         let param_count = PG_PARAMATER_REGEX.find_iter(&out).count();
         if param_count != updated {
             return Err(GasError::QueryFormatError);
+        }
+
+        if !out.ends_with(';') {
+            return Ok(out + ";");
         }
 
         Ok(out)

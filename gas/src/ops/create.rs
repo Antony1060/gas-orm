@@ -4,20 +4,19 @@ use crate::{FieldFlags, GasResult, ModelMeta};
 use std::marker::PhantomData;
 
 // struct is kinda useless ngl
-pub struct CreateOp<T: ModelMeta> {
+pub(crate) struct CreateOp<T: ModelMeta> {
     ignore_existing: bool,
     _marker: PhantomData<T>,
 }
 
 impl<T: ModelMeta> CreateOp<T> {
-    pub fn new(if_not_exists: bool) -> Self {
+    pub(crate) fn new(if_not_exists: bool) -> Self {
         Self {
             ignore_existing: if_not_exists,
             _marker: PhantomData,
         }
     }
-
-    pub async fn run<E: PgExecutionContext>(self, ctx: &E) -> GasResult<()> {
+    pub(crate) async fn run<E: PgExecutionContext>(self, ctx: &E) -> GasResult<()> {
         let mut sql = SqlQuery::new("CREATE TABLE ");
 
         if self.ignore_existing {
@@ -59,7 +58,7 @@ impl<T: ModelMeta> CreateOp<T> {
             sql.append_str(")");
         }
 
-        sql.append_str(");");
+        sql.append_str(")");
 
         ctx.execute(sql, &[]).await.map(|_| ())
     }

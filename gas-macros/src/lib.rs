@@ -214,6 +214,18 @@ fn derive_model_impl(_input: TokenStream) -> Result<TokenStream, syn::Error> {
         impl gas::ModelMeta for Model {
             const TABLE_NAME: &'static str = #table_name;
             const FIELDS: &'static [gas::FieldMeta] = &[#(#field_list.meta),*];
+
+            fn gen_insert_sql(&self) -> gas::sql_query::SqlStatement {
+                todo!()
+            }
+
+            fn gen_update_sql(&self) -> gas::sql_query::SqlStatement {
+                todo!()
+            }
+
+            fn gen_delete_sql(&self) -> gas::sql_query::SqlStatement {
+                todo!()
+            }
         }
 
         const _: () = {
