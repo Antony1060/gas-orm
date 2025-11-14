@@ -18,13 +18,10 @@ async fn main() -> GasResult<()> {
 
     person::Model::create_table(&conn, true).await?;
 
-    let mut new = person::Model {
+    let mut new = person::Def! {
         first_name: "Test".to_string(),
         last_name: "Test".to_string(),
-        email: "test@test.com".to_string(),
-        phone_number: None,
-        bank_account_balance: dec!(0),
-        ..person::default()
+        bank_account_balance: dec!(20),
     };
 
     tracing_dbg!("before insert", new);

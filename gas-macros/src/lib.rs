@@ -272,6 +272,17 @@ fn model_impl(args: TokenStream, input: TokenStream) -> Result<TokenStream, syn:
             pub fn default() -> Model {
                 Default::default()
             }
+
+            macro_rules! Def {
+                ($($field:ident: $value:expr,)* $(,)?) => {
+                    #mod_identifier::Model {
+                        $($field: $value,)*
+                        ..#mod_identifier::Model::default()
+                    }
+                }
+            }
+
+            pub(crate) use Def;
         }
     }
     .into())
