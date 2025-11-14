@@ -34,15 +34,13 @@ async fn main() -> GasResult<()> {
     tracing_dbg!("after insert", new);
 
     let persons = person::Model::query()
-        // .filter(|| {
-        //     (person::bank_account_balance.gte(6000) & person::phone_number.is_not_null())
-        //         | (person::id.gte(18) & person::phone_number.is_null())
-        // })
         .filter(|| person::first_name.eq("Test") & person::last_name.eq("Test"))
         .find_all(&conn)
         .await?;
 
     tracing_dbg!(persons);
+
+    new.delete(&conn).await?;
 
     Ok(())
 }

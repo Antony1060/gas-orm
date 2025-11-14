@@ -6,6 +6,7 @@ pub use gas_macros::*;
 use crate::connection::PgExecutionContext;
 use crate::error::GasError;
 use crate::ops::create::CreateOp;
+use crate::ops::delete::DeleteOp;
 use crate::ops::insert::InsertOp;
 use crate::ops::select::SelectBuilder;
 use crate::pg_type::PgType;
@@ -144,8 +145,8 @@ pub trait ModelOps: ModelMeta {
         async { todo!() }
     }
 
-    fn delete<E: PgExecutionContext>(&self, _ctx: &E) -> impl Future<Output = GasResult<()>> {
-        async { todo!() }
+    fn delete<E: PgExecutionContext>(self, ctx: &E) -> impl Future<Output = GasResult<()>> {
+        DeleteOp::<Self>::new(self).run(ctx)
     }
 }
 

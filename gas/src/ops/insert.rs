@@ -1,21 +1,16 @@
 use crate::connection::PgExecutionContext;
 use crate::error::GasError;
 use crate::{GasResult, ModelMeta};
-use std::marker::PhantomData;
 use std::mem;
 
 pub(crate) struct InsertOp<'a, T: ModelMeta> {
     // object will me replaced with the inserted one
     object: &'a mut T,
-    _marker: PhantomData<T>,
 }
 
 impl<'a, T: ModelMeta> InsertOp<'a, T> {
     pub(crate) fn new(object: &'a mut T) -> Self {
-        Self {
-            object,
-            _marker: PhantomData,
-        }
+        Self { object }
     }
 
     pub(crate) async fn run<E: PgExecutionContext>(self, ctx: &E) -> GasResult<()> {
