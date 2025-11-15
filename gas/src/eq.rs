@@ -53,48 +53,48 @@ macro_rules! pg_eq_impl {
         impl PgEq<$cmp_type> for Field<$field_type> {
             fn eq(&self, other: $cmp_type) -> EqExpression {
                 EqExpression::new(
-                    Condition::Basic(format!("{}=?", self.name)),
+                    Condition::Basic(format!("{}=?", self.full_name)),
                     vec![$pg_param(other.into())],
                 )
             }
 
             fn neq(&self, other: $cmp_type) -> EqExpression {
                 EqExpression::new(
-                    Condition::Basic(format!("{}!=?", self.name)),
+                    Condition::Basic(format!("{}!=?", self.full_name)),
                     vec![$pg_param(other.into())],
                 )
             }
 
             fn lt(&self, other: $cmp_type) -> EqExpression {
                 EqExpression::new(
-                    Condition::Basic(format!("{}<?", self.name)),
+                    Condition::Basic(format!("{}<?", self.full_name)),
                     vec![$pg_param(other.into())],
                 )
             }
 
             fn lte(&self, other: $cmp_type) -> EqExpression {
                 EqExpression::new(
-                    Condition::Basic(format!("{}<=?", self.name)),
+                    Condition::Basic(format!("{}<=?", self.full_name)),
                     vec![$pg_param(other.into())],
                 )
             }
 
             fn gt(&self, other: $cmp_type) -> EqExpression {
                 EqExpression::new(
-                    Condition::Basic(format!("{}>?", self.name)),
+                    Condition::Basic(format!("{}>?", self.full_name)),
                     vec![$pg_param(other.into())],
                 )
             }
 
             fn gte(&self, other: $cmp_type) -> EqExpression {
                 EqExpression::new(
-                    Condition::Basic(format!("{}>=?", self.name)),
+                    Condition::Basic(format!("{}>=?", self.full_name)),
                     vec![$pg_param(other.into())],
                 )
             }
 
             fn one_of(&self, other: &[$cmp_type]) -> EqExpression {
-                let condition = make_in_expression(self.name, other.len());
+                let condition = make_in_expression(self.full_name, other.len());
 
                 EqExpression::new(
                     Condition::Basic(condition),
