@@ -36,18 +36,21 @@ pub(crate) fn gen_update_sql_fn_tokens(
             .collect::<Vec<_>>(),
     );
 
+    let table_name = ctx.table_name;
+
     Ok(quote! {
         use gas::sql_query::SqlQuery;
         use gas::pg_param::PgParam;
 
-        let mut sql = SqlQuery::new("UPDATE ");
-        sql.append_str(Self::TABLE_NAME);
-        sql.append_str(" SET ");
-        sql.append_str(#set_statement);
-        sql.append_str(" WHERE ");
-        sql.append_str(#where_statement);
-        sql.append_str(concat!(" RETURNING ", #all_returning));
-
+        let mut sql = SqlQuery::new(concat!(
+            "UPDATE ",
+            #table_name,
+            " SET ",
+            #set_statement,
+            " WHERE ",
+            #where_statement,
+            " RETURNING ", #all_returning
+        ));
         let mut params: Vec<PgParam> = Vec::with_capacity(#field_count);
         #(#field_params)*
 

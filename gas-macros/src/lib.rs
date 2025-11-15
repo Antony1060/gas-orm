@@ -20,6 +20,7 @@ struct FieldNames {
 }
 
 struct ModelCtx<'a> {
+    table_name: &'a str,
     primary_keys: &'a [Ident],
     serials: &'a [Ident],
 
@@ -201,6 +202,7 @@ fn derive_model_impl(_input: TokenStream) -> Result<TokenStream, syn::Error> {
     let table_name = meta.table_name;
 
     let ctx = ModelCtx {
+        table_name: &table_name,
         primary_keys: &primary_keys,
         serials: &serials,
         field_columns: &parse_col_names(&table_name, &input.fields)?,

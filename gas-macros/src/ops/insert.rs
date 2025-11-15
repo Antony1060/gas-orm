@@ -32,17 +32,20 @@ pub(crate) fn gen_insert_sql_fn_tokens(
         &fields.collect::<Vec<_>>(),
     );
 
+    let table_name = ctx.table_name;
+
     Ok(quote! {
         use gas::sql_query::SqlQuery;
         use gas::pg_param::PgParam;
 
-        let mut sql = SqlQuery::new("INSERT INTO ");
-        sql.append_str(Self::TABLE_NAME);
-        sql.append_str(concat!("(", #field_full_list, ")"));
-        sql.append_str(" VALUES ");
-        sql.append_str(concat!("(", #field_qs, ")"));
-        sql.append_str(concat!(" RETURNING ", #all_returning));
-
+        let mut sql = SqlQuery::new(concat!(
+            "INSERT INTO ",
+            #table_name,
+            "(", #field_full_list, ")",
+            " VALUES ",
+            "(", #field_qs, ")",
+            " RETURNING ", #all_returning
+        ));
         let mut params: Vec<PgParam> = Vec::with_capacity(#field_count);
         #(#field_params)*
 
