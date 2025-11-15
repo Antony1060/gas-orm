@@ -3,6 +3,7 @@ mod text_util;
 
 use crate::ops::delete::gen_delete_sql_fn_tokens;
 use crate::ops::insert::gen_insert_sql_fn_tokens;
+use crate::ops::update::gen_update_sql_fn_tokens;
 use darling::{FromDeriveInput, FromMeta};
 use proc_macro::TokenStream;
 use proc_macro2::{Ident, Span};
@@ -216,6 +217,7 @@ fn derive_model_impl(_input: TokenStream) -> Result<TokenStream, syn::Error> {
     let from_row_impl = generate_from_row(&ctx)?;
 
     let insert_fn = gen_insert_sql_fn_tokens(&ctx)?;
+    let update_fn = gen_update_sql_fn_tokens(&ctx)?;
     let delete_fn = gen_delete_sql_fn_tokens(&ctx)?;
 
     Ok(quote! {
@@ -225,13 +227,17 @@ fn derive_model_impl(_input: TokenStream) -> Result<TokenStream, syn::Error> {
             const TABLE_NAME: &'static str = #table_name;
             const FIELDS: &'static [gas::FieldMeta] = &[#(#field_list.meta),*];
 
-            #insert_fn
-
-            fn gen_update_sql(&self) -> gas::sql_query::SqlStatement {
-                todo!()
+            fn gen_insert_sql(&self) -> gas::sql_query::SqlStatement {
+                #insert_fn
             }
 
-            #delete_fn
+            fn gen_update_sql(&self) -> gas::sql_query::SqlStatement {
+                #update_fn
+            }
+
+            fn gen_delete_sql(&self) -> gas::sql_query::SqlStatement {
+                #delete_fn
+            }
         }
 
         const _: () = {

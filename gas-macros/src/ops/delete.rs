@@ -17,7 +17,7 @@ pub(crate) fn gen_delete_sql_fn_tokens(
 
     let where_statement: Option<String> = pk_fields
         .clone()
-        .map(|(_, FieldNames { full_name, .. })| format!("{}=?", full_name))
+        .map(|(_, FieldNames { column_name, .. })| format!("{}=?", column_name))
         .reduce(|acc, curr| format!("{} AND {}", acc, curr));
 
     let field_params = make_params_insert(
@@ -26,19 +26,17 @@ pub(crate) fn gen_delete_sql_fn_tokens(
     );
 
     Ok(quote! {
-        fn gen_delete_sql(&self) -> gas::sql_query::SqlStatement {
-            use gas::sql_query::SqlQuery;
-            use gas::pg_param::PgParam;
+        use gas::sql_query::SqlQuery;
+        use gas::pg_param::PgParam;
 
-            let mut sql = SqlQuery::new("DELETE FROM ");
-            sql.append_str(Self::TABLE_NAME);
-            sql.append_str(" WHERE ");
-            sql.append_str(#where_statement);
+        let mut sql = SqlQuery::new("DELETE FROM ");
+        sql.append_str(Self::TABLE_NAME);
+        sql.append_str(" WHERE ");
+        sql.append_str(#where_statement);
 
-            let mut params: Vec<PgParam> = Vec::with_capacity(#field_count);
-            #(#field_params)*
+        let mut params: Vec<PgParam> = Vec::with_capacity(#field_count);
+        #(#field_params)*
 
-            (sql, std::sync::Arc::from(params.as_ref()))
-        }
+        (sql, std::sync::Arc::from(params.as_ref()))
     })
 }

@@ -1,7 +1,6 @@
 use crate::connection::PgExecutionContext;
 use crate::error::GasError;
 use crate::{GasResult, ModelMeta};
-use std::mem;
 
 pub(crate) struct InsertOp<'a, T: ModelMeta> {
     // object will me replaced with the inserted one
@@ -21,8 +20,7 @@ impl<'a, T: ModelMeta> InsertOp<'a, T> {
             .pop()
             .ok_or_else(|| GasError::UnexpectedResponse("no returned row on insert".to_string()))?;
 
-        // TODO:
-        let _ = mem::replace(self.object, inserted);
+        *self.object = inserted;
 
         Ok(())
     }

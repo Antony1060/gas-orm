@@ -1,4 +1,4 @@
-use crate::ops::make_params_insert;
+use crate::ops::{make_all_returning, make_params_insert};
 use crate::{FieldNames, ModelCtx};
 use proc_macro2::{Ident, Span};
 use quote::quote;
@@ -25,20 +25,7 @@ pub(crate) fn gen_insert_sql_fn_tokens(
         .map(|_| "?".to_string())
         .reduce(|acc, curr| format!("{}, {}", acc, curr));
 
-    let all_returning = ctx
-        .field_columns
-        .iter()
-        .map(
-            |(
-                _,
-                FieldNames {
-                    full_name,
-                    alias_name,
-                    ..
-                },
-            )| format!("{} AS {}", full_name, alias_name),
-        )
-        .reduce(|acc, curr| format!("{}, {}", acc, curr));
+    let all_returning = make_all_returning(ctx);
 
     let field_params = make_params_insert(
         Ident::new("params", Span::call_site()),
@@ -46,21 +33,19 @@ pub(crate) fn gen_insert_sql_fn_tokens(
     );
 
     Ok(quote! {
-        fn gen_insert_sql(&self) -> gas::sql_query::SqlStatement {
-            use gas::sql_query::SqlQuery;
-            use gas::pg_param::PgParam;
+        use gas::sql_query::SqlQuery;
+        use gas::pg_param::PgParam;
 
-            let mut sql = SqlQuery::new("INSERT INTO ");
-            sql.append_str(Self::TABLE_NAME);
-            sql.append_str(concat!("(", #field_full_list, ")"));
-            sql.append_str(" VALUES ");
-            sql.append_str(concat!("(", #field_qs, ")"));
-            sql.append_str(concat!(" RETURNING ", #all_returning));
+        let mut sql = SqlQuery::new("INSERT INTO ");
+        sql.append_str(Self::TABLE_NAME);
+        sql.append_str(concat!("(", #field_full_list, ")"));
+        sql.append_str(" VALUES ");
+        sql.append_str(concat!("(", #field_qs, ")"));
+        sql.append_str(concat!(" RETURNING ", #all_returning));
 
-            let mut params: Vec<PgParam> = Vec::with_capacity(#field_count);
-            #(#field_params)*
+        let mut params: Vec<PgParam> = Vec::with_capacity(#field_count);
+        #(#field_params)*
 
-            (sql, std::sync::Arc::from(params.as_ref()))
-        }
+        (sql, std::sync::Arc::from(params.as_ref()))
     })
 }

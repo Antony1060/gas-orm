@@ -13,4 +13,7 @@ pub enum GasError {
 
     #[error("unexpected response: {0}")]
     UnexpectedResponse(String),
+
+    #[error("unexpected state {0}")]
+    UnexpectedState(&'static str),
 }

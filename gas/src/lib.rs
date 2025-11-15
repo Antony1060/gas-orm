@@ -9,6 +9,7 @@ use crate::ops::create::CreateOp;
 use crate::ops::delete::DeleteOp;
 use crate::ops::insert::InsertOp;
 use crate::ops::select::SelectBuilder;
+use crate::ops::update::UpdateOp;
 use crate::pg_type::PgType;
 use crate::row::FromRow;
 use crate::sql_query::{SqlQuery, SqlStatement};
@@ -141,8 +142,8 @@ pub trait ModelOps: ModelMeta {
         InsertOp::<Self>::new(self).run(ctx)
     }
 
-    fn update<E: PgExecutionContext>(&self, _ctx: &E) -> impl Future<Output = GasResult<()>> {
-        async { todo!() }
+    fn update<E: PgExecutionContext>(&mut self, ctx: &E) -> impl Future<Output = GasResult<()>> {
+        UpdateOp::<Self>::new(self).run(ctx)
     }
 
     fn delete<E: PgExecutionContext>(self, ctx: &E) -> impl Future<Output = GasResult<()>> {
