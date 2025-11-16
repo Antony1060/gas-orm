@@ -1,3 +1,4 @@
+use crate::condition::EqExpression;
 use crate::connection::PgExecutionContext;
 use crate::field::FieldMeta;
 use crate::internals::SqlStatement;
@@ -15,6 +16,10 @@ pub trait ModelMeta: Sized + FromRow {
 
     type Key;
 
+    fn apply_key(&mut self, key: Self::Key);
+
+    fn filter_with_key(key: Self::Key) -> EqExpression;
+
     fn gen_insert_sql(&self) -> SqlStatement<'_>;
 
     fn gen_update_sql(&self) -> SqlStatement<'_>;
@@ -22,17 +27,6 @@ pub trait ModelMeta: Sized + FromRow {
     fn gen_delete_sql(&self) -> SqlStatement<'_>;
 }
 
-// NOTE: maybe add ByKeyOps<T: ModelMeta, Key> that will implement find_by_key, delete_by_key and update_by_key
-//  update_by_key would probably be used something like
-//  ```
-//  user::Model {
-//      username: "user1234".to_string(),
-//      ..user::default()
-//  }.update_by_key(key: K) // insert would be similar
-//  ```
-//
-// NOTE 2: maybe add aliases for all of these in the root of the namespace,
-//  so it can be used like user::query() or user::create_table()
 pub trait ModelOps: ModelMeta {
     fn query() -> SelectBuilder<Self> {
         SelectBuilder::new()
@@ -56,6 +50,38 @@ pub trait ModelOps: ModelMeta {
     }
 
     fn delete<E: PgExecutionContext>(self, ctx: &E) -> impl Future<Output = GasResult<()>> {
+        DeleteOp::<Self>::new(self).run(ctx)
+    }
+
+    fn find_by_key<E: PgExecutionContext>(
+        ctx: &E,
+        key: Self::Key,
+    ) -> impl Future<Output = GasResult<Option<Self>>> {
+        Self::query()
+            .filter(|| Self::filter_with_key(key))
+            .find_one(ctx)
+    }
+
+    fn update_by_key<E: PgExecutionContext>(
+        mut self,
+        ctx: &E,
+        key: Self::Key,
+    ) -> impl Future<Output = GasResult<Self>> {
+        self.apply_key(key);
+
+        async {
+            UpdateOp::<Self>::new(&mut self).run(ctx).await?;
+            Ok(self)
+        }
+    }
+
+    fn delete_by_key<E: PgExecutionContext>(
+        mut self,
+        ctx: &E,
+        key: Self::Key,
+    ) -> impl Future<Output = GasResult<()>> {
+        self.apply_key(key);
+
         DeleteOp::<Self>::new(self).run(ctx)
     }
 }

@@ -9,7 +9,7 @@ use proc_macro::TokenStream;
 use proc_macro2::{Ident, Span};
 use quote::quote;
 use syn::spanned::Spanned;
-use syn::{Field, Fields};
+use syn::{Field, Fields, Index};
 
 #[derive(Debug)]
 struct FieldNames {
@@ -193,6 +193,80 @@ fn parse_col_names(
         .collect::<Result<Vec<_>, _>>()
 }
 
+fn gen_key_tokens(ctx: &ModelCtx, fields: &Fields) -> proc_macro2::TokenStream {
+    let primary_key_fields = fields.iter().filter_map(|field| {
+        let ident = field.ident.as_ref()?;
+        ctx.primary_keys
+            .iter()
+            .find(|pk| *pk == ident)
+            .map(|_| field)
+    });
+
+    let primary_key_field_types = primary_key_fields.clone().map(|field| field.ty.clone());
+
+    let primary_key_field_idents = primary_key_fields.clone().map(|field| field.ident.clone());
+
+    let pk_count = primary_key_fields.count();
+
+    let apply_fn = if pk_count <= 1 {
+        let primary_key_field_idents = primary_key_field_idents.clone();
+
+        quote! {
+            #(self.#primary_key_field_idents = key;)*
+        }
+    } else {
+        let mut counter = 0..;
+
+        let assignments = primary_key_field_idents.clone().map(|ident| {
+            let index = Index::from(counter.next().unwrap_or(0));
+
+            quote! {
+                self.#ident = key.#index;
+            }
+        });
+
+        quote! {
+            #(#assignments)*
+        }
+    };
+
+    let condition_fn = if pk_count <= 1 {
+        let primary_key_field_idents = primary_key_field_idents.clone();
+
+        quote! {
+            #(#primary_key_field_idents.eq(key))*
+        }
+    } else {
+        let mut counter = 0..;
+
+        let eqs = primary_key_field_idents.clone().map(|ident| {
+            let index = Index::from(counter.next().unwrap_or(0));
+
+            quote! {
+                #ident.eq(key.#index)
+            }
+        });
+
+        quote! {
+            #(#eqs)&*
+        }
+    };
+
+    quote! {
+        type Key = (#(#primary_key_field_types),*);
+
+        fn apply_key(&mut self, key: Self::Key) {
+            #apply_fn
+        }
+
+        fn filter_with_key(key: Self::Key) -> gas::condition::EqExpression {
+            use gas::eq::PgEq;
+
+            #condition_fn
+        }
+    }
+}
+
 #[inline(always)]
 fn derive_model_impl(_input: TokenStream) -> Result<TokenStream, syn::Error> {
     let derive_input = syn::parse::<syn::DeriveInput>(_input.clone())?;
@@ -220,13 +294,7 @@ fn derive_model_impl(_input: TokenStream) -> Result<TokenStream, syn::Error> {
 
     let field_list = input.fields.iter().filter_map(|field| field.ident.clone());
 
-    let primary_key_field_types = input.fields.iter().filter_map(|field| {
-        let ident = field.ident.as_ref()?;
-        primary_keys
-            .iter()
-            .find(|pk| *pk == ident)
-            .map(|_| field.ty.clone())
-    });
+    let key_tokens = gen_key_tokens(&ctx, &input.fields);
 
     let insert_fn = gen_insert_sql_fn_tokens(&ctx)?;
     let update_fn = gen_update_sql_fn_tokens(&ctx)?;
@@ -241,7 +309,7 @@ fn derive_model_impl(_input: TokenStream) -> Result<TokenStream, syn::Error> {
             const TABLE_NAME: &'static str = #table_name;
             const FIELDS: &'static [gas::FieldMeta] = &[#(#field_list.meta),*];
 
-            type Key = (#(#primary_key_field_types),*);
+            #key_tokens
 
             fn gen_insert_sql(&self) -> gas::internals::SqlStatement {
                 #insert_fn

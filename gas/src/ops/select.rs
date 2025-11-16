@@ -22,7 +22,7 @@ impl<T: ModelMeta> SelectBuilder<T> {
         }
     }
 
-    pub fn filter<F: Fn() -> EqExpression>(mut self, cond_fn: F) -> Self {
+    pub fn filter<F: FnOnce() -> EqExpression>(mut self, cond_fn: F) -> Self {
         self.filter = Some(cond_fn());
         self
     }
