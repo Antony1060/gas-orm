@@ -65,13 +65,12 @@ impl BitOr for EqExpression {
 }
 
 impl Condition {
-    pub(crate) fn as_sql(&self) -> SqlQuery {
-        let mut sql = SqlQuery::from("");
+    pub(crate) fn as_sql(&self) -> SqlQuery<'_> {
+        let mut sql = SqlQuery::new();
 
         match self {
             Condition::Basic(s) => sql.append_str(s),
             Condition::And { lhs, rhs } => {
-                // eeeeh
                 sql.append_str("(");
                 sql.append_query(lhs.as_sql());
                 sql.append_str(") AND (");

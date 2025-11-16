@@ -38,7 +38,7 @@ pub(crate) trait PgExecutionContext {
 
     async fn execute_parsed<T: FromRow>(
         &self,
-        sql: SqlQuery,
+        sql: SqlQuery<'_>,
         params: &[PgParam],
     ) -> GasResult<Vec<T>> {
         let rows = self.execute(sql, params).await?;
@@ -50,7 +50,7 @@ pub(crate) trait PgExecutionContext {
 }
 
 impl PgExecutionContext for PgConnection {
-    async fn execute(&self, sql: SqlQuery, params: &[PgParam]) -> GasResult<Vec<Row>> {
+    async fn execute(&self, sql: SqlQuery<'_>, params: &[PgParam]) -> GasResult<Vec<Row>> {
         let query = sql.finish()?;
 
         tracing::trace!(sql = query, params = ?params, "executing query");
@@ -74,7 +74,7 @@ impl PgExecutionContext for PgConnection {
 }
 
 impl PgExecutionContext for PgTransaction {
-    async fn execute(&self, sql: SqlQuery, _params: &[PgParam]) -> GasResult<Vec<Row>> {
+    async fn execute(&self, sql: SqlQuery<'_>, _params: &[PgParam]) -> GasResult<Vec<Row>> {
         let _query = sql.finish()?;
         let _a = &self.transaction; // mute warning for now
         todo!()

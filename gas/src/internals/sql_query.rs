@@ -2,6 +2,7 @@ use crate::error::GasError;
 use crate::internals::PgParam;
 use crate::GasResult;
 use lazy_static::lazy_static;
+use std::borrow::Cow;
 
 lazy_static! {
     static ref PG_PARAMATER_REGEX: regex::Regex = regex::Regex::new(r"\$\d+").unwrap();
@@ -9,25 +10,25 @@ lazy_static! {
 
 // eh
 #[derive(Debug, Default)]
-pub struct SqlQuery {
-    query: String,
+pub struct SqlQuery<'a> {
+    query: Cow<'a, str>,
 }
 
-pub type SqlStatement = (SqlQuery, Box<[PgParam]>);
+pub type SqlStatement<'a> = (SqlQuery<'a>, Box<[PgParam]>);
 
-impl SqlQuery {
+impl<'a> SqlQuery<'a> {
     pub fn new() -> Self {
         SqlQuery {
-            query: String::new(),
+            query: Cow::from(""),
         }
     }
 
     pub fn append_query(&mut self, other: SqlQuery) {
-        self.query.push_str(&other.query);
+        self.query.to_mut().push_str(&other.query);
     }
 
     pub fn append_str(&mut self, other: &str) {
-        self.query.push_str(other);
+        self.query.to_mut().push_str(other);
     }
 
     pub(crate) fn finish(self) -> GasResult<String> {
@@ -55,16 +56,18 @@ impl SqlQuery {
     }
 }
 
-impl From<String> for SqlQuery {
+impl<'a> From<String> for SqlQuery<'a> {
     fn from(value: String) -> Self {
-        Self { query: value }
+        Self {
+            query: Cow::from(value),
+        }
     }
 }
 
-impl From<&str> for SqlQuery {
-    fn from(value: &str) -> Self {
+impl<'a> From<&'a str> for SqlQuery<'a> {
+    fn from(value: &'a str) -> Self {
         Self {
-            query: String::from(value),
+            query: Cow::from(value),
         }
     }
 }

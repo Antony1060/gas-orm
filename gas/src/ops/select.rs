@@ -52,7 +52,7 @@ impl<T: ModelMeta> SelectBuilder<T> {
         Ok(items.pop())
     }
 
-    fn build(self) -> SqlStatement {
+    fn build<'a>(self) -> SqlStatement<'a> {
         // sql
         let fields = T::FIELDS
             .iter()

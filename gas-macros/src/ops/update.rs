@@ -39,12 +39,9 @@ pub(crate) fn gen_update_sql_fn_tokens(
         use gas::internals::PgParam;
 
         let mut sql = SqlQuery::from(concat!(
-            "UPDATE ",
-            #table_name,
-            " SET ",
-            #set_statement,
-            " WHERE ",
-            #where_statement,
+            "UPDATE ", #table_name,
+            " SET ", #set_statement,
+            " WHERE ", #where_statement,
             " RETURNING ", #all_returning
         ));
 

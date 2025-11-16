@@ -26,10 +26,8 @@ pub(crate) fn gen_delete_sql_fn_tokens(
         use gas::internals::PgParam;
 
         let mut sql = SqlQuery::from(concat!(
-            "DELETE FROM ",
-            #table_name,
-            " WHERE ",
-            #where_statement
+            "DELETE FROM ", #table_name,
+            " WHERE ", #where_statement
         ));
 
         (sql, std::boxed::Box::new([#(#field_params),*]))

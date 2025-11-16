@@ -13,11 +13,11 @@ pub trait ModelMeta: Sized + FromRow {
     const TABLE_NAME: &'static str;
     const FIELDS: &'static [FieldMeta];
 
-    fn gen_insert_sql(&self) -> SqlStatement;
+    fn gen_insert_sql(&self) -> SqlStatement<'_>;
 
-    fn gen_update_sql(&self) -> SqlStatement;
+    fn gen_update_sql(&self) -> SqlStatement<'_>;
 
-    fn gen_delete_sql(&self) -> SqlStatement;
+    fn gen_delete_sql(&self) -> SqlStatement<'_>;
 }
 
 // NOTE: maybe add ByKeyOps<T: ModelMeta, Key> that will implement find_by_key, delete_by_key and update_by_key

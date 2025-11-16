@@ -33,11 +33,8 @@ pub(crate) fn gen_insert_sql_fn_tokens(
         use gas::internals::PgParam;
 
         let mut sql = SqlQuery::from(concat!(
-            "INSERT INTO ",
-            #table_name,
-            "(", #field_full_list, ")",
-            " VALUES ",
-            "(", #field_qs, ")",
+            "INSERT INTO ", #table_name, "(", #field_full_list, ")",
+            " VALUES ", "(", #field_qs, ")",
             " RETURNING ", #all_returning
         ));
 
