@@ -58,7 +58,7 @@ fn proc_type_to_pg_type(ty: &syn::Type) -> Result<proc_macro2::TokenStream, syn:
     };
 
     // going through a generic function gives better errors compared to just `#path::PG_TYPE`
-    Ok(quote! { gas::pg_type::PgType::__to_pg_type::<#path>() })
+    Ok(quote! { gas::internals::PgType::__to_pg_type::<#path>() })
 }
 
 fn find_fields_with_attr(fields: &Fields, target_attr: &'static str) -> Vec<Ident> {
@@ -98,7 +98,7 @@ fn process_field(
     let mut flags: Vec<proc_macro2::TokenStream> = Vec::new();
 
     flags.push(
-        quote! { ((gas::FieldFlags::Nullable as u8) * <#ty as gas::pg_type::IsOptional>::FACTOR) },
+        quote! { ((gas::FieldFlags::Nullable as u8) * <#ty as gas::internals::IsOptional>::FACTOR) },
     );
 
     if ctx.primary_keys.contains(ident) {
@@ -114,10 +114,14 @@ fn process_field(
     let alias_name = &field_names.alias_name;
 
     Some(Ok(quote! {
-        pub const #ident: gas::Field<#ty> = gas::Field::new(
-            #full_name, #name, #alias_name,
-            #pg_type_tokens, #(#flags)|*, None
-        );
+        pub const #ident: gas::Field<#ty> = gas::Field::new(gas::FieldMeta {
+            full_name: #full_name,
+            name: #name,
+            alias_name: #alias_name,
+            pg_type: #pg_type_tokens,
+            flags: #(#flags)|*,
+            relationship: None
+        });
     }))
 }
 
@@ -229,15 +233,15 @@ fn derive_model_impl(_input: TokenStream) -> Result<TokenStream, syn::Error> {
             const TABLE_NAME: &'static str = #table_name;
             const FIELDS: &'static [gas::FieldMeta] = &[#(#field_list.meta),*];
 
-            fn gen_insert_sql(&self) -> gas::sql_query::SqlStatement {
+            fn gen_insert_sql(&self) -> gas::internals::SqlStatement {
                 #insert_fn
             }
 
-            fn gen_update_sql(&self) -> gas::sql_query::SqlStatement {
+            fn gen_update_sql(&self) -> gas::internals::SqlStatement {
                 #update_fn
             }
 
-            fn gen_delete_sql(&self) -> gas::sql_query::SqlStatement {
+            fn gen_delete_sql(&self) -> gas::internals::SqlStatement {
                 #delete_fn
             }
         }

@@ -1,6 +1,8 @@
 use crate::connection::PgExecutionContext;
-use crate::sql_query::SqlQuery;
-use crate::{FieldFlags, GasResult, ModelMeta};
+use crate::field::FieldFlags;
+use crate::internals::SqlQuery;
+use crate::model::ModelMeta;
+use crate::GasResult;
 use std::marker::PhantomData;
 
 // struct is kinda useless ngl
@@ -17,7 +19,7 @@ impl<T: ModelMeta> CreateOp<T> {
         }
     }
     pub(crate) async fn run<E: PgExecutionContext>(self, ctx: &E) -> GasResult<()> {
-        let mut sql = SqlQuery::new("CREATE TABLE ");
+        let mut sql = SqlQuery::from("CREATE TABLE ");
 
         if self.ignore_existing {
             sql.append_str(" IF NOT EXISTS ");

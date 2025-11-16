@@ -1,7 +1,7 @@
 use crate::error::GasError;
-use crate::pg_param::{pg_param_all, PgParam};
+use crate::internals::SqlQuery;
+use crate::internals::{pg_param_all, PgParam};
 use crate::row::{FromRow, Row};
-use crate::sql_query::SqlQuery;
 use crate::GasResult;
 use sqlx::postgres::{PgArguments, PgPoolOptions};
 use sqlx::Arguments;

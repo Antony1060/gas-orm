@@ -1,4 +1,4 @@
-use crate::pg_type::AsPgType;
+use crate::internals::AsPgType;
 use crate::GasResult;
 use sqlx::postgres::PgRow;
 use sqlx::Row as SqlxRow;

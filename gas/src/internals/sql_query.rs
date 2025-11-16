@@ -1,25 +1,24 @@
 use crate::error::GasError;
-use crate::pg_param::PgParam;
+use crate::internals::PgParam;
 use crate::GasResult;
 use lazy_static::lazy_static;
-use std::sync::Arc;
 
 lazy_static! {
     static ref PG_PARAMATER_REGEX: regex::Regex = regex::Regex::new(r"\$\d+").unwrap();
 }
 
 // eh
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct SqlQuery {
     query: String,
 }
 
-pub type SqlStatement = (SqlQuery, Arc<[PgParam]>);
+pub type SqlStatement = (SqlQuery, Box<[PgParam]>);
 
 impl SqlQuery {
-    pub fn new<T: AsRef<str>>(query: T) -> Self {
+    pub fn new() -> Self {
         SqlQuery {
-            query: query.as_ref().to_string(),
+            query: String::new(),
         }
     }
 
@@ -56,16 +55,24 @@ impl SqlQuery {
     }
 }
 
-impl<T: AsRef<str>> From<T> for SqlQuery {
-    fn from(value: T) -> Self {
-        SqlQuery::new(value)
+impl From<String> for SqlQuery {
+    fn from(value: String) -> Self {
+        Self { query: value }
+    }
+}
+
+impl From<&str> for SqlQuery {
+    fn from(value: &str) -> Self {
+        Self {
+            query: String::from(value),
+        }
     }
 }
 
 #[cfg(test)]
 mod test {
     use crate::error::GasError;
-    use crate::sql_query::SqlQuery;
+    use crate::internals::SqlQuery;
 
     #[test]
     pub fn test_parameterize() {

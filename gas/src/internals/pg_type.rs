@@ -1,4 +1,4 @@
-use crate::pg_param::PgParam;
+use crate::internals::PgParam;
 use crate::types::Decimal;
 use sqlx::{Decode, Type};
 

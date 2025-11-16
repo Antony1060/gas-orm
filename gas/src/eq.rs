@@ -1,7 +1,7 @@
 use crate::condition::{Condition, EqExpression};
-use crate::pg_param::PgParam;
+use crate::field::Field;
+use crate::internals::PgParam;
 use crate::types::Decimal;
-use crate::Field;
 
 pub trait PgEq<T> {
     fn eq(&self, other: T) -> EqExpression;
