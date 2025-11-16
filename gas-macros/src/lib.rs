@@ -220,11 +220,19 @@ fn derive_model_impl(_input: TokenStream) -> Result<TokenStream, syn::Error> {
 
     let field_list = input.fields.iter().filter_map(|field| field.ident.clone());
 
-    let from_row_impl = generate_from_row(&ctx)?;
+    let primary_key_field_types = input.fields.iter().filter_map(|field| {
+        let ident = field.ident.as_ref()?;
+        primary_keys
+            .iter()
+            .find(|pk| *pk == ident)
+            .map(|_| field.ty.clone())
+    });
 
     let insert_fn = gen_insert_sql_fn_tokens(&ctx)?;
     let update_fn = gen_update_sql_fn_tokens(&ctx)?;
     let delete_fn = gen_delete_sql_fn_tokens(&ctx)?;
+
+    let from_row_impl = generate_from_row(&ctx)?;
 
     Ok(quote! {
         #(#field_consts)*
@@ -232,6 +240,8 @@ fn derive_model_impl(_input: TokenStream) -> Result<TokenStream, syn::Error> {
         impl gas::ModelMeta for Model {
             const TABLE_NAME: &'static str = #table_name;
             const FIELDS: &'static [gas::FieldMeta] = &[#(#field_list.meta),*];
+
+            type Key = (#(#primary_key_field_types),*);
 
             fn gen_insert_sql(&self) -> gas::internals::SqlStatement {
                 #insert_fn
@@ -285,6 +295,7 @@ fn model_impl(args: TokenStream, input: TokenStream) -> Result<TokenStream, syn:
                 Default::default()
             }
 
+            #[allow(unused_macros)]
             macro_rules! Def {
                 ($($field:ident: $value:expr,)* $(,)?) => {
                     #mod_identifier::Model {

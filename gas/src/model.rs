@@ -13,6 +13,8 @@ pub trait ModelMeta: Sized + FromRow {
     const TABLE_NAME: &'static str;
     const FIELDS: &'static [FieldMeta];
 
+    type Key;
+
     fn gen_insert_sql(&self) -> SqlStatement<'_>;
 
     fn gen_update_sql(&self) -> SqlStatement<'_>;
