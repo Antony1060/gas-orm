@@ -6,13 +6,17 @@ use crate::GasResult;
 use sqlx::postgres::{PgArguments, PgPoolOptions};
 use sqlx::Arguments;
 use sqlx::PgPool;
+use std::mem;
+use std::sync::Arc;
 
+#[derive(Clone)]
 pub struct PgConnection {
-    pool: PgPool,
+    pool: Arc<PgPool>,
 }
 
 pub struct PgTransaction {
-    transaction: Option<sqlx::postgres::PgTransaction<'static>>,
+    connection: PgConnection,
+    transaction: sqlx::postgres::PgTransaction<'static>,
 }
 
 impl PgConnection {
@@ -21,15 +25,34 @@ impl PgConnection {
 
         let pool: PgPool = PgPoolOptions::new().connect(connection_string).await?;
 
-        Ok(Self { pool })
+        Ok(Self {
+            pool: Arc::new(pool),
+        })
     }
 
     pub async fn transaction(&self) -> GasResult<PgTransaction> {
         let tx = self.pool.begin().await?;
 
         Ok(PgTransaction {
-            transaction: Some(tx),
+            connection: self.clone(),
+            transaction: tx,
         })
+    }
+}
+
+impl PgTransaction {
+    pub async fn save(&mut self) -> GasResult<()> {
+        let tx = mem::replace(self, self.connection.transaction().await?);
+        tx.transaction.commit().await?;
+
+        Ok(())
+    }
+
+    pub async fn discard(&mut self) -> GasResult<()> {
+        let tx = mem::replace(self, self.connection.transaction().await?);
+        tx.transaction.rollback().await?;
+
+        Ok(())
     }
 }
 
@@ -66,7 +89,7 @@ impl PgExecutionContext for PgConnection {
         }
 
         let rows = sqlx::query_with(&query, arguments)
-            .fetch_all(&self.pool)
+            .fetch_all(self.pool.as_ref())
             .await?;
 
         Ok(rows.into_iter().map(Row::from).collect())
