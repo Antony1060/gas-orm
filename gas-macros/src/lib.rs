@@ -118,6 +118,7 @@ fn process_field(
             full_name: #full_name,
             name: #name,
             alias_name: #alias_name,
+            struct_name: stringify!(#ident),
             pg_type: #pg_type_tokens,
             flags: #(#flags)|*,
             relationship: None
@@ -366,10 +367,13 @@ fn model_impl(args: TokenStream, input: TokenStream) -> Result<TokenStream, syn:
             #[allow(unused_macros)]
             macro_rules! Def {
                 ($($field:ident: $value:expr,)* $(,)?) => {
-                    #mod_identifier::Model {
-                        $($field: $value,)*
-                        ..#mod_identifier::Model::default()
-                    }
+                    gas::internals::DefModel::new(
+                        #mod_identifier::Model {
+                            $($field: $value,)*
+                            ..#mod_identifier::Model::default()
+                        },
+                        Box::new([$(stringify!($field)),*])
+                    )
                 }
             }
 

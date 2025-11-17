@@ -10,7 +10,7 @@ use crate::ops::update::UpdateOp;
 use crate::row::FromRow;
 use crate::GasResult;
 
-pub trait ModelMeta: Sized + FromRow {
+pub trait ModelMeta: Sized + Default + FromRow {
     const TABLE_NAME: &'static str;
     const FIELDS: &'static [FieldMeta];
 
@@ -62,27 +62,13 @@ pub trait ModelOps: ModelMeta {
             .find_one(ctx)
     }
 
-    fn update_by_key<E: PgExecutionContext>(
-        mut self,
-        ctx: &E,
-        key: Self::Key,
-    ) -> impl Future<Output = GasResult<Self>> {
-        self.apply_key(key);
-
-        async {
-            UpdateOp::<Self>::new(&mut self).run(ctx).await?;
-            Ok(self)
-        }
-    }
-
     fn delete_by_key<E: PgExecutionContext>(
-        mut self,
         ctx: &E,
         key: Self::Key,
     ) -> impl Future<Output = GasResult<()>> {
-        self.apply_key(key);
-
-        DeleteOp::<Self>::new(self).run(ctx)
+        let mut im = Self::default();
+        im.apply_key(key);
+        DeleteOp::<Self>::new(im).run(ctx)
     }
 }
 

@@ -25,9 +25,10 @@ impl FieldFlags {
 #[derive(Debug)]
 pub struct FieldMeta {
     // a lot of names
-    pub full_name: &'static str,  // table.column
-    pub name: &'static str,       // column
-    pub alias_name: &'static str, // table_column
+    pub full_name: &'static str,   // table.column
+    pub name: &'static str,        // column
+    pub alias_name: &'static str,  // table_column
+    pub struct_name: &'static str, // table_column
     pub pg_type: PgType,
     pub flags: u8,
     pub relationship: Option<FieldRelationship>,
