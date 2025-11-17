@@ -24,6 +24,8 @@ pub trait ModelMeta: Sized + Default + FromRow {
 
     fn gen_update_sql(&self) -> SqlStatement<'_>;
 
+    fn gen_update_with_fields_sql(&self, fields: &[&FieldMeta]) -> SqlStatement<'_>;
+
     fn gen_delete_sql(&self) -> SqlStatement<'_>;
 }
 

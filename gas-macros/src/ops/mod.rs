@@ -5,6 +5,7 @@ use quote::quote;
 pub(crate) mod delete;
 pub(crate) mod insert;
 pub(crate) mod update;
+pub(crate) mod update_with_fields;
 
 fn make_params(fields: &[&(String, FieldNames)]) -> Vec<proc_macro2::TokenStream> {
     fields

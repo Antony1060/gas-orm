@@ -24,13 +24,17 @@ impl<T: ModelMeta> DefModel<T> {
     ) -> impl Future<Output = GasResult<T>> {
         self.apply_key(key);
 
+        // this way of updating is slightly more inefficient because it doesn't work on all fields
         async {
-            UpdateOp::<T>::new(&mut self).run(ctx).await?;
-            Ok(self.as_model())
+            UpdateOp::<T>::new(&mut self.model)
+                .run_with_fields(ctx, &self.modified_fields)
+                .await?;
+
+            Ok(self.into_model())
         }
     }
 
-    pub fn as_model(self) -> T {
+    pub fn into_model(self) -> T {
         self.model
     }
 }

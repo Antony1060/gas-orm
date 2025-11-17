@@ -19,17 +19,20 @@ async fn main() -> GasResult<()> {
 
     main2(&conn).await?;
 
+    tracing::info!("aaaa");
+
     person::Model::create_table(&conn, true).await?;
 
     person::Def! {
         phone_number: Some(format!("+385{}", rand::random_range(100000000u64..999999999u64))),
+        bank_account_balance: Decimal::from(rand::random_range(100u64..100000u64)),
     }
-    .update_by_key(&conn, 2)
+    .update_by_key(&conn, 20)
     .await?;
 
-    person::Model::delete_by_key(&conn, 4).await?;
+    // person::Model::delete_by_key(&conn, 4).await?;
 
-    let id_ten = person::Model::find_by_key(&conn, 4).await?;
+    let id_ten = person::Model::find_by_key(&conn, 20).await?;
     tracing_dbg!(id_ten);
 
     Ok(())
@@ -43,7 +46,7 @@ async fn main2(conn: &PgConnection) -> GasResult<()> {
         last_name: String::from("Test"),
         email: String::from("nonce"),
     }
-    .as_model();
+    .into_model();
 
     tracing_dbg!("before insert", new_person);
     tracing_dbg!(

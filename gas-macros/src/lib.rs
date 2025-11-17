@@ -4,6 +4,7 @@ mod text_util;
 use crate::ops::delete::gen_delete_sql_fn_tokens;
 use crate::ops::insert::gen_insert_sql_fn_tokens;
 use crate::ops::update::gen_update_sql_fn_tokens;
+use crate::ops::update_with_fields::gen_update_with_fields_sql_fn_tokens;
 use darling::{FromDeriveInput, FromMeta};
 use proc_macro::TokenStream;
 use proc_macro2::{Ident, Span};
@@ -299,6 +300,7 @@ fn derive_model_impl(_input: TokenStream) -> Result<TokenStream, syn::Error> {
 
     let insert_fn = gen_insert_sql_fn_tokens(&ctx)?;
     let update_fn = gen_update_sql_fn_tokens(&ctx)?;
+    let update_with_fields_fn = gen_update_with_fields_sql_fn_tokens(&ctx)?;
     let delete_fn = gen_delete_sql_fn_tokens(&ctx)?;
 
     let from_row_impl = generate_from_row(&ctx)?;
@@ -318,6 +320,10 @@ fn derive_model_impl(_input: TokenStream) -> Result<TokenStream, syn::Error> {
 
             fn gen_update_sql(&self) -> gas::internals::SqlStatement {
                 #update_fn
+            }
+
+            fn gen_update_with_fields_sql(&self, fields: &[&gas::FieldMeta]) -> gas::internals::SqlStatement {
+                #update_with_fields_fn
             }
 
             fn gen_delete_sql(&self) -> gas::internals::SqlStatement {
@@ -366,7 +372,7 @@ fn model_impl(args: TokenStream, input: TokenStream) -> Result<TokenStream, syn:
 
             #[allow(unused_macros)]
             macro_rules! Def {
-                ($($field:ident: $value:expr,)* $(,)?) => {
+                ($($field:ident: $value:expr,)*) => {
                     gas::internals::DefModel::new(
                         #mod_identifier::Model {
                             $($field: $value,)*
