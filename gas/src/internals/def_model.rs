@@ -17,22 +17,20 @@ impl<T: ModelMeta> DefModel<T> {
         }
     }
 
-    pub fn update_by_key<E: PgExecutionContext>(
+    pub async fn update_by_key<E: PgExecutionContext>(
         mut self,
-        ctx: &E,
+        ctx: E,
         key: T::Key,
-    ) -> impl Future<Output = GasResult<T>> {
-        async {
-            self.apply_key(key);
+    ) -> GasResult<T> {
+        self.apply_key(key);
 
-            // this way of updating is slightly more inefficient because
-            //  it can't generate the sql at compile time
-            UpdateOp::<T>::new(&mut self.model)
-                .run_with_fields(ctx, &self.modified_fields)
-                .await?;
+        // this way of updating is slightly more inefficient because
+        //  it can't generate the sql at compile time
+        UpdateOp::<T>::new(&mut self.model)
+            .run_with_fields(ctx, &self.modified_fields)
+            .await?;
 
-            Ok(self.into_model())
-        }
+        Ok(self.into_model())
     }
 
     pub fn into_model(self) -> T {

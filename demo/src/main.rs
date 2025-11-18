@@ -34,7 +34,7 @@ async fn main() -> GasResult<()> {
 }
 
 async fn transaction_ops(conn: &PgConnection) -> GasResult<()> {
-    let tx = conn.transaction().await?;
+    let mut tx = conn.transaction().await?;
 
     let mut person = person::Def! {
         first_name: String::from("Some"),
@@ -42,11 +42,24 @@ async fn transaction_ops(conn: &PgConnection) -> GasResult<()> {
         email: String::from("some@person.com"),
     };
 
-    person.phone_number = Some(String::from("091"));
+    person.phone_number = Some(String::from("192"));
     person.bank_account_balance = Decimal::from(2000);
-    person.update(&tx).await?;
+    person.insert(&mut tx).await?;
 
     tracing_dbg!(person);
+
+    match rand::random_bool(0.4) {
+        true => {
+            tracing::warn!("saving tx");
+            tx.save().await
+        }
+        false => {
+            tracing::warn!("discrding tx");
+            tx.discard().await
+        }
+    }?;
+
+    tracing_dbg!(person::Model::find_by_key(&mut tx, person.id).await?);
 
     Ok(())
 }

@@ -24,7 +24,7 @@ impl<'a, T: ModelMeta> UpdateOp<'a, T> {
         Self { object }
     }
 
-    pub(crate) async fn run<E: PgExecutionContext>(self, ctx: &E) -> GasResult<()> {
+    pub(crate) async fn run<E: PgExecutionContext>(self, ctx: E) -> GasResult<()> {
         let (sql, params) = self.object.gen_update_sql();
 
         let mut rows = ctx.execute_parsed::<T>(sql, &params).await?;
@@ -37,7 +37,7 @@ impl<'a, T: ModelMeta> UpdateOp<'a, T> {
 
     pub(crate) async fn run_with_fields<E: PgExecutionContext>(
         self,
-        ctx: &E,
+        ctx: E,
         fields: &[&'static str],
     ) -> GasResult<()> {
         // mmmm O(n^2)

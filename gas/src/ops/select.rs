@@ -27,7 +27,7 @@ impl<T: ModelMeta> SelectBuilder<T> {
         self
     }
 
-    pub async fn find_all<E: PgExecutionContext>(self, ctx: &E) -> GasResult<Vec<T>> {
+    pub async fn find_all<E: PgExecutionContext>(self, ctx: E) -> GasResult<Vec<T>> {
         let (sql, params) = self.build();
 
         let items = ctx.execute_parsed::<T>(sql, &params).await?;
@@ -35,7 +35,7 @@ impl<T: ModelMeta> SelectBuilder<T> {
         Ok(items)
     }
 
-    pub async fn find_one<E: PgExecutionContext>(self, ctx: &E) -> GasResult<Option<T>> {
+    pub async fn find_one<E: PgExecutionContext>(self, ctx: E) -> GasResult<Option<T>> {
         let (mut sql, params) = self.build();
 
         sql.append_str(" LIMIT 1");

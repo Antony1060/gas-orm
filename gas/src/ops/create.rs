@@ -18,7 +18,7 @@ impl<T: ModelMeta> CreateOp<T> {
             _marker: PhantomData,
         }
     }
-    pub(crate) async fn run<E: PgExecutionContext>(self, ctx: &E) -> GasResult<()> {
+    pub(crate) async fn run<E: PgExecutionContext>(self, ctx: E) -> GasResult<()> {
         let mut sql = SqlQuery::from("CREATE TABLE ");
 
         if self.ignore_existing {

@@ -36,27 +36,27 @@ pub trait ModelOps: ModelMeta {
 
     // some trait bounds cannot be enforced if I just do `async fn` here, idk
     fn create_table<E: PgExecutionContext>(
-        ctx: &E,
+        ctx: E,
         ignore_existing: bool,
     ) -> impl Future<Output = GasResult<()>> {
         CreateOp::<Self>::new(ignore_existing).run(ctx)
     }
 
     // consume self and return an entry that is inserted
-    fn insert<E: PgExecutionContext>(&mut self, ctx: &E) -> impl Future<Output = GasResult<()>> {
+    fn insert<E: PgExecutionContext>(&mut self, ctx: E) -> impl Future<Output = GasResult<()>> {
         InsertOp::<Self>::new(self).run(ctx)
     }
 
-    fn update<E: PgExecutionContext>(&mut self, ctx: &E) -> impl Future<Output = GasResult<()>> {
+    fn update<E: PgExecutionContext>(&mut self, ctx: E) -> impl Future<Output = GasResult<()>> {
         UpdateOp::<Self>::new(self).run(ctx)
     }
 
-    fn delete<E: PgExecutionContext>(self, ctx: &E) -> impl Future<Output = GasResult<()>> {
+    fn delete<E: PgExecutionContext>(self, ctx: E) -> impl Future<Output = GasResult<()>> {
         DeleteOp::<Self>::new(self).run(ctx)
     }
 
     fn find_by_key<E: PgExecutionContext>(
-        ctx: &E,
+        ctx: E,
         key: Self::Key,
     ) -> impl Future<Output = GasResult<Option<Self>>> {
         Self::query()
@@ -65,7 +65,7 @@ pub trait ModelOps: ModelMeta {
     }
 
     fn delete_by_key<E: PgExecutionContext>(
-        ctx: &E,
+        ctx: E,
         key: Self::Key,
     ) -> impl Future<Output = GasResult<()>> {
         let mut im = Self::default();

@@ -56,11 +56,11 @@ impl PgTransaction {
     }
 }
 
-pub(crate) trait PgExecutionContext {
-    async fn execute(&self, sql: SqlQuery, params: &[PgParam]) -> GasResult<Vec<Row>>;
+pub(crate) trait PgExecutionContext: Sized {
+    async fn execute(self, sql: SqlQuery, params: &[PgParam]) -> GasResult<Vec<Row>>;
 
     async fn execute_parsed<T: FromRow>(
-        &self,
+        self,
         sql: SqlQuery<'_>,
         params: &[PgParam],
     ) -> GasResult<Vec<T>> {
@@ -70,23 +70,28 @@ pub(crate) trait PgExecutionContext {
             .map(|row| FromRow::from_row(&row))
             .collect::<Result<Vec<T>, _>>()
     }
-}
 
-impl PgExecutionContext for PgConnection {
-    async fn execute(&self, sql: SqlQuery<'_>, params: &[PgParam]) -> GasResult<Vec<Row>> {
+    fn prepare_query(sql: SqlQuery, params: &[PgParam]) -> GasResult<(String, PgArguments)> {
         let query = sql.finish()?;
 
         tracing::trace!(sql = query, params = ?params, "executing query");
 
         let mut arguments = PgArguments::default();
         for param in params {
-            // eh
             let res = pg_param_all!(param, |_, value| arguments.add(value));
 
             if res.is_err() {
                 return Err(GasError::TypeError(param.clone()));
             }
         }
+
+        Ok((query, arguments))
+    }
+}
+
+impl PgExecutionContext for &PgConnection {
+    async fn execute(self, sql: SqlQuery<'_>, params: &[PgParam]) -> GasResult<Vec<Row>> {
+        let (query, arguments) = Self::prepare_query(sql, params)?;
 
         let rows = sqlx::query_with(&query, arguments)
             .fetch_all(self.pool.as_ref())
@@ -96,10 +101,14 @@ impl PgExecutionContext for PgConnection {
     }
 }
 
-impl PgExecutionContext for PgTransaction {
-    async fn execute(&self, sql: SqlQuery<'_>, _params: &[PgParam]) -> GasResult<Vec<Row>> {
-        let _query = sql.finish()?;
-        let _a = &self.transaction; // mute warning for now
-        todo!()
+impl PgExecutionContext for &mut PgTransaction {
+    async fn execute(self, sql: SqlQuery<'_>, params: &[PgParam]) -> GasResult<Vec<Row>> {
+        let (query, arguments) = Self::prepare_query(sql, params)?;
+
+        let rows = sqlx::query_with(&query, arguments)
+            .fetch_all(&mut *self.transaction)
+            .await?;
+
+        Ok(rows.into_iter().map(Row::from).collect())
     }
 }
