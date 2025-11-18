@@ -43,10 +43,9 @@ impl<T: ModelMeta> SelectBuilder<T> {
         let mut items = ctx.execute_parsed::<T>(sql, &params).await?;
 
         if items.len() > 1 {
-            return Err(GasError::UnexpectedResponse(format!(
-                "find_one: got {}, expected <= 1",
-                items.len()
-            )));
+            return Err(GasError::UnexpectedResponse(
+                format!("find_one: got {}, expected <= 1", items.len()).into(),
+            ));
         }
 
         Ok(items.pop())

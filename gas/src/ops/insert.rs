@@ -19,7 +19,7 @@ impl<'a, T: ModelMeta> InsertOp<'a, T> {
         let mut rows = ctx.execute_parsed::<T>(sql, &params).await?;
         let inserted = rows
             .pop()
-            .ok_or_else(|| GasError::UnexpectedResponse("no returned row on insert".to_string()))?;
+            .ok_or_else(|| GasError::UnexpectedResponse("no returned row on insert".into()))?;
 
         *self.object = inserted;
 

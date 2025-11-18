@@ -1,4 +1,5 @@
 use crate::internals::PgParam;
+use std::borrow::Cow;
 
 #[derive(thiserror::Error, Debug)]
 pub enum GasError {
@@ -12,8 +13,13 @@ pub enum GasError {
     QueryFormatError,
 
     #[error("unexpected response: {0}")]
-    UnexpectedResponse(String),
+    UnexpectedResponse(Cow<'static, str>),
 
-    #[error("unexpected state: {0}")]
-    UnexpectedState(&'static str),
+    // "everything is checked at compile time" they said
+    //  "if it compiles, it will work", they said
+    #[error("invalid input to ORM: {0}")]
+    InvalidInput(&'static str),
+
+    #[error("query yielded no responses: {0}")]
+    QueryNoResponse(&'static str),
 }

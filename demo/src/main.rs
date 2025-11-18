@@ -2,6 +2,7 @@ use crate::models::person;
 use crate::tracing_util::setup_tracing;
 use gas::connection::PgConnection;
 use gas::eq::PgEq;
+use gas::error::GasError;
 use gas::{GasResult, ModelOps};
 use rust_decimal::Decimal;
 use std::env;
@@ -21,7 +22,11 @@ async fn main() -> GasResult<()> {
 
     normal_ops(&conn).await?;
     tracing::info!("----------------");
+    tracing::info!("by key");
+    tracing::info!("----------------");
     by_key_ops(&conn).await?;
+    tracing::info!("----------------");
+    tracing::info!("transaction");
     tracing::info!("----------------");
     transaction_ops(&conn).await?;
 
@@ -53,6 +58,24 @@ async fn by_key_ops(conn: &PgConnection) -> GasResult<()> {
     }
     .update_by_key(conn, 20)
     .await?;
+
+    // test update no real fields
+    let res = person::Def! { id: 20, }.update_by_key(conn, 0).await;
+    let Err(GasError::InvalidInput(_)) = res else {
+        return res.map(|_| ());
+    };
+
+    dbg!(&res);
+
+    // test update invalid key
+    let res = person::Def! { first_name: String::from("gaser"), }
+        .update_by_key(conn, 0)
+        .await;
+    let Err(GasError::QueryNoResponse(_)) = res else {
+        return res.map(|_| ());
+    };
+
+    dbg!(&res);
 
     // person::Model::delete_by_key(&conn, 4).await?;
 

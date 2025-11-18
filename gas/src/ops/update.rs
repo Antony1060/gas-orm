@@ -1,14 +1,19 @@
 use crate::connection::PgExecutionContext;
 use crate::error::GasError;
 use crate::model::ModelMeta;
-use crate::GasResult;
+use crate::{FieldFlags, GasResult};
+
+const UPDATE_NO_MODIFIED_FIELDS_ERR: GasError =
+    GasError::InvalidInput("attempted to update an object with no modified fields");
 
 const UPDATE_NO_ROW_ERR: GasError = {
-    GasError::UnexpectedState(
-        "no returned row on update (this could be because a primary key was modified which is not allowed)",
+    GasError::QueryNoResponse(
+        "no returned row on update (this could be because of a non-existing primary key)",
     )
 };
 
+// updates can fail with GasError::QueryNoResponse, it took way too much brain power to think
+//  if it would be an Option<T> or return with an error so we're left with this
 pub(crate) struct UpdateOp<'a, T: ModelMeta> {
     // object will be replaced with the updated one
     object: &'a mut T,
@@ -39,12 +44,18 @@ impl<'a, T: ModelMeta> UpdateOp<'a, T> {
         let fields = fields
             .iter()
             .map(|field| {
-                T::FIELDS
+                *T::FIELDS
                     .iter()
                     .find(|it| it.struct_name == *field)
                     .expect("field mismatch")
             })
+            .filter(|field| !FieldFlags::PrimaryKey.in_bitmask(field.flags))
             .collect::<Vec<_>>();
+
+        if fields.is_empty() {
+            return Err(UPDATE_NO_MODIFIED_FIELDS_ERR);
+        }
+
         let (sql, params) = self.object.gen_update_with_fields_sql(&fields);
 
         let mut rows = ctx.execute_parsed::<T>(sql, &params).await?;

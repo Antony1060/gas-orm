@@ -12,7 +12,7 @@ use crate::GasResult;
 
 pub trait ModelMeta: Sized + Default + FromRow {
     const TABLE_NAME: &'static str;
-    const FIELDS: &'static [FieldMeta];
+    const FIELDS: &'static [&'static FieldMeta];
 
     type Key;
 

@@ -310,7 +310,7 @@ fn derive_model_impl(_input: TokenStream) -> Result<TokenStream, syn::Error> {
 
         impl gas::ModelMeta for Model {
             const TABLE_NAME: &'static str = #table_name;
-            const FIELDS: &'static [gas::FieldMeta] = &[#(#field_list.meta),*];
+            const FIELDS: &'static [&'static gas::FieldMeta] = &[#(&#field_list.meta),*];
 
             #key_tokens
 
