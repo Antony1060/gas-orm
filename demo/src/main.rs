@@ -58,7 +58,7 @@ async fn transaction_ops(conn: &PgConnection) -> GasResult<()> {
             tx.save().await
         }
         false => {
-            tracing::warn!("discrding tx");
+            tracing::warn!("discarding tx");
             tx.discard().await
         }
     }?;
