@@ -24,6 +24,7 @@ struct ModelCtx<'a> {
     table_name: &'a str,
     primary_keys: &'a [Ident],
     serials: &'a [Ident],
+    uniques: &'a [Ident],
 
     // field.ident -> names
     field_columns: &'a [(String, FieldNames)],
@@ -99,15 +100,19 @@ fn process_field(
     let mut flags: Vec<proc_macro2::TokenStream> = Vec::new();
 
     flags.push(
-        quote! { ((gas::FieldFlags::Nullable as u8) * <#ty as gas::internals::IsOptional>::FACTOR) },
+        quote! { ((gas::FieldFlag::Nullable as u8) * <#ty as gas::internals::IsOptional>::FACTOR) },
     );
 
     if ctx.primary_keys.contains(ident) {
-        flags.push(quote! { (gas::FieldFlags::PrimaryKey as u8) })
+        flags.push(quote! { (gas::FieldFlag::PrimaryKey as u8) })
     }
 
     if ctx.serials.contains(ident) {
-        flags.push(quote! { (gas::FieldFlags::Serial as u8) })
+        flags.push(quote! { (gas::FieldFlag::Serial as u8) })
+    }
+
+    if ctx.uniques.contains(ident) {
+        flags.push(quote! { (gas::FieldFlag::Unique as u8) })
     }
 
     let full_name = &field_names.full_name;
@@ -121,7 +126,7 @@ fn process_field(
             alias_name: #alias_name,
             struct_name: stringify!(#ident),
             pg_type: #pg_type_tokens,
-            flags: #(#flags)|*,
+            flags: gas::FieldFlags(#(#flags)|*),
             relationship: None
         });
     }))
@@ -278,6 +283,7 @@ fn derive_model_impl(_input: TokenStream) -> Result<TokenStream, syn::Error> {
 
     let primary_keys = find_fields_with_attr(&input.fields, "primary_key");
     let serials = find_fields_with_attr(&input.fields, "serial");
+    let uniques = find_fields_with_attr(&input.fields, "unique");
 
     let table_name = meta.table_name;
 
@@ -285,6 +291,7 @@ fn derive_model_impl(_input: TokenStream) -> Result<TokenStream, syn::Error> {
         table_name: &table_name,
         primary_keys: &primary_keys,
         serials: &serials,
+        uniques: &uniques,
         field_columns: &parse_col_names(&table_name, &input.fields)?,
     };
 
@@ -394,7 +401,7 @@ pub fn model(args: TokenStream, input: TokenStream) -> TokenStream {
     model_impl(args, input).unwrap_or_else(|err| err.to_compile_error().into())
 }
 
-#[proc_macro_derive(__model, attributes(primary_key, serial, column, __gas_meta))]
+#[proc_macro_derive(__model, attributes(primary_key, serial, unique, column, __gas_meta))]
 pub fn derive_model(input: TokenStream) -> TokenStream {
     derive_model_impl(input).unwrap_or_else(|err| err.to_compile_error().into())
 }

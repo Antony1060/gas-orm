@@ -1,7 +1,7 @@
 use crate::connection::PgExecutionContext;
 use crate::error::GasError;
 use crate::model::ModelMeta;
-use crate::{FieldFlags, GasResult};
+use crate::{FieldFlag, GasResult};
 
 const UPDATE_NO_MODIFIED_FIELDS_ERR: GasError =
     GasError::InvalidInput("attempted to update an object with no modified fields");
@@ -49,7 +49,7 @@ impl<'a, T: ModelMeta> UpdateOp<'a, T> {
                     .find(|it| it.struct_name == *field)
                     .expect("field mismatch")
             })
-            .filter(|field| !FieldFlags::PrimaryKey.in_bitmask(field.flags))
+            .filter(|field| !field.flags.has_flag(FieldFlag::PrimaryKey))
             .collect::<Vec<_>>();
 
         if fields.is_empty() {

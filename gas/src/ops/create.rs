@@ -1,8 +1,7 @@
 use crate::connection::PgExecutionContext;
-use crate::field::FieldFlags;
 use crate::internals::SqlQuery;
 use crate::model::ModelMeta;
-use crate::GasResult;
+use crate::{FieldFlag, GasResult};
 use std::marker::PhantomData;
 
 // struct is kinda useless ngl
@@ -18,6 +17,8 @@ impl<T: ModelMeta> CreateOp<T> {
             _marker: PhantomData,
         }
     }
+
+    // could be at compile-time, but I don't care, it's create_table, who cares
     pub(crate) async fn run<E: PgExecutionContext>(self, ctx: E) -> GasResult<()> {
         let mut sql = SqlQuery::from("CREATE TABLE ");
 
@@ -31,19 +32,23 @@ impl<T: ModelMeta> CreateOp<T> {
         let mut primary_keys: Vec<String> = Vec::new();
 
         for field in T::FIELDS {
-            if FieldFlags::PrimaryKey.in_bitmask(field.flags) {
+            if field.flags.has_flag(FieldFlag::PrimaryKey) {
                 primary_keys.push(field.name.to_string())
             }
 
             let sql_type = field
                 .pg_type
-                .as_sql_type(FieldFlags::Serial.in_bitmask(field.flags));
+                .as_sql_type(field.flags.has_flag(FieldFlag::Serial));
             sql.append_str(field.name);
             sql.append_str(" ");
             sql.append_str(sql_type);
 
-            if !FieldFlags::Nullable.in_bitmask(field.flags) {
+            if !field.flags.has_flag(FieldFlag::Nullable) {
                 sql.append_str(" NOT NULL");
+            }
+
+            if field.flags.has_flag(FieldFlag::Unique) {
+                sql.append_str(" UNIQUE");
             }
 
             sql.append_str(", ");

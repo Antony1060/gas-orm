@@ -3,9 +3,10 @@ use crate::tracing_util::setup_tracing;
 use gas::connection::PgConnection;
 use gas::eq::PgEq;
 use gas::error::GasError;
-use gas::{GasResult, ModelOps};
+use gas::{GasResult, ModelMeta, ModelOps};
 use rust_decimal::Decimal;
 use std::env;
+use std::time::{SystemTime, UNIX_EPOCH};
 
 mod models;
 mod tracing_util;
@@ -19,6 +20,8 @@ async fn main() -> GasResult<()> {
             .await?;
 
     person::Model::create_table(&conn, true).await?;
+
+    tracing_dbg!(person::Model::FIELDS);
 
     normal_ops(&conn).await?;
     tracing::info!("----------------");
@@ -36,10 +39,11 @@ async fn main() -> GasResult<()> {
 async fn transaction_ops(conn: &PgConnection) -> GasResult<()> {
     let mut tx = conn.transaction().await?;
 
+    let since_epoch = SystemTime::now().duration_since(UNIX_EPOCH).unwrap();
     let mut person = person::Def! {
         first_name: String::from("Some"),
         last_name: String::from("Person"),
-        email: String::from("some@person.com"),
+        email: format!("{}@person.com", since_epoch.as_secs()),
     };
 
     person.phone_number = Some(String::from("192"));

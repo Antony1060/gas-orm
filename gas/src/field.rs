@@ -1,4 +1,5 @@
 use crate::internals::PgType;
+use std::fmt::{Debug, Formatter};
 use std::marker::PhantomData;
 use std::ops::Deref;
 
@@ -10,15 +11,24 @@ pub enum FieldRelationship {
 }
 
 #[repr(u8)]
-pub enum FieldFlags {
-    PrimaryKey = 1 << 0,
-    Serial = 1 << 1,
-    Nullable = 1 << 2,
+pub enum FieldFlag {
+    Nullable = 1 << 0,
+    PrimaryKey = 1 << 1,
+    Unique = 1 << 2,
+    Serial = 1 << 3,
 }
 
+pub struct FieldFlags(pub u8);
+
 impl FieldFlags {
-    pub fn in_bitmask(self, mask: u8) -> bool {
-        (mask & (self as u8)) != 0
+    pub fn has_flag(&self, flag: FieldFlag) -> bool {
+        (self.0 & (flag as u8)) != 0
+    }
+}
+
+impl Debug for FieldFlags {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{:b}", self.0)
     }
 }
 
@@ -30,7 +40,7 @@ pub struct FieldMeta {
     pub alias_name: &'static str,  // table_column
     pub struct_name: &'static str, // table_column
     pub pg_type: PgType,
-    pub flags: u8,
+    pub flags: FieldFlags,
     pub relationship: Option<FieldRelationship>,
 }
 
