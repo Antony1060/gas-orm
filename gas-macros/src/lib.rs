@@ -12,6 +12,8 @@ use quote::quote;
 use syn::spanned::Spanned;
 use syn::{Field, Fields, Index};
 
+// this file is a mess lol
+
 #[derive(Debug)]
 struct FieldNames {
     column_name: String, // username
@@ -51,6 +53,12 @@ struct ModelArgsAttrib {
 #[derive(Debug, FromMeta)]
 struct ColumnArgs {
     name: String,
+}
+
+#[derive(Debug, FromMeta)]
+struct DefaultArgs {
+    #[darling(rename = "fn")]
+    expression: syn::Expr,
 }
 
 #[inline(always)]
@@ -210,53 +218,48 @@ fn gen_key_tokens(ctx: &ModelCtx, fields: &Fields) -> proc_macro2::TokenStream {
     });
 
     let primary_key_field_types = primary_key_fields.clone().map(|field| field.ty.clone());
-
-    let primary_key_field_idents = primary_key_fields.clone().map(|field| field.ident.clone());
+    let primary_key_field_idents = primary_key_fields.clone().map(|field| field.ident.as_ref());
 
     let pk_count = primary_key_fields.count();
 
-    let apply_fn = if pk_count <= 1 {
-        let primary_key_field_idents = primary_key_field_idents.clone();
+    let (apply_fn, condition_fn) = if pk_count <= 1 {
+        let field_idents = primary_key_field_idents.clone();
 
-        quote! {
-            #(self.#primary_key_field_idents = key;)*
-        }
+        (
+            quote! {
+                #(self.#field_idents = key;)*
+            },
+            quote! {
+                #(#primary_key_field_idents.eq(key))*
+            },
+        )
     } else {
         let mut counter = 0..;
 
-        let assignments = primary_key_field_idents.clone().map(|ident| {
-            let index = Index::from(counter.next().unwrap_or(0));
+        let (assignments, eqs): (Vec<_>, Vec<_>) = primary_key_field_idents
+            .clone()
+            .map(|ident| {
+                let index = Index::from(counter.next().unwrap_or(0));
 
+                (
+                    quote! {
+                        self.#ident = key.#index;
+                    },
+                    quote! {
+                        #ident.eq(key.#index)
+                    },
+                )
+            })
+            .collect();
+
+        (
             quote! {
-                self.#ident = key.#index;
-            }
-        });
-
-        quote! {
-            #(#assignments)*
-        }
-    };
-
-    let condition_fn = if pk_count <= 1 {
-        let primary_key_field_idents = primary_key_field_idents.clone();
-
-        quote! {
-            #(#primary_key_field_idents.eq(key))*
-        }
-    } else {
-        let mut counter = 0..;
-
-        let eqs = primary_key_field_idents.clone().map(|ident| {
-            let index = Index::from(counter.next().unwrap_or(0));
-
+                #(#assignments)*
+            },
             quote! {
-                #ident.eq(key.#index)
-            }
-        });
-
-        quote! {
-            #(#eqs)&*
-        }
+                #(#eqs)&*
+            },
+        )
     };
 
     quote! {
@@ -301,7 +304,7 @@ fn derive_model_impl(_input: TokenStream) -> Result<TokenStream, syn::Error> {
         .filter_map(|field| process_field(&ctx, field))
         .collect::<Result<Vec<_>, syn::Error>>()?;
 
-    let field_list = input.fields.iter().filter_map(|field| field.ident.clone());
+    let field_list = input.fields.iter().filter_map(|field| field.ident.as_ref());
 
     let key_tokens = gen_key_tokens(&ctx, &input.fields);
 
@@ -339,12 +342,53 @@ fn derive_model_impl(_input: TokenStream) -> Result<TokenStream, syn::Error> {
         }
 
         const _: () = {
-            assert!(<Model as gas::ModelMeta>::FIELDS.len() > 1, "struct must not be empty");
+            assert!(<Model as gas::ModelMeta>::FIELDS.len() > 0, "struct must not be empty");
         };
 
         #from_row_impl
     }
-    .into())
+        .into())
+}
+
+fn gen_default_impl(fields: &Fields) -> Result<proc_macro2::TokenStream, syn::Error> {
+    let fields = fields
+        .iter()
+        .filter_map(|field| {
+            let ident = field.ident.as_ref()?;
+            let ty = field.ty.clone();
+
+            let attribute = field
+                .attrs
+                .iter()
+                .find(|attr| attr.path().is_ident("default"))
+                .map(|attr| <DefaultArgs as FromMeta>::from_meta(&attr.meta));
+
+            let Some(attribute) = attribute else {
+                return Some(Ok(quote! {
+                    #ident: <#ty as Default>::default()
+                }));
+            };
+
+            let expr = match attribute {
+                Ok(DefaultArgs { expression }) => expression,
+                Err(err) => return Some(Err(err.into())),
+            };
+
+            Some(Ok::<proc_macro2::TokenStream, syn::Error>(quote! {
+                #ident: #expr
+            }))
+        })
+        .collect::<Result<Vec<_>, _>>()?;
+
+    Ok(quote! {
+        impl Default for Model {
+            fn default() -> Self {
+                Self {
+                    #(#fields),*
+                }
+            }
+        }
+    })
 }
 
 #[inline(always)]
@@ -364,14 +408,18 @@ fn model_impl(args: TokenStream, input: TokenStream) -> Result<TokenStream, syn:
     let mut original_struct = input.clone();
     original_struct.ident = Ident::new("Model", Span::call_site());
 
+    let default_impl_tokens = gen_default_impl(&input.fields)?;
+
     Ok(quote! {
         pub mod #mod_identifier {
             #![allow(non_upper_case_globals, dead_code)]
             use super::*;
 
-            #[derive(gas::__model, Default)]
+            #[derive(gas::__model)]
             #[__gas_meta(#args_tokens)]
             #original_struct
+
+            #default_impl_tokens
 
             pub fn default() -> Model {
                 Default::default()
@@ -401,7 +449,10 @@ pub fn model(args: TokenStream, input: TokenStream) -> TokenStream {
     model_impl(args, input).unwrap_or_else(|err| err.to_compile_error().into())
 }
 
-#[proc_macro_derive(__model, attributes(primary_key, serial, unique, column, __gas_meta))]
+#[proc_macro_derive(
+    __model,
+    attributes(primary_key, serial, unique, default, column, __gas_meta)
+)]
 pub fn derive_model(input: TokenStream) -> TokenStream {
     derive_model_impl(input).unwrap_or_else(|err| err.to_compile_error().into())
 }
