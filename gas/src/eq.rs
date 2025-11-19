@@ -217,24 +217,24 @@ pg_eq_impl!(NaiveDateTime as NaiveDateTime, PgParam::TIMESTAMP);
 pg_eq_impl!(Option<NaiveDateTime> as NaiveDateTime, PgParam::TIMESTAMP);
 
 // timestamp with timezone
-pg_eq_impl!(DateTime<Utc> as DateTime<Utc>, PgParam::TIMESTAMP_TZ);
-pg_eq_impl!(DateTime<Utc> as DateTime<Local>, PgParam::TIMESTAMP_TZ);
-pg_eq_impl!(DateTime<Utc> as DateTime<FixedOffset>, PgParam::TIMESTAMP_TZ);
-pg_eq_impl!(DateTime<Local> as DateTime<Utc>, PgParam::TIMESTAMP_TZ);
-pg_eq_impl!(DateTime<Local> as DateTime<Local>, PgParam::TIMESTAMP_TZ);
-pg_eq_impl!(DateTime<Local> as DateTime<FixedOffset>, PgParam::TIMESTAMP_TZ);
-pg_eq_impl!(DateTime<FixedOffset> as DateTime<Utc>, PgParam::TIMESTAMP_TZ);
-pg_eq_impl!(DateTime<FixedOffset> as DateTime<Local>, PgParam::TIMESTAMP_TZ);
-pg_eq_impl!(DateTime<FixedOffset> as DateTime<FixedOffset>, PgParam::TIMESTAMP_TZ);
-pg_eq_impl!(Option<DateTime<Utc>> as DateTime<Utc>, PgParam::TIMESTAMP_TZ);
-pg_eq_impl!(Option<DateTime<Utc>> as DateTime<Local>, PgParam::TIMESTAMP_TZ);
-pg_eq_impl!(Option<DateTime<Utc>> as DateTime<FixedOffset>, PgParam::TIMESTAMP_TZ);
-pg_eq_impl!(Option<DateTime<Local>> as DateTime<Utc>, PgParam::TIMESTAMP_TZ);
-pg_eq_impl!(Option<DateTime<Local>> as DateTime<Local>, PgParam::TIMESTAMP_TZ);
-pg_eq_impl!(Option<DateTime<Local>> as DateTime<FixedOffset>, PgParam::TIMESTAMP_TZ);
-pg_eq_impl!(Option<DateTime<FixedOffset>> as DateTime<Utc>, PgParam::TIMESTAMP_TZ);
-pg_eq_impl!(Option<DateTime<FixedOffset>> as DateTime<Local>, PgParam::TIMESTAMP_TZ);
-pg_eq_impl!(Option<DateTime<FixedOffset>> as DateTime<FixedOffset>, PgParam::TIMESTAMP_TZ);
+pg_eq_impl!(DateTime<Utc> as DateTime<Utc>, PgParam::TIMESTAMP_TZ_UTC);
+pg_eq_impl!(DateTime<Utc> as DateTime<Local>, PgParam::TIMESTAMP_TZ_LOCAL);
+pg_eq_impl!(DateTime<Utc> as DateTime<FixedOffset>, PgParam::TIMESTAMP_TZ_FIXED_OFFSET);
+pg_eq_impl!(DateTime<Local> as DateTime<Utc>, PgParam::TIMESTAMP_TZ_UTC);
+pg_eq_impl!(DateTime<Local> as DateTime<Local>, PgParam::TIMESTAMP_TZ_LOCAL);
+pg_eq_impl!(DateTime<Local> as DateTime<FixedOffset>, PgParam::TIMESTAMP_TZ_FIXED_OFFSET);
+pg_eq_impl!(DateTime<FixedOffset> as DateTime<Utc>, PgParam::TIMESTAMP_TZ_UTC);
+pg_eq_impl!(DateTime<FixedOffset> as DateTime<Local>, PgParam::TIMESTAMP_TZ_LOCAL);
+pg_eq_impl!(DateTime<FixedOffset> as DateTime<FixedOffset>, PgParam::TIMESTAMP_TZ_FIXED_OFFSET);
+pg_eq_impl!(Option<DateTime<Utc>> as DateTime<Utc>, PgParam::TIMESTAMP_TZ_UTC);
+pg_eq_impl!(Option<DateTime<Utc>> as DateTime<Local>, PgParam::TIMESTAMP_TZ_LOCAL);
+pg_eq_impl!(Option<DateTime<Utc>> as DateTime<FixedOffset>, PgParam::TIMESTAMP_TZ_FIXED_OFFSET);
+pg_eq_impl!(Option<DateTime<Local>> as DateTime<Utc>, PgParam::TIMESTAMP_TZ_UTC);
+pg_eq_impl!(Option<DateTime<Local>> as DateTime<Local>, PgParam::TIMESTAMP_TZ_LOCAL);
+pg_eq_impl!(Option<DateTime<Local>> as DateTime<FixedOffset>, PgParam::TIMESTAMP_TZ_FIXED_OFFSET);
+pg_eq_impl!(Option<DateTime<FixedOffset>> as DateTime<Utc>, PgParam::TIMESTAMP_TZ_UTC);
+pg_eq_impl!(Option<DateTime<FixedOffset>> as DateTime<Local>, PgParam::TIMESTAMP_TZ_LOCAL);
+pg_eq_impl!(Option<DateTime<FixedOffset>> as DateTime<FixedOffset>, PgParam::TIMESTAMP_TZ_FIXED_OFFSET);
 
 // date
 pg_eq_impl!(NaiveDate as NaiveDate, PgParam::DATE);

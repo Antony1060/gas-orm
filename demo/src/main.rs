@@ -3,7 +3,7 @@ use crate::tracing_util::setup_tracing;
 use gas::connection::PgConnection;
 use gas::eq::{PgEq, PgEqTime};
 use gas::error::GasError;
-use gas::types::{NaiveDate, NaiveTime, TimeDelta, Utc};
+use gas::types::{Local, NaiveDate, NaiveTime, TimeDelta, Utc};
 use gas::{GasResult, ModelOps};
 use rust_decimal::Decimal;
 use std::env;
@@ -110,6 +110,14 @@ async fn datetime_ops(conn: &PgConnection) -> GasResult<()> {
         "after time",
         audit_logs::Model::query()
             .filter(|| audit_logs::random_time.gt(NaiveTime::from_hms_opt(12, 0, 0).unwrap()))
+            .find_all(conn)
+            .await?
+    );
+
+    tracing_dbg!(
+        "datetime compare different timezone",
+        audit_logs::Model::query()
+            .filter(|| audit_logs::created_at.gte(Local::now() - TimeDelta::minutes(1)))
             .find_all(conn)
             .await?
     );

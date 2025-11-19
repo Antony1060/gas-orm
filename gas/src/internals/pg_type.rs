@@ -97,14 +97,9 @@ pg_type_impl!(f64 as PgType::DOUBLE, PgParam::DOUBLE);
 pg_type_impl!(Decimal as PgType::DECIMAL, PgParam::DECIMAL);
 pg_type_impl!(NaiveDateTime as PgType::TIMESTAMP, PgParam::TIMESTAMP);
 
-pg_type_impl!(DateTime<Utc> as PgType::TIMESTAMP_TZ, PgParam::TIMESTAMP_TZ);
-pg_type_impl!(DateTime<Local> as PgType::TIMESTAMP_TZ, |value: DateTime<Local>| {
-    PgParam::TIMESTAMP_TZ(value.to_utc())
-});
-
-pg_type_impl!(DateTime<FixedOffset> as PgType::TIMESTAMP_TZ, |value: DateTime<FixedOffset>| {
-    PgParam::TIMESTAMP_TZ(value.to_utc())
-});
+pg_type_impl!(DateTime<Utc> as PgType::TIMESTAMP_TZ, PgParam::TIMESTAMP_TZ_UTC);
+pg_type_impl!(DateTime<Local> as PgType::TIMESTAMP_TZ, PgParam::TIMESTAMP_TZ_LOCAL);
+pg_type_impl!(DateTime<FixedOffset> as PgType::TIMESTAMP_TZ, PgParam::TIMESTAMP_TZ_FIXED_OFFSET);
 
 pg_type_impl!(NaiveDate as PgType::DATE, PgParam::DATE);
 pg_type_impl!(NaiveTime as PgType::TIME, PgParam::TIME);
