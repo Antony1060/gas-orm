@@ -36,6 +36,32 @@ async fn main() -> GasResult<()> {
     tracing::info!("(date)(time)");
     tracing::info!("----------------");
     datetime_ops(&conn).await?;
+    tracing::info!("----------------");
+    tracing::info!("sorting");
+    tracing::info!("----------------");
+    sort_limit_ops(&conn).await?;
+
+    Ok(())
+}
+
+async fn sort_limit_ops(conn: &PgConnection) -> GasResult<()> {
+    tracing_dbg!(
+        "sort one",
+        person::Model::query()
+            .sort(person::id.asc())
+            .limit(4)
+            .find_all(conn)
+            .await?
+    );
+
+    tracing_dbg!(
+        "sort two",
+        person::Model::query()
+            .filter(|| person::bank_account_balance.lte(2000))
+            .sort(person::bank_account_balance.desc().then(person::id.asc()))
+            .find_all(conn)
+            .await?
+    );
 
     Ok(())
 }

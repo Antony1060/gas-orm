@@ -245,7 +245,7 @@ pg_eq_impl!(NaiveTime as NaiveTime, PgParam::TIME);
 pg_eq_impl!(Option<NaiveTime> as NaiveTime, PgParam::TIME);
 
 macro_rules! pg_timed_now_impl {
-    ($field_type:ty, $pg_param:expr, $time_cast:literal) => {
+    ($field_type:ty, $time_cast:literal) => {
         impl PgEqTime for Field<$field_type> {
             fn is_now(&self) -> EqExpression {
                 EqExpression::new(
@@ -286,25 +286,21 @@ macro_rules! pg_timed_now_impl {
 }
 
 // timestamp
-pg_timed_now_impl!(NaiveDateTime, PgParam::TIMESTAMP, "timestamp");
-pg_timed_now_impl!(Option<NaiveDateTime>, PgParam::TIMESTAMP, "timestamp");
+pg_timed_now_impl!(NaiveDateTime, "timestamp");
+pg_timed_now_impl!(Option<NaiveDateTime>, "timestamp");
 
 // timestamp with timezone
-pg_timed_now_impl!(DateTime<Utc>, PgParam::TIMESTAMP_TZ, "timestamp");
-pg_timed_now_impl!(DateTime<Local>, PgParam::TIMESTAMP_TZ, "timestamp");
-pg_timed_now_impl!(DateTime<FixedOffset>, PgParam::TIMESTAMP_TZ, "timestamp");
-pg_timed_now_impl!(Option<DateTime<Utc>>, PgParam::TIMESTAMP_TZ, "timestamp");
-pg_timed_now_impl!(Option<DateTime<Local>>, PgParam::TIMESTAMP_TZ, "timestamp");
-pg_timed_now_impl!(
-    Option<DateTime<FixedOffset>>,
-    PgParam::TIMESTAMP_TZ,
-    "timestamp"
-);
+pg_timed_now_impl!(DateTime<Utc>, "timestamp");
+pg_timed_now_impl!(DateTime<Local>, "timestamp");
+pg_timed_now_impl!(DateTime<FixedOffset>, "timestamp");
+pg_timed_now_impl!(Option<DateTime<Utc>>, "timestamp");
+pg_timed_now_impl!(Option<DateTime<Local>>, "timestamp");
+pg_timed_now_impl!(Option<DateTime<FixedOffset>>, "timestamp");
 
 // date
-pg_timed_now_impl!(NaiveDate, PgParam::DATE, "date");
-pg_timed_now_impl!(Option<NaiveDate>, PgParam::DATE, "date");
+pg_timed_now_impl!(NaiveDate, "date");
+pg_timed_now_impl!(Option<NaiveDate>, "date");
 
 // time
-pg_timed_now_impl!(NaiveTime, PgParam::TIME, "time");
-pg_timed_now_impl!(Option<NaiveTime>, PgParam::TIME, "time");
+pg_timed_now_impl!(NaiveTime, "time");
+pg_timed_now_impl!(Option<NaiveTime>, "time");

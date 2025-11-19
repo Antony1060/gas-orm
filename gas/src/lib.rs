@@ -10,6 +10,7 @@ pub mod internals;
 pub mod model;
 mod ops;
 pub mod row;
+pub mod sort;
 pub mod types;
 
 pub use field::*;

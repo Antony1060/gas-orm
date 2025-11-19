@@ -5,12 +5,16 @@ use crate::connection::PgExecutionContext;
 use crate::error::GasError;
 use crate::internals::{SqlQuery, SqlStatement};
 use crate::model::ModelMeta;
+use crate::sort::SortDefinition;
 use crate::GasResult;
 use std::marker::PhantomData;
+use std::num::NonZeroUsize;
 
 #[derive(Debug, Clone, Default)]
 pub struct SelectBuilder<T> {
     pub(crate) filter: Option<EqExpression>,
+    pub(crate) sort: Option<SortDefinition>,
+    pub(crate) limit: Option<NonZeroUsize>,
     _marker: PhantomData<T>,
 }
 
@@ -18,12 +22,24 @@ impl<T: ModelMeta> SelectBuilder<T> {
     pub fn new() -> Self {
         Self {
             filter: None,
+            sort: None,
+            limit: None,
             _marker: PhantomData,
         }
     }
 
     pub fn filter<F: FnOnce() -> EqExpression>(mut self, cond_fn: F) -> Self {
         self.filter = Some(cond_fn());
+        self
+    }
+
+    pub fn sort(mut self, sort_definition: SortDefinition) -> Self {
+        self.sort = Some(sort_definition);
+        self
+    }
+
+    pub fn limit(mut self, items: usize) -> Self {
+        self.limit = NonZeroUsize::new(items);
         self
     }
 
@@ -64,6 +80,13 @@ impl<T: ModelMeta> SelectBuilder<T> {
         if let Some(ref filter) = self.filter {
             sql.append_str(" WHERE ");
             sql.append_query(filter.condition.as_sql());
+        }
+
+        if let Some(ref sort) = self.sort
+            && let Some(sort_sql) = sort.as_sql()
+        {
+            sql.append_str(" ORDER BY ");
+            sql.append_query(sort_sql);
         }
 
         // params

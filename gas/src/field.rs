@@ -1,4 +1,5 @@
 use crate::internals::PgType;
+use crate::sort::{SortDefinition, SortDirection, SortOp};
 use std::fmt::{Debug, Formatter};
 use std::marker::PhantomData;
 use std::ops::Deref;
@@ -56,6 +57,20 @@ impl<T> Field<T> {
             meta,
             _marker: PhantomData,
         }
+    }
+
+    pub fn asc(&self) -> SortDefinition {
+        SortDefinition::from(SortOp {
+            field_full_name: self.full_name,
+            direction: SortDirection::Ascending,
+        })
+    }
+
+    pub fn desc(&self) -> SortDefinition {
+        SortDefinition::from(SortOp {
+            field_full_name: self.full_name,
+            direction: SortDirection::Descending,
+        })
     }
 }
 
