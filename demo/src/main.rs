@@ -1,9 +1,10 @@
-use crate::models::person;
+use crate::models::{audit_logs, person};
 use crate::tracing_util::setup_tracing;
 use gas::connection::PgConnection;
-use gas::eq::PgEq;
+use gas::eq::{PgEq, PgEqTime};
 use gas::error::GasError;
-use gas::{GasResult, ModelMeta, ModelOps};
+use gas::types::{NaiveDate, NaiveTime, TimeDelta, Utc};
+use gas::{GasResult, ModelOps};
 use rust_decimal::Decimal;
 use std::env;
 use std::time::{SystemTime, UNIX_EPOCH};
@@ -20,8 +21,7 @@ async fn main() -> GasResult<()> {
             .await?;
 
     person::Model::create_table(&conn, true).await?;
-
-    tracing_dbg!(person::Model::FIELDS);
+    audit_logs::Model::create_table(&conn, true).await?;
 
     normal_ops(&conn).await?;
     tracing::info!("----------------");
@@ -32,6 +32,91 @@ async fn main() -> GasResult<()> {
     tracing::info!("transaction");
     tracing::info!("----------------");
     transaction_ops(&conn).await?;
+    tracing::info!("----------------");
+    tracing::info!("(date)(time)");
+    tracing::info!("----------------");
+    datetime_ops(&conn).await?;
+
+    Ok(())
+}
+
+async fn datetime_ops(conn: &PgConnection) -> GasResult<()> {
+    let mut first = audit_logs::Def! {
+        updated_at: NaiveDate::from_ymd_opt(2025, 10, 22).unwrap().and_hms_opt(10, 22, 40).unwrap(),
+        random_date: NaiveDate::from_ymd_opt(2025, 11, 22).unwrap(),
+        random_time: NaiveTime::from_hms_opt(12, 6, 20).unwrap(),
+    }
+    .into_model();
+
+    first.insert(conn).await?;
+
+    let mut second = audit_logs::Def! {
+        created_at: Utc::now() - TimeDelta::days(1),
+        updated_at: NaiveDate::from_ymd_opt(2025, 10, 22).unwrap().and_hms_opt(10, 22, 40).unwrap() - TimeDelta::days(1),
+        random_date: NaiveDate::from_ymd_opt(2025, 11, 22).unwrap() - TimeDelta::days(1),
+        random_time: NaiveTime::from_hms_opt(12, 6, 20).unwrap() - TimeDelta::hours(6),
+    }.into_model();
+    second.insert(conn).await?;
+
+    let mut third = audit_logs::Def! {
+        created_at: Utc::now() + TimeDelta::days(1),
+        updated_at: NaiveDate::from_ymd_opt(2025, 10, 22).unwrap().and_hms_opt(10, 22, 40).unwrap() + TimeDelta::days(1),
+        random_date: NaiveDate::from_ymd_opt(2025, 11, 22).unwrap() + TimeDelta::days(1),
+        random_time: NaiveTime::from_hms_opt(12, 6, 20).unwrap() + TimeDelta::hours(6),
+    }.into_model();
+    third.insert(conn).await?;
+
+    tracing_dbg!(
+        "before now",
+        audit_logs::Model::query()
+            .filter(|| audit_logs::created_at.is_now_or_before())
+            .find_all(conn)
+            .await?
+    );
+
+    tracing_dbg!(
+        "after now",
+        audit_logs::Model::query()
+            .filter(|| audit_logs::updated_at.is_now_or_after())
+            .find_all(conn)
+            .await?
+    );
+
+    tracing_dbg!(
+        "before now date",
+        audit_logs::Model::query()
+            .filter(|| audit_logs::random_date.is_before_now())
+            .find_all(conn)
+            .await?
+    );
+
+    tracing_dbg!(
+        "after now date",
+        audit_logs::Model::query()
+            .filter(|| audit_logs::random_date.is_after_now())
+            .find_all(conn)
+            .await?
+    );
+
+    tracing_dbg!(
+        "less than time",
+        audit_logs::Model::query()
+            .filter(|| audit_logs::random_time.lt(NaiveTime::from_hms_opt(12, 0, 0).unwrap()))
+            .find_all(conn)
+            .await?
+    );
+
+    tracing_dbg!(
+        "after time",
+        audit_logs::Model::query()
+            .filter(|| audit_logs::random_time.gt(NaiveTime::from_hms_opt(12, 0, 0).unwrap()))
+            .find_all(conn)
+            .await?
+    );
+
+    first.delete(conn).await?;
+    second.delete(conn).await?;
+    third.delete(conn).await?;
 
     Ok(())
 }

@@ -2,6 +2,7 @@ use crate::condition::{Condition, EqExpression};
 use crate::field::Field;
 use crate::internals::PgParam;
 use crate::types::Decimal;
+use chrono::{DateTime, FixedOffset, Local, NaiveDate, NaiveDateTime, NaiveTime, Utc};
 
 pub trait PgEq<T> {
     fn eq(&self, other: T) -> EqExpression;
@@ -23,6 +24,14 @@ pub trait PgEqNone {
     fn is_null(&self) -> EqExpression;
 
     fn is_not_null(&self) -> EqExpression;
+}
+
+pub trait PgEqTime {
+    fn is_now(&self) -> EqExpression;
+    fn is_before_now(&self) -> EqExpression;
+    fn is_now_or_before(&self) -> EqExpression;
+    fn is_after_now(&self) -> EqExpression;
+    fn is_now_or_after(&self) -> EqExpression;
 }
 
 impl<T> PgEqNone for Field<Option<T>> {
@@ -202,3 +211,100 @@ pg_eq_impl!(Option<Decimal> as u32, PgParam::DECIMAL);
 pg_eq_impl!(Option<Decimal> as u64, PgParam::DECIMAL);
 pg_eq_impl!(Option<Decimal> as u128, PgParam::DECIMAL);
 pg_eq_impl!(Option<Decimal> as usize, PgParam::DECIMAL);
+
+// timestamp
+pg_eq_impl!(NaiveDateTime as NaiveDateTime, PgParam::TIMESTAMP);
+pg_eq_impl!(Option<NaiveDateTime> as NaiveDateTime, PgParam::TIMESTAMP);
+
+// timestamp with timezone
+pg_eq_impl!(DateTime<Utc> as DateTime<Utc>, PgParam::TIMESTAMP_TZ);
+pg_eq_impl!(DateTime<Utc> as DateTime<Local>, PgParam::TIMESTAMP_TZ);
+pg_eq_impl!(DateTime<Utc> as DateTime<FixedOffset>, PgParam::TIMESTAMP_TZ);
+pg_eq_impl!(DateTime<Local> as DateTime<Utc>, PgParam::TIMESTAMP_TZ);
+pg_eq_impl!(DateTime<Local> as DateTime<Local>, PgParam::TIMESTAMP_TZ);
+pg_eq_impl!(DateTime<Local> as DateTime<FixedOffset>, PgParam::TIMESTAMP_TZ);
+pg_eq_impl!(DateTime<FixedOffset> as DateTime<Utc>, PgParam::TIMESTAMP_TZ);
+pg_eq_impl!(DateTime<FixedOffset> as DateTime<Local>, PgParam::TIMESTAMP_TZ);
+pg_eq_impl!(DateTime<FixedOffset> as DateTime<FixedOffset>, PgParam::TIMESTAMP_TZ);
+pg_eq_impl!(Option<DateTime<Utc>> as DateTime<Utc>, PgParam::TIMESTAMP_TZ);
+pg_eq_impl!(Option<DateTime<Utc>> as DateTime<Local>, PgParam::TIMESTAMP_TZ);
+pg_eq_impl!(Option<DateTime<Utc>> as DateTime<FixedOffset>, PgParam::TIMESTAMP_TZ);
+pg_eq_impl!(Option<DateTime<Local>> as DateTime<Utc>, PgParam::TIMESTAMP_TZ);
+pg_eq_impl!(Option<DateTime<Local>> as DateTime<Local>, PgParam::TIMESTAMP_TZ);
+pg_eq_impl!(Option<DateTime<Local>> as DateTime<FixedOffset>, PgParam::TIMESTAMP_TZ);
+pg_eq_impl!(Option<DateTime<FixedOffset>> as DateTime<Utc>, PgParam::TIMESTAMP_TZ);
+pg_eq_impl!(Option<DateTime<FixedOffset>> as DateTime<Local>, PgParam::TIMESTAMP_TZ);
+pg_eq_impl!(Option<DateTime<FixedOffset>> as DateTime<FixedOffset>, PgParam::TIMESTAMP_TZ);
+
+// date
+pg_eq_impl!(NaiveDate as NaiveDate, PgParam::DATE);
+pg_eq_impl!(Option<NaiveDate> as NaiveDate, PgParam::DATE);
+
+// time
+pg_eq_impl!(NaiveTime as NaiveTime, PgParam::TIME);
+pg_eq_impl!(Option<NaiveTime> as NaiveTime, PgParam::TIME);
+
+macro_rules! pg_timed_now_impl {
+    ($field_type:ty, $pg_param:expr, $time_cast:literal) => {
+        impl PgEqTime for Field<$field_type> {
+            fn is_now(&self) -> EqExpression {
+                EqExpression::new(
+                    Condition::Basic(format!(concat!("{}=NOW()::", $time_cast), self.full_name)),
+                    vec![],
+                )
+            }
+
+            fn is_before_now(&self) -> EqExpression {
+                EqExpression::new(
+                    Condition::Basic(format!(concat!("{}<NOW()::", $time_cast), self.full_name)),
+                    vec![],
+                )
+            }
+
+            fn is_now_or_before(&self) -> EqExpression {
+                EqExpression::new(
+                    Condition::Basic(format!(concat!("{}<=NOW()::", $time_cast), self.full_name)),
+                    vec![],
+                )
+            }
+
+            fn is_after_now(&self) -> EqExpression {
+                EqExpression::new(
+                    Condition::Basic(format!(concat!("{}>NOW()::", $time_cast), self.full_name)),
+                    vec![],
+                )
+            }
+
+            fn is_now_or_after(&self) -> EqExpression {
+                EqExpression::new(
+                    Condition::Basic(format!(concat!("{}>=NOW()::", $time_cast), self.full_name)),
+                    vec![],
+                )
+            }
+        }
+    };
+}
+
+// timestamp
+pg_timed_now_impl!(NaiveDateTime, PgParam::TIMESTAMP, "timestamp");
+pg_timed_now_impl!(Option<NaiveDateTime>, PgParam::TIMESTAMP, "timestamp");
+
+// timestamp with timezone
+pg_timed_now_impl!(DateTime<Utc>, PgParam::TIMESTAMP_TZ, "timestamp");
+pg_timed_now_impl!(DateTime<Local>, PgParam::TIMESTAMP_TZ, "timestamp");
+pg_timed_now_impl!(DateTime<FixedOffset>, PgParam::TIMESTAMP_TZ, "timestamp");
+pg_timed_now_impl!(Option<DateTime<Utc>>, PgParam::TIMESTAMP_TZ, "timestamp");
+pg_timed_now_impl!(Option<DateTime<Local>>, PgParam::TIMESTAMP_TZ, "timestamp");
+pg_timed_now_impl!(
+    Option<DateTime<FixedOffset>>,
+    PgParam::TIMESTAMP_TZ,
+    "timestamp"
+);
+
+// date
+pg_timed_now_impl!(NaiveDate, PgParam::DATE, "date");
+pg_timed_now_impl!(Option<NaiveDate>, PgParam::DATE, "date");
+
+// time
+pg_timed_now_impl!(NaiveTime, PgParam::TIME, "time");
+pg_timed_now_impl!(Option<NaiveTime>, PgParam::TIME, "time");

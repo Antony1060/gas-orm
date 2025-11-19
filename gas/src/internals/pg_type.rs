@@ -1,5 +1,6 @@
 use crate::internals::PgParam;
 use crate::types::Decimal;
+use chrono::{DateTime, FixedOffset, Local, NaiveDate, NaiveDateTime, NaiveTime, Utc};
 use sqlx::{Decode, Type};
 
 #[derive(Debug)]
@@ -11,6 +12,11 @@ pub enum PgType {
     REAL,
     DOUBLE,
     DECIMAL,
+    TIMESTAMP,
+    #[allow(nonstandard_style)]
+    TIMESTAMP_TZ,
+    DATE,
+    TIME,
 }
 
 impl PgType {
@@ -30,6 +36,10 @@ impl PgType {
             PgType::REAL => "REAL",
             PgType::DOUBLE => "DOUBLE",
             PgType::DECIMAL => "DECIMAL",
+            PgType::TIMESTAMP => "TIMESTAMP",
+            PgType::TIMESTAMP_TZ => "TIMESTAMP WITH TIME ZONE",
+            PgType::DATE => "DATE",
+            PgType::TIME => "TIME",
         }
     }
 }
@@ -85,3 +95,16 @@ pg_type_impl!(i64 as PgType::BIGINT, PgParam::BIGINT);
 pg_type_impl!(f32 as PgType::REAL, PgParam::REAL);
 pg_type_impl!(f64 as PgType::DOUBLE, PgParam::DOUBLE);
 pg_type_impl!(Decimal as PgType::DECIMAL, PgParam::DECIMAL);
+pg_type_impl!(NaiveDateTime as PgType::TIMESTAMP, PgParam::TIMESTAMP);
+
+pg_type_impl!(DateTime<Utc> as PgType::TIMESTAMP_TZ, PgParam::TIMESTAMP_TZ);
+pg_type_impl!(DateTime<Local> as PgType::TIMESTAMP_TZ, |value: DateTime<Local>| {
+    PgParam::TIMESTAMP_TZ(value.to_utc())
+});
+
+pg_type_impl!(DateTime<FixedOffset> as PgType::TIMESTAMP_TZ, |value: DateTime<FixedOffset>| {
+    PgParam::TIMESTAMP_TZ(value.to_utc())
+});
+
+pg_type_impl!(NaiveDate as PgType::DATE, PgParam::DATE);
+pg_type_impl!(NaiveTime as PgType::TIME, PgParam::TIME);

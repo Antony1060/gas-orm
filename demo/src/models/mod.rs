@@ -1,4 +1,4 @@
-use gas::types::Decimal;
+use gas::types::{DateTime, Decimal, NaiveDate, NaiveDateTime, NaiveTime, Utc};
 
 #[gas::model(table_name = "persons")]
 #[derive(Debug, Clone)]
@@ -15,22 +15,16 @@ pub struct Person {
     #[column(name = "bank_balance")]
     pub bank_account_balance: Decimal,
 }
-// #[gas::model(table_name = "audit_logs", mod_name = "audit_logs")]
-// #[derive(Debug, Clone)]
-// pub struct AuditLog {
-//     #[primary_key]
-//     #[serial]
-//     pub id: i64,
-// }
 
-// #[gas::model(table_name = "audit_logs", mod_name = "audit_logs")]
-// #[derive(Debug, Clone)]
-// pub struct AuditLog {
-//     #[primary_key]
-//     #[serial]
-//     pub id: i64,
-//     pub created_at: DateTime<Utc>,
-//     pub updated_at: NaiveDateTime,
-//     pub random_date: NaiveDate,
-//     pub random_time: NaiveTime,
-// }
+#[gas::model(table_name = "audit_logs", mod_name = "audit_logs")]
+#[derive(Debug, Clone)]
+pub struct AuditLog {
+    #[primary_key]
+    #[serial]
+    pub id: i64,
+    #[default(fn = Utc::now())]
+    pub created_at: DateTime<Utc>,
+    pub updated_at: NaiveDateTime,
+    pub random_date: NaiveDate,
+    pub random_time: NaiveTime,
+}

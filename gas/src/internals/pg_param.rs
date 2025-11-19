@@ -1,3 +1,4 @@
+use chrono::{DateTime, NaiveDate, NaiveDateTime, NaiveTime, Utc};
 use rust_decimal::Decimal;
 use std::fmt::{Display, Formatter};
 
@@ -10,6 +11,12 @@ pub enum PgParam {
     REAL(f32),
     DOUBLE(f64),
     DECIMAL(Decimal),
+    TIMESTAMP(NaiveDateTime),
+    #[allow(nonstandard_style)]
+    TIMESTAMP_TZ(DateTime<Utc>),
+    DATE(NaiveDate),
+    TIME(NaiveTime),
+    RAW(&'static str),
     NULL,
 }
 
@@ -24,6 +31,11 @@ macro_rules! pg_param_all {
             PgParam::REAL(value) => $ex("REAL", value),
             PgParam::DOUBLE(value) => $ex("DOUBLE", value),
             PgParam::DECIMAL(value) => $ex("DECIMAL", value),
+            PgParam::TIMESTAMP(value) => $ex("TIMESTAMP", value),
+            PgParam::TIMESTAMP_TZ(value) => $ex("TIMESTAMP_TZ", value),
+            PgParam::DATE(value) => $ex("DATE", value),
+            PgParam::TIME(value) => $ex("TIME", value),
+            PgParam::RAW(value) => $ex("RAW", value),
             PgParam::NULL => $ex("NULL", Option::<i8>::None),
         }
     };
