@@ -63,6 +63,15 @@ async fn sort_limit_ops(conn: &PgConnection) -> GasResult<()> {
             .await?
     );
 
+    tracing_dbg!(
+        "sort find one",
+        person::Model::query()
+            .sort(person::id.desc())
+            .limit(4)
+            .find_one(conn)
+            .await?
+    );
+
     Ok(())
 }
 

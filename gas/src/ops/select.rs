@@ -44,7 +44,7 @@ impl<T: ModelMeta> SelectBuilder<T> {
     }
 
     pub async fn find_all<E: PgExecutionContext>(self, ctx: E) -> GasResult<Vec<T>> {
-        let (sql, params) = self.build();
+        let (sql, params) = self.build(true);
 
         let items = ctx.execute_parsed::<T>(sql, &params).await?;
 
@@ -52,7 +52,7 @@ impl<T: ModelMeta> SelectBuilder<T> {
     }
 
     pub async fn find_one<E: PgExecutionContext>(self, ctx: E) -> GasResult<Option<T>> {
-        let (mut sql, params) = self.build();
+        let (mut sql, params) = self.build(false);
 
         sql.append_str(" LIMIT 1");
 
@@ -67,7 +67,10 @@ impl<T: ModelMeta> SelectBuilder<T> {
         Ok(items.pop())
     }
 
-    fn build<'a>(self) -> SqlStatement<'a> {
+    // include_limit is important here because of find_one
+    //  if limit is built into the query and then later on enforced by find_one,
+    //  the query would fail; not very nice way to enforce an invariant but eh
+    fn build<'a>(self, include_limit: bool) -> SqlStatement<'a> {
         // sql
         let fields = T::FIELDS
             .iter()
@@ -87,6 +90,10 @@ impl<T: ModelMeta> SelectBuilder<T> {
         {
             sql.append_str(" ORDER BY ");
             sql.append_query(sort_sql);
+        }
+
+        if include_limit && let Some(limit) = self.limit {
+            sql.append_str(&format!(" LIMIT {}", limit.get()));
         }
 
         // params
