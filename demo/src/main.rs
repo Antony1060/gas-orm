@@ -58,7 +58,7 @@ async fn sort_limit_ops(conn: &PgConnection) -> GasResult<()> {
         "sort two",
         person::Model::query()
             .filter(|| person::bank_account_balance.lte(2000))
-            .sort(person::bank_account_balance.desc().then(person::id.asc()))
+            .sort(person::bank_account_balance.desc() >> person::id.asc())
             .find_all(conn)
             .await?
     );

@@ -1,5 +1,6 @@
 use crate::internals::SqlQuery;
 use std::fmt::{Display, Formatter};
+use std::ops::Shr;
 
 #[derive(Debug, Clone)]
 pub enum SortDirection {
@@ -50,6 +51,14 @@ impl SortDefinition {
             sql.append_str(&ops);
             sql
         })
+    }
+}
+
+impl Shr for SortDefinition {
+    type Output = SortDefinition;
+
+    fn shr(self, rhs: Self) -> Self::Output {
+        self.then(rhs)
     }
 }
 
