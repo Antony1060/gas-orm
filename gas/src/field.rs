@@ -1,5 +1,6 @@
 use crate::internals::PgType;
 use crate::sort::{SortDefinition, SortDirection, SortOp};
+use crate::ModelMeta;
 use std::fmt::{Debug, Formatter};
 use std::marker::PhantomData;
 use std::ops::Deref;
@@ -46,16 +47,18 @@ pub struct FieldMeta {
 }
 
 #[derive(Debug)]
-pub struct Field<T> {
+pub struct Field<T, M: ModelMeta> {
     pub meta: FieldMeta,
     _marker: PhantomData<T>,
+    _model_marker: PhantomData<M>,
 }
 
-impl<T> Field<T> {
+impl<T, M: ModelMeta> Field<T, M> {
     pub const fn new(meta: FieldMeta) -> Self {
         Self {
             meta,
             _marker: PhantomData,
+            _model_marker: PhantomData,
         }
     }
 
@@ -74,7 +77,13 @@ impl<T> Field<T> {
     }
 }
 
-impl<T> Deref for Field<T> {
+impl<T, M: ModelMeta> AsRef<Field<T, M>> for Field<T, M> {
+    fn as_ref(&self) -> &Field<T, M> {
+        self
+    }
+}
+
+impl<T, M: ModelMeta> Deref for Field<T, M> {
     type Target = FieldMeta;
 
     fn deref(&self) -> &Self::Target {

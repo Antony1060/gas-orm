@@ -128,7 +128,7 @@ fn process_field(
     let alias_name = &field_names.alias_name;
 
     Some(Ok(quote! {
-        pub const #ident: gas::Field<#ty> = gas::Field::new(gas::FieldMeta {
+        pub const #ident: gas::Field<#ty, Model> = gas::Field::new(gas::FieldMeta {
             full_name: #full_name,
             name: #name,
             alias_name: #alias_name,

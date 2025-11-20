@@ -40,7 +40,86 @@ async fn main() -> GasResult<()> {
     tracing::info!("sorting");
     tracing::info!("----------------");
     sort_limit_ops(&conn).await?;
+    tracing::info!("----------------");
+    tracing::info!("aggregate");
+    tracing::info!("----------------");
+    aggregate_ops(&conn).await?;
 
+    Ok(())
+}
+
+async fn aggregate_ops(conn: &PgConnection) -> GasResult<()> {
+    tracing_dbg!(
+        "simple count",
+        person::Model::query().count(conn, person::id).await?
+    );
+
+    tracing_dbg!(
+        "simple sum",
+        person::Model::query()
+            .sum(conn, person::bank_account_balance)
+            .await?
+    );
+
+    tracing_dbg!(
+        "complex count",
+        person::Model::query()
+            .filter(|| person::bank_account_balance.gte(200))
+            // sort and limit should be ignored for aggregates
+            .sort(person::id.asc())
+            .limit(4)
+            .count(conn, person::phone_number)
+            .await?
+    );
+
+    tracing_dbg!(
+        "complex sum",
+        person::Model::query()
+            .filter(|| person::bank_account_balance.gte(200))
+            // sort and limit should be ignored for aggregates
+            .sort(person::id.asc())
+            .limit(4)
+            .sum(conn, person::bank_account_balance)
+            .await?
+    );
+
+    tracing_dbg!(
+        "simple count (grouped)",
+        person::Model::query()
+            .group(person::bank_account_balance)
+            .count(conn, person::id)
+            .await?
+    );
+
+    tracing_dbg!(
+        "simple sum (grouped)",
+        person::Model::query()
+            .group(person::last_name)
+            .sum(conn, person::bank_account_balance)
+            .await?
+    );
+
+    tracing_dbg!(
+        "complex count (grouped)",
+        person::Model::query()
+            .filter(|| person::bank_account_balance.gte(2000))
+            .sort(person::id.asc())
+            .limit(4)
+            .group(person::bank_account_balance)
+            .count(conn, person::id)
+            .await?
+    );
+
+    tracing_dbg!(
+        "complex sum (grouped)",
+        person::Model::query()
+            .filter(|| person::bank_account_balance.gte(2000))
+            .sort(person::id.asc())
+            .limit(4)
+            .group(person::last_name)
+            .sum(conn, person::bank_account_balance)
+            .await?
+    );
     Ok(())
 }
 
