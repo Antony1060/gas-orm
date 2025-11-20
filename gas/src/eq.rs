@@ -1,6 +1,6 @@
 use crate::condition::{Condition, EqExpression};
 use crate::field::Field;
-use crate::internals::PgParam;
+use crate::internals::{AsPgType, PgParam};
 use crate::types::Decimal;
 use crate::ModelMeta;
 use chrono::{DateTime, FixedOffset, Local, NaiveDate, NaiveDateTime, NaiveTime, Utc};
@@ -35,7 +35,10 @@ pub trait PgEqTime {
     fn is_now_or_after(&self) -> EqExpression;
 }
 
-impl<T, M: ModelMeta> PgEqNone for Field<Option<T>, M> {
+impl<T, M: ModelMeta> PgEqNone for Field<Option<T>, M>
+where
+    Option<T>: AsPgType,
+{
     fn is_null(&self) -> EqExpression {
         EqExpression::new(Condition::Basic(format!("{} IS NULL", self.name)), vec![])
     }

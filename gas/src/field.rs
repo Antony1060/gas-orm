@@ -1,4 +1,4 @@
-use crate::internals::PgType;
+use crate::internals::{AsPgType, PgType};
 use crate::sort::{SortDefinition, SortDirection, SortOp};
 use crate::ModelMeta;
 use std::fmt::{Debug, Formatter};
@@ -47,18 +47,20 @@ pub struct FieldMeta {
 }
 
 #[derive(Debug)]
-pub struct Field<T, M: ModelMeta> {
+pub struct Field<T: AsPgType, M: ModelMeta> {
     pub meta: FieldMeta,
+    pub index: usize,
     _marker: PhantomData<T>,
     _model_marker: PhantomData<M>,
 }
 
-impl<T, M: ModelMeta> Field<T, M> {
+impl<T: AsPgType, M: ModelMeta> Field<T, M> {
     pub const fn new(meta: FieldMeta) -> Self {
         Self {
             meta,
             _marker: PhantomData,
             _model_marker: PhantomData,
+            index: 0,
         }
     }
 
@@ -77,16 +79,20 @@ impl<T, M: ModelMeta> Field<T, M> {
     }
 }
 
-impl<T, M: ModelMeta> AsRef<Field<T, M>> for Field<T, M> {
-    fn as_ref(&self) -> &Field<T, M> {
-        self
-    }
-}
-
-impl<T, M: ModelMeta> Deref for Field<T, M> {
+impl<T: AsPgType, M: ModelMeta> Deref for Field<T, M> {
     type Target = FieldMeta;
 
     fn deref(&self) -> &Self::Target {
         &self.meta
     }
+}
+
+pub trait FieldTypeAccessor {
+    type VALUE: AsPgType;
+    type MODEL: ModelMeta;
+}
+
+impl<T: AsPgType, M: ModelMeta> FieldTypeAccessor for Field<T, M> {
+    type VALUE = T;
+    type MODEL = M;
 }

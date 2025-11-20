@@ -20,10 +20,6 @@ pub enum PgType {
 }
 
 impl PgType {
-    pub const fn __to_pg_type<T: AsPgType>() -> PgType {
-        T::PG_TYPE
-    }
-
     pub fn as_sql_type(&self, is_serial: bool) -> &'static str {
         match self {
             PgType::TEXT => "TEXT",
@@ -44,7 +40,7 @@ impl PgType {
     }
 }
 
-pub trait AsPgType: for<'a> Decode<'a, sqlx::Postgres> + Type<sqlx::Postgres> {
+pub trait AsPgType: Clone + for<'a> Decode<'a, sqlx::Postgres> + Type<sqlx::Postgres> {
     const PG_TYPE: PgType;
 }
 

@@ -73,7 +73,7 @@ impl<M: ModelMeta, G: AsPgType + 'static> Group<M, G> {
         ctx.execute_parsed(sql, &params).await
     }
 
-    pub async fn count<E: PgExecutionContext, T>(
+    pub async fn count<E: PgExecutionContext, T: AsPgType>(
         self,
         ctx: E,
         field: Field<T, M>,

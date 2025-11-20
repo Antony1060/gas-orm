@@ -10,6 +10,7 @@ pub mod group;
 pub mod internals;
 pub mod model;
 mod ops;
+pub mod relation;
 pub mod row;
 pub mod sort;
 pub mod types;

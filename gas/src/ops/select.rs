@@ -1,10 +1,10 @@
 #![allow(private_bounds)]
 
-use crate::condition::EqExpression;
+use crate::condition::{Condition, EqExpression};
 use crate::connection::PgExecutionContext;
 use crate::error::GasError;
 use crate::group::Group;
-use crate::internals::{AsPgType, Numeric, SqlQuery, SqlStatement};
+use crate::internals::{AsPgType, Numeric, PgParam, SqlQuery, SqlStatement};
 use crate::model::ModelMeta;
 use crate::sort::SortDefinition;
 use crate::{Field, GasResult};
@@ -31,6 +31,16 @@ impl<M: ModelMeta> SelectBuilder<M> {
 
     pub fn filter<F: FnOnce() -> EqExpression>(mut self, cond_fn: F) -> Self {
         self.filter = Some(cond_fn());
+        self
+    }
+
+    // bad, very bad
+    pub(crate) unsafe fn raw_filter(mut self, where_statement: String, params: &[PgParam]) -> Self {
+        // very good, very nice, much ORM
+        self.filter = Some(EqExpression::new(
+            Condition::Basic(where_statement),
+            params.to_vec(),
+        ));
         self
     }
 
@@ -90,12 +100,11 @@ impl<M: ModelMeta> SelectBuilder<M> {
         rows[0].try_get("aggregate")
     }
 
-    pub async fn count<E: PgExecutionContext, T>(
+    pub async fn count<E: PgExecutionContext, T: AsPgType>(
         self,
         ctx: E,
         field: Field<T, M>,
     ) -> GasResult<i64> {
-        let field = field.as_ref();
         let aggregate_call = format!("COUNT({})", field.full_name);
         let (sql, params) = self.build_aggregate_query(&aggregate_call);
 

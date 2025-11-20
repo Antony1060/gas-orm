@@ -67,8 +67,7 @@ fn proc_type_to_pg_type(ty: &syn::Type) -> Result<proc_macro2::TokenStream, syn:
         Err(syn::Error::new(ty.span(), "type must be a path type"))?
     };
 
-    // going through a generic function gives better errors compared to just `#path::PG_TYPE`
-    Ok(quote! { gas::internals::PgType::__to_pg_type::<#path>() })
+    Ok(quote! { <#path as gas::internals::AsPgType>::PG_TYPE })
 }
 
 fn find_fields_with_attr(fields: &Fields, target_attr: &'static str) -> Vec<Ident> {
