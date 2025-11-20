@@ -14,8 +14,8 @@ use std::num::NonZeroUsize;
 #[derive(Debug, Clone, Default)]
 pub struct SelectBuilder<T: ModelMeta> {
     pub(crate) filter: Option<EqExpression>,
-    pub(crate) sort: Option<SortDefinition>,
-    pub(crate) limit: Option<NonZeroUsize>,
+    sort: Option<SortDefinition>,
+    limit: Option<NonZeroUsize>,
     _marker: PhantomData<T>,
 }
 
@@ -45,10 +45,7 @@ impl<M: ModelMeta> SelectBuilder<M> {
     }
 
     pub fn group<Ty: AsPgType>(self, field: Field<Ty, M>) -> Group<M, Ty> {
-        Group {
-            field,
-            select: self,
-        }
+        Group::new(field, self)
     }
 
     pub async fn find_all<E: PgExecutionContext>(self, ctx: E) -> GasResult<Vec<M>> {

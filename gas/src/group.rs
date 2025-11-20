@@ -2,16 +2,64 @@ use crate::connection::PgExecutionContext;
 use crate::internals::{AsPgType, Numeric, SqlQuery, SqlStatement};
 use crate::ops::select::SelectBuilder;
 use crate::row::{FromRow, Row};
+use crate::sort::{SortDefinition, SortDirection, SortOp};
 use crate::{Field, GasResult, ModelMeta};
+use std::num::NonZeroUsize;
+
+pub enum GroupSorting {
+    Key,
+    Aggregate,
+}
+
+impl GroupSorting {
+    fn sql_select_name(&self) -> &'static str {
+        match self {
+            GroupSorting::Key => "key",
+            GroupSorting::Aggregate => "aggregate",
+        }
+    }
+
+    pub fn asc(&self) -> SortDefinition {
+        SortDefinition::from(SortOp {
+            field_full_name: self.sql_select_name(),
+            direction: SortDirection::Ascending,
+        })
+    }
+
+    pub fn desc(&self) -> SortDefinition {
+        SortDefinition::from(SortOp {
+            field_full_name: self.sql_select_name(),
+            direction: SortDirection::Descending,
+        })
+    }
+}
 
 pub struct Group<M: ModelMeta + 'static, G: AsPgType + 'static> {
-    pub(crate) field: Field<G, M>,
-    pub(crate) select: SelectBuilder<M>,
+    field: Field<G, M>,
+    select: SelectBuilder<M>,
+
+    sort: Option<SortDefinition>,
+    limit: Option<NonZeroUsize>,
 }
 
 impl<M: ModelMeta, G: AsPgType + 'static> Group<M, G> {
     pub fn new(field: Field<G, M>, select: SelectBuilder<M>) -> Self {
-        Self { field, select }
+        Self {
+            field,
+            select,
+            sort: None,
+            limit: None,
+        }
+    }
+
+    pub fn sort(mut self, sort_definition: SortDefinition) -> Self {
+        self.sort = Some(sort_definition);
+        self
+    }
+
+    pub fn limit(mut self, items: usize) -> Self {
+        self.limit = NonZeroUsize::new(items);
+        self
     }
 
     pub async fn sum<E: PgExecutionContext, N: Numeric>(
@@ -51,6 +99,17 @@ impl<M: ModelMeta, G: AsPgType + 'static> Group<M, G> {
         }
 
         sql.append_str(&format!(" GROUP BY {}", self.field.full_name));
+
+        if let Some(ref sort) = self.sort
+            && let Some(sort_sql) = sort.as_sql()
+        {
+            sql.append_str(" ORDER BY ");
+            sql.append_query(sort_sql);
+        }
+
+        if let Some(limit) = self.limit {
+            sql.append_str(&format!(" LIMIT {}", limit.get()));
+        }
 
         // params
         let params = self

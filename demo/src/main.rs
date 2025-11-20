@@ -3,6 +3,7 @@ use crate::tracing_util::setup_tracing;
 use gas::connection::PgConnection;
 use gas::eq::{PgEq, PgEqTime};
 use gas::error::GasError;
+use gas::group::GroupSorting;
 use gas::types::{Local, NaiveDate, NaiveTime, TimeDelta, Utc};
 use gas::{GasResult, ModelOps};
 use rust_decimal::Decimal;
@@ -103,9 +104,9 @@ async fn aggregate_ops(conn: &PgConnection) -> GasResult<()> {
         "complex count (grouped)",
         person::Model::query()
             .filter(|| person::bank_account_balance.gte(2000))
-            .sort(person::id.asc())
-            .limit(4)
             .group(person::bank_account_balance)
+            .sort(GroupSorting::Aggregate.asc() >> GroupSorting::Key.desc())
+            .limit(4)
             .count(conn, person::id)
             .await?
     );
@@ -114,9 +115,9 @@ async fn aggregate_ops(conn: &PgConnection) -> GasResult<()> {
         "complex sum (grouped)",
         person::Model::query()
             .filter(|| person::bank_account_balance.gte(2000))
-            .sort(person::id.asc())
-            .limit(4)
             .group(person::last_name)
+            .sort(GroupSorting::Aggregate.desc() >> person::last_name.asc())
+            .limit(4)
             .sum(conn, person::bank_account_balance)
             .await?
     );
