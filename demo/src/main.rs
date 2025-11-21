@@ -5,7 +5,7 @@ use gas::eq::{PgEq, PgEqTime};
 use gas::error::GasError;
 use gas::group::GroupSorting;
 use gas::types::{Local, NaiveDate, NaiveTime, TimeDelta, Utc};
-use gas::{GasResult, ModelOps};
+use gas::{GasResult, ModelMeta, ModelOps};
 use rust_decimal::Decimal;
 use std::env;
 use std::time::{SystemTime, UNIX_EPOCH};
@@ -56,7 +56,11 @@ async fn main() -> GasResult<()> {
 }
 
 async fn foreign_key_ops(conn: &PgConnection) -> GasResult<()> {
-    let mut some_post = post::Model::query().find_one(conn).await?.unwrap();
+    let mut some_post = post::Model::query()
+        .sort(post::id.asc())
+        .find_one(conn)
+        .await?
+        .unwrap();
 
     tracing_dbg!(some_post);
     tracing_dbg!("fk", some_post.user.get_foreign_key());
@@ -65,6 +69,18 @@ async fn foreign_key_ops(conn: &PgConnection) -> GasResult<()> {
 
     tracing_dbg!(some_post);
     tracing_dbg!("fk", some_post.user.get_foreign_key());
+
+    tracing_dbg!(
+        "eager loaded",
+        post::Model::query()
+            .raw_include(
+                " LEFT JOIN users ON users.id=posts.user_fk",
+                user::Model::FIELDS
+            )
+            .sort(post::id.desc())
+            .find_one(conn)
+            .await?
+    );
 
     Ok(())
 }

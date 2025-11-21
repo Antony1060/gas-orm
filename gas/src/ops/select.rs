@@ -7,7 +7,7 @@ use crate::group::Group;
 use crate::internals::{AsPgType, Numeric, PgParam, SqlQuery, SqlStatement};
 use crate::model::ModelMeta;
 use crate::sort::SortDefinition;
-use crate::{Field, GasResult, NaiveDecodable};
+use crate::{Field, FieldMeta, GasResult, NaiveDecodable};
 use std::marker::PhantomData;
 use std::num::NonZeroUsize;
 
@@ -16,6 +16,7 @@ pub struct SelectBuilder<T: ModelMeta> {
     pub(crate) filter: Option<EqExpression>,
     sort: Option<SortDefinition>,
     limit: Option<NonZeroUsize>,
+    includes: Vec<(String, &'static [&'static FieldMeta])>,
     _marker: PhantomData<T>,
 }
 
@@ -25,6 +26,7 @@ impl<M: ModelMeta> SelectBuilder<M> {
             filter: None,
             sort: None,
             limit: None,
+            includes: Vec::new(),
             _marker: PhantomData,
         }
     }
@@ -41,6 +43,11 @@ impl<M: ModelMeta> SelectBuilder<M> {
             Condition::Basic(where_statement),
             params.to_vec(),
         ));
+        self
+    }
+
+    pub fn raw_include(mut self, join: &str, fields: &'static [&FieldMeta]) -> Self {
+        self.includes.push((join.to_string(), fields));
         self
     }
 
@@ -122,14 +129,21 @@ impl<M: ModelMeta> SelectBuilder<M> {
     //  if limit is built into the query and then later on enforced by find_one,
     //  the query would fail; not very nice way to enforce an invariant but eh
     fn build<'a>(self, include_limit: bool) -> SqlStatement<'a> {
+        let tmp = self.includes.first().map(|it| it.1).unwrap_or(&[]);
+
         // sql
         let fields = M::FIELDS
             .iter()
+            .chain(tmp.iter())
             .map(|f| format!("{} AS {}", f.full_name, f.alias_name))
             .reduce(|acc, cur| format!("{}, {}", acc, cur))
             .expect("no fields");
 
         let mut sql = SqlQuery::from(format!("SELECT {} FROM {}", fields, M::TABLE_NAME));
+
+        for include in self.includes {
+            sql.append_str(include.0.as_str());
+        }
 
         if let Some(ref filter) = self.filter {
             sql.append_str(" WHERE ");
