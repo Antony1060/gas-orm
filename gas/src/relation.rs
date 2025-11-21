@@ -10,7 +10,7 @@ use crate::{GasResult, ModelMeta, ModelOps};
 //  ```
 // NOTE: a foreign key must have uniqueness, so it must have a unique constraint or
 //  be a primary key unless it's part of a composite primary key (i.e. there's only one)
-pub enum FullRelation<Fk: AsPgType, Model: ModelMeta, const FIELD_INDEX: usize> {
+pub enum FullRelation<Fk: AsPgType + 'static, Model: ModelMeta, const FIELD_INDEX: usize> {
     // this is cursed
     ForeignKey(Fk),
     Loaded(Model),

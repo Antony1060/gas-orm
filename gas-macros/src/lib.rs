@@ -340,10 +340,17 @@ fn derive_model_impl(_input: TokenStream) -> Result<TokenStream, syn::Error> {
                 #delete_fn
             }
 
-            fn get_by_field<T: gas::internals::AsPgType>(&self, field: &gas::FieldMeta) -> Option<T> {
+            fn get_by_field<T: gas::internals::AsPgType + 'static>(&self, field: &gas::FieldMeta) -> Option<T> {
                 let struct_name = field.struct_name;
+                let type_id_t = std::any::TypeId::of::<T>();
                 match struct_name {
-                    #(stringify!(#filed_list_get_by_field) => Some(unsafe { (*((&self.#filed_list_get_by_field as *const _) as *const T)).clone() }),)*
+                    #(stringify!(#filed_list_get_by_field) => {
+                        let value = &self.#filed_list_get_by_field;
+                        if type_id_t != gas::internals::type_id_of_value(value) {
+                            return None;
+                        }
+                        Some(unsafe { (*((value as *const _) as *const T)).clone() })
+                    },)*
                     _ => None
                 }
             }

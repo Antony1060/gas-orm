@@ -10,6 +10,7 @@ pub(crate) use numeric::*;
 pub use pg_param::*;
 pub use pg_type::*;
 pub use sql_query::*;
+use std::any::TypeId;
 
 pub fn generate_update_set_fields(fields: &[&FieldMeta]) -> String {
     fields
@@ -17,4 +18,8 @@ pub fn generate_update_set_fields(fields: &[&FieldMeta]) -> String {
         .map(|field| format!("{}=?", field.name))
         .reduce(|acc, curr| format!("{}, {}", acc, curr))
         .unwrap_or_else(String::new)
+}
+
+pub fn type_id_of_value<T: 'static>(_: &T) -> TypeId {
+    TypeId::of::<T>()
 }

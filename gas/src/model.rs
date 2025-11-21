@@ -30,7 +30,7 @@ pub trait ModelMeta: Sized + Default + FromRow {
 
     // will be implemented by a macro with some unsafe magic
     //  used with relations
-    fn get_by_field<T: AsPgType>(&self, field: &FieldMeta) -> Option<T>;
+    fn get_by_field<T: AsPgType + 'static>(&self, field: &FieldMeta) -> Option<T>;
 }
 
 pub trait ModelOps: ModelMeta {
