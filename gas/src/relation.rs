@@ -2,11 +2,6 @@ use crate::connection::PgExecutionContext;
 use crate::internals::{AsPgType, PgParam};
 use crate::{GasResult, ModelMeta, ModelOps};
 
-pub enum Relation<Fk: AsPgType, Model: ModelMeta> {
-    ForeignKey(Fk),
-    Loaded(Model),
-}
-
 // TODO: enforce that Field<Fk, Model> matches the one provided with macro, e.g.
 //  ```
 //  #[foreign(key = account::id)] // account::id must be a Field<i64, account::Model>
@@ -55,6 +50,15 @@ where
 
                 Ok(Some(model))
             }
+        }
+    }
+
+    pub async fn get_foreign_key(&self) -> Fk {
+        match self {
+            FullRelation::Loaded(model) => model
+                .get_by_field(Model::FIELDS[FIELD_INDEX])
+                .expect("foreign key should be accessible by field"),
+            FullRelation::ForeignKey(key) => key.clone(),
         }
     }
 }

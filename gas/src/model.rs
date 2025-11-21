@@ -1,7 +1,7 @@
 use crate::condition::EqExpression;
 use crate::connection::PgExecutionContext;
 use crate::field::FieldMeta;
-use crate::internals::SqlStatement;
+use crate::internals::{AsPgType, SqlStatement};
 use crate::ops::create::CreateOp;
 use crate::ops::delete::DeleteOp;
 use crate::ops::insert::InsertOp;
@@ -27,6 +27,10 @@ pub trait ModelMeta: Sized + Default + FromRow {
     fn gen_update_with_fields_sql(&self, fields: &[&FieldMeta]) -> SqlStatement<'_>;
 
     fn gen_delete_sql(&self) -> SqlStatement<'_>;
+
+    // will be implemented by a macro with some unsafe magic
+    //  used with relations
+    fn get_by_field<T: AsPgType>(&self, field: &FieldMeta) -> Option<T>;
 }
 
 pub trait ModelOps: ModelMeta {

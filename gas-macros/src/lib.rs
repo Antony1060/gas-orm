@@ -304,6 +304,7 @@ fn derive_model_impl(_input: TokenStream) -> Result<TokenStream, syn::Error> {
         .collect::<Result<Vec<_>, syn::Error>>()?;
 
     let field_list = input.fields.iter().filter_map(|field| field.ident.as_ref());
+    let filed_list_get_by_field = field_list.clone();
 
     let key_tokens = gen_key_tokens(&ctx, &input.fields);
 
@@ -337,6 +338,14 @@ fn derive_model_impl(_input: TokenStream) -> Result<TokenStream, syn::Error> {
 
             fn gen_delete_sql(&self) -> gas::internals::SqlStatement {
                 #delete_fn
+            }
+
+            fn get_by_field<T: gas::internals::AsPgType>(&self, field: &gas::FieldMeta) -> Option<T> {
+                let struct_name = field.struct_name;
+                match struct_name {
+                    #(stringify!(#filed_list_get_by_field) => Some(unsafe { (*((&self.#filed_list_get_by_field as *const _) as *const T)).clone() }),)*
+                    _ => None
+                }
             }
         }
 
