@@ -37,6 +37,7 @@ impl Debug for FieldFlags {
 #[derive(Debug)]
 pub struct FieldMeta {
     // a lot of names
+    pub table_name: &'static str,
     pub full_name: &'static str,   // table.column
     pub name: &'static str,        // column
     pub alias_name: &'static str,  // table_column
@@ -55,12 +56,12 @@ pub struct Field<T: AsPgType, M: ModelMeta> {
 }
 
 impl<T: AsPgType, M: ModelMeta> Field<T, M> {
-    pub const fn new(meta: FieldMeta) -> Self {
+    pub const fn new(meta: FieldMeta, index: usize) -> Self {
         Self {
             meta,
+            index,
             _marker: PhantomData,
             _model_marker: PhantomData,
-            index: 0,
         }
     }
 

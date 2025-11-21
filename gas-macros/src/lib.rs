@@ -87,6 +87,7 @@ fn find_fields_with_attr(fields: &Fields, target_attr: &'static str) -> Vec<Iden
 fn process_field(
     ctx: &ModelCtx<'_>,
     field: &Field,
+    index: usize,
 ) -> Option<Result<proc_macro2::TokenStream, syn::Error>> {
     let ident = field.ident.as_ref()?;
     let ty = field.ty.clone();
@@ -126,8 +127,11 @@ fn process_field(
     let name = &field_names.column_name;
     let alias_name = &field_names.alias_name;
 
+    let table_name = ctx.table_name;
+
     Some(Ok(quote! {
         pub const #ident: gas::Field<#ty, Model> = gas::Field::new(gas::FieldMeta {
+            table_name: #table_name,
             full_name: #full_name,
             name: #name,
             alias_name: #alias_name,
@@ -135,7 +139,7 @@ fn process_field(
             pg_type: #pg_type_tokens,
             flags: gas::FieldFlags(#(#flags)|*),
             relationship: None
-        });
+        }, #index);
     }))
 }
 
@@ -297,10 +301,12 @@ fn derive_model_impl(_input: TokenStream) -> Result<TokenStream, syn::Error> {
         field_columns: &parse_col_names(&table_name, &input.fields)?,
     };
 
+    let mut counter = 0usize..;
+
     let field_consts = input
         .fields
         .iter()
-        .filter_map(|field| process_field(&ctx, field))
+        .filter_map(|field| process_field(&ctx, field, counter.next().unwrap()))
         .collect::<Result<Vec<_>, syn::Error>>()?;
 
     let field_list = input.fields.iter().filter_map(|field| field.ident.as_ref());

@@ -1,4 +1,5 @@
 use crate::connection::PgExecutionContext;
+use crate::internals::PgType::FOREIGN_KEY;
 use crate::internals::{AsPgType, IsOptional, PgParam, PgType};
 use crate::row::{FromRowNamed, Row};
 use crate::{GasResult, ModelMeta, ModelOps, NaiveDecodable};
@@ -76,7 +77,10 @@ impl<Fk: AsPgType, Model: ModelMeta, const FIELD_INDEX: usize> Default
 impl<Fk: AsPgType, Model: ModelMeta, const FIELD_INDEX: usize> AsPgType
     for Relation<Fk, Model, FIELD_INDEX>
 {
-    const PG_TYPE: PgType = Fk::PG_TYPE;
+    const PG_TYPE: PgType = FOREIGN_KEY {
+        key_type: &Fk::PG_TYPE,
+        target_field: Model::FIELDS[FIELD_INDEX],
+    };
 }
 
 impl<Fk: AsPgType, Model: ModelMeta, const FIELD_INDEX: usize> IsOptional

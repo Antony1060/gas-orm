@@ -41,7 +41,7 @@ impl<T: ModelMeta> CreateOp<T> {
                 .as_sql_type(field.flags.has_flag(FieldFlag::Serial));
             sql.append_str(field.name);
             sql.append_str(" ");
-            sql.append_str(sql_type);
+            sql.append_str(&sql_type);
 
             if !field.flags.has_flag(FieldFlag::Nullable) {
                 sql.append_str(" NOT NULL");

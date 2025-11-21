@@ -1,4 +1,4 @@
-use crate::models::{audit_logs, person};
+use crate::models::{audit_logs, person, post, user};
 use crate::tracing_util::setup_tracing;
 use gas::connection::PgConnection;
 use gas::eq::{PgEq, PgEqTime};
@@ -23,6 +23,8 @@ async fn main() -> GasResult<()> {
 
     person::Model::create_table(&conn, true).await?;
     audit_logs::Model::create_table(&conn, true).await?;
+    user::Model::create_table(&conn, true).await?;
+    post::Model::create_table(&conn, true).await?;
 
     normal_ops(&conn).await?;
     tracing::info!("----------------");
@@ -45,6 +47,24 @@ async fn main() -> GasResult<()> {
     tracing::info!("aggregate");
     tracing::info!("----------------");
     aggregate_ops(&conn).await?;
+    tracing::info!("----------------");
+    tracing::info!("foreign key");
+    tracing::info!("----------------");
+    foreign_key_ops(&conn).await?;
+
+    Ok(())
+}
+
+async fn foreign_key_ops(conn: &PgConnection) -> GasResult<()> {
+    let mut some_post = post::Model::query().find_one(conn).await?.unwrap();
+
+    tracing_dbg!(some_post);
+    tracing_dbg!("fk", some_post.user.get_foreign_key());
+
+    tracing_dbg!("lazy loaded", some_post.user.load(conn).await?);
+
+    tracing_dbg!(some_post);
+    tracing_dbg!("fk", some_post.user.get_foreign_key());
 
     Ok(())
 }
