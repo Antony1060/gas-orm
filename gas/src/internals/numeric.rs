@@ -1,7 +1,8 @@
 use crate::internals::AsPgType;
+use crate::NaiveDecodable;
 use rust_decimal::Decimal;
 
-pub(crate) trait Numeric: AsPgType {}
+pub(crate) trait Numeric: AsPgType + NaiveDecodable {}
 
 impl Numeric for i16 {}
 impl Numeric for i32 {}

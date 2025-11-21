@@ -3,7 +3,7 @@ use crate::internals::{AsPgType, Numeric, SqlQuery, SqlStatement};
 use crate::ops::select::SelectBuilder;
 use crate::row::{FromRow, Row};
 use crate::sort::{SortDefinition, SortDirection, SortOp};
-use crate::{Field, GasResult, ModelMeta};
+use crate::{Field, GasResult, ModelMeta, NaiveDecodable};
 use std::num::NonZeroUsize;
 
 pub enum GroupSorting {
@@ -34,7 +34,7 @@ impl GroupSorting {
     }
 }
 
-pub struct Group<M: ModelMeta + 'static, G: AsPgType + 'static> {
+pub struct Group<M: ModelMeta + 'static, G: AsPgType + NaiveDecodable + 'static> {
     field: Field<G, M>,
     select: SelectBuilder<M>,
 
@@ -42,7 +42,7 @@ pub struct Group<M: ModelMeta + 'static, G: AsPgType + 'static> {
     limit: Option<NonZeroUsize>,
 }
 
-impl<M: ModelMeta, G: AsPgType + 'static> Group<M, G> {
+impl<M: ModelMeta, G: AsPgType + NaiveDecodable + 'static> Group<M, G> {
     pub fn new(field: Field<G, M>, select: SelectBuilder<M>) -> Self {
         Self {
             field,
@@ -128,7 +128,7 @@ pub struct Counted<G: AsPgType> {
     pub count: i64,
 }
 
-impl<G: AsPgType> FromRow for Counted<G> {
+impl<G: AsPgType + NaiveDecodable> FromRow for Counted<G> {
     fn from_row(row: &Row) -> GasResult<Self> {
         Ok(Self {
             key: row.try_get("key")?,
@@ -143,7 +143,7 @@ pub struct Summed<G: AsPgType, N: Numeric> {
     pub sum: N,
 }
 
-impl<G: AsPgType, N: Numeric> FromRow for Summed<G, N> {
+impl<G: AsPgType + NaiveDecodable, N: Numeric> FromRow for Summed<G, N> {
     fn from_row(row: &Row) -> GasResult<Self> {
         Ok(Self {
             key: row.try_get("key")?,

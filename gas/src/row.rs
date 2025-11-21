@@ -1,5 +1,5 @@
 use crate::internals::AsPgType;
-use crate::GasResult;
+use crate::{GasResult, NaiveDecodable};
 use sqlx::postgres::PgRow;
 use sqlx::Row as SqlxRow;
 
@@ -14,11 +14,24 @@ impl From<PgRow> for Row {
 }
 
 impl Row {
-    pub fn try_get<T: AsPgType>(&self, index: &str) -> GasResult<T> {
+    pub fn try_get<T>(&self, index: &str) -> GasResult<T>
+    where
+        T: AsPgType + NaiveDecodable,
+    {
         Ok(self.pg_row.try_get::<T, &str>(index)?)
     }
 }
 
 pub trait FromRow: Sized {
     fn from_row(row: &Row) -> GasResult<Self>;
+}
+
+pub trait FromRowNamed: Sized {
+    fn from_row_named(row: &Row, name: &str) -> GasResult<Self>;
+}
+
+impl<T: AsPgType + NaiveDecodable> FromRowNamed for T {
+    fn from_row_named(row: &Row, name: &str) -> GasResult<Self> {
+        row.try_get::<T>(name)
+    }
 }

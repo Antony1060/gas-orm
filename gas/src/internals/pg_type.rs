@@ -1,7 +1,6 @@
 use crate::internals::PgParam;
 use crate::types::Decimal;
 use chrono::{DateTime, FixedOffset, Local, NaiveDate, NaiveDateTime, NaiveTime, Utc};
-use sqlx::{Decode, Type};
 
 #[derive(Debug)]
 pub enum PgType {
@@ -40,7 +39,7 @@ impl PgType {
     }
 }
 
-pub trait AsPgType: Clone + for<'a> Decode<'a, sqlx::Postgres> + Type<sqlx::Postgres> {
+pub trait AsPgType: Clone + Default {
     const PG_TYPE: PgType;
 }
 

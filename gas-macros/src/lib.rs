@@ -147,7 +147,7 @@ fn generate_from_row(ctx: &ModelCtx) -> Result<proc_macro2::TokenStream, syn::Er
             let ident = Ident::new(ident, Span::call_site());
 
             quote! {
-                #ident: row.try_get(#alias_name)?,
+                #ident: gas::row::FromRowNamed::from_row_named(row, #alias_name)?,
             }
         })
         .collect::<Vec<_>>();
@@ -430,7 +430,7 @@ fn model_impl(args: TokenStream, input: TokenStream) -> Result<TokenStream, syn:
             #![allow(non_upper_case_globals, dead_code)]
             use super::*;
 
-            #[derive(gas::__model)]
+            #[derive(gas::__model, Clone)]
             #[__gas_meta(#args_tokens)]
             #original_struct
 
