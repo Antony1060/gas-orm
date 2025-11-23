@@ -1,4 +1,5 @@
 use crate::internals::PgParam;
+use crate::row::FromRowNamed;
 use crate::types::Decimal;
 use crate::FieldMeta;
 use chrono::{DateTime, FixedOffset, Local, NaiveDate, NaiveDateTime, NaiveTime, Utc};
@@ -56,7 +57,7 @@ impl PgType {
     }
 }
 
-pub trait AsPgType: Clone + Default {
+pub trait AsPgType: Clone + Default + FromRowNamed {
     const PG_TYPE: PgType;
 }
 

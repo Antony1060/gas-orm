@@ -76,6 +76,8 @@ impl<Fk: AsPgType, Model: ModelMeta, const FIELD_INDEX: usize> Default
 
 impl<Fk: AsPgType, Model: ModelMeta, const FIELD_INDEX: usize> AsPgType
     for Relation<Fk, Model, FIELD_INDEX>
+where
+    Relation<Fk, Model, FIELD_INDEX>: FromRowNamed,
 {
     const PG_TYPE: PgType = FOREIGN_KEY {
         key_type: &Fk::PG_TYPE,
