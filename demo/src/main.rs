@@ -95,6 +95,18 @@ async fn foreign_key_ops(conn: &PgConnection) -> GasResult<()> {
             .await?
     );
 
+    tracing_dbg!(
+        "group fk",
+        post::Model::query()
+            .raw_include(
+                " LEFT JOIN users ON users.id=posts.user_fk",
+                user::Model::FIELDS
+            )
+            .group(post::user)
+            .count(conn, post::id)
+            .await?
+    );
+
     Ok(())
 }
 

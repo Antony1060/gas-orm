@@ -7,7 +7,7 @@ use crate::group::Group;
 use crate::internals::{AsPgType, Numeric, PgParam, SqlQuery, SqlStatement};
 use crate::model::ModelMeta;
 use crate::sort::SortDefinition;
-use crate::{Field, FieldMeta, GasResult, NaiveDecodable};
+use crate::{Field, FieldMeta, GasResult};
 use std::marker::PhantomData;
 use std::num::NonZeroUsize;
 
@@ -61,7 +61,7 @@ impl<M: ModelMeta> SelectBuilder<M> {
         self
     }
 
-    pub fn group<Ty: AsPgType + NaiveDecodable>(self, field: Field<Ty, M>) -> Group<M, Ty> {
+    pub fn group<Ty: AsPgType>(self, field: Field<Ty, M>) -> Group<M, Ty> {
         Group::new(field, self)
     }
 
