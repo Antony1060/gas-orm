@@ -66,7 +66,7 @@ impl<M: ModelMeta, G: AsPgType + 'static> Group<M, G> {
         self,
         ctx: E,
         field: Field<N, M>,
-    ) -> GasResult<Vec<Summed<G, N>>> {
+    ) -> GasResult<Vec<Summed<G, N::SumType>>> {
         let aggregate_call = format!("SUM({})", field.full_name);
         let (sql, params) = self.build_aggregate_query(&aggregate_call);
 

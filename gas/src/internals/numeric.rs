@@ -2,7 +2,7 @@ use crate::internals::{AsPgType, NaiveDecodable};
 use crate::types::Decimal;
 
 pub trait Numeric: AsPgType + NaiveDecodable {
-    type SumType: AsPgType + NaiveDecodable;
+    type SumType: Numeric;
 }
 
 impl Numeric for i16 {
