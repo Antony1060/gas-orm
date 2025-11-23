@@ -77,8 +77,21 @@ async fn foreign_key_ops(conn: &PgConnection) -> GasResult<()> {
                 " LEFT JOIN users ON users.id=posts.user_fk",
                 user::Model::FIELDS
             )
-            .sort(post::id.desc())
+            .sort(user::id.desc())
             .find_one(conn)
+            .await?
+    );
+
+    tracing_dbg!(
+        "aggregate on joined",
+        post::Model::query()
+            .raw_include(
+                " LEFT JOIN users ON users.id=posts.user_fk",
+                user::Model::FIELDS
+            )
+            .filter(|| user::id.gt(2))
+            .sort(post::id.desc())
+            .sum(conn, user::id)
             .await?
     );
 

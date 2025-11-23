@@ -89,11 +89,11 @@ impl<M: ModelMeta> SelectBuilder<M> {
         Ok(items.pop())
     }
 
-    pub async fn sum<E: PgExecutionContext, N: Numeric>(
+    pub async fn sum<E: PgExecutionContext, FM: ModelMeta, N: Numeric>(
         self,
         ctx: E,
-        field: Field<N, M>,
-    ) -> GasResult<N> {
+        field: Field<N, FM>,
+    ) -> GasResult<N::SumType> {
         let aggregate_call = format!("SUM({})", field.full_name);
         let (sql, params) = self.build_aggregate_query(&aggregate_call);
 
@@ -107,10 +107,10 @@ impl<M: ModelMeta> SelectBuilder<M> {
         rows[0].try_get("aggregate")
     }
 
-    pub async fn count<E: PgExecutionContext, T: AsPgType>(
+    pub async fn count<E: PgExecutionContext, FM: ModelMeta, T: AsPgType>(
         self,
         ctx: E,
-        field: Field<T, M>,
+        field: Field<T, FM>,
     ) -> GasResult<i64> {
         let aggregate_call = format!("COUNT({})", field.full_name);
         let (sql, params) = self.build_aggregate_query(&aggregate_call);
@@ -177,6 +177,10 @@ impl<M: ModelMeta> SelectBuilder<M> {
             aggregate_call,
             M::TABLE_NAME
         ));
+
+        for include in self.includes {
+            sql.append_str(include.0.as_str());
+        }
 
         if let Some(ref filter) = self.filter {
             sql.append_str(" WHERE ");
