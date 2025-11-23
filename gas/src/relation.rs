@@ -1,8 +1,8 @@
 use crate::connection::PgExecutionContext;
 use crate::internals::PgType::FOREIGN_KEY;
-use crate::internals::{AsPgType, IsOptional, PgParam, PgType};
+use crate::internals::{AsPgType, IsOptional, NaiveDecodable, PgParam, PgType};
 use crate::row::{FromRowNamed, Row};
-use crate::{GasResult, ModelMeta, ModelOps, NaiveDecodable};
+use crate::{GasResult, ModelMeta, ModelOps};
 
 // TODO: enforce that Field<Fk, Model> matches the one provided with macro, e.g.
 //  ```
@@ -74,10 +74,8 @@ impl<Fk: AsPgType, Model: ModelMeta, const FIELD_INDEX: usize> Default
     }
 }
 
-impl<Fk: AsPgType, Model: ModelMeta, const FIELD_INDEX: usize> AsPgType
+impl<Fk: AsPgType + NaiveDecodable, Model: ModelMeta, const FIELD_INDEX: usize> AsPgType
     for Relation<Fk, Model, FIELD_INDEX>
-where
-    Relation<Fk, Model, FIELD_INDEX>: FromRowNamed,
 {
     const PG_TYPE: PgType = FOREIGN_KEY {
         key_type: &Fk::PG_TYPE,
@@ -108,5 +106,44 @@ impl<Fk: AsPgType + NaiveDecodable, Model: ModelMeta, const FIELD_INDEX: usize> 
         Model::from_row(row)
             .map(|model| Relation::Loaded(model))
             .or_else(|_| Ok(Relation::ForeignKey(Fk::from_row_named(row, name)?)))
+    }
+}
+
+// optional
+impl<Fk: AsPgType + NaiveDecodable, Model: ModelMeta, const FIELD_INDEX: usize> AsPgType
+    for Option<Relation<Fk, Model, FIELD_INDEX>>
+where
+    Option<Fk>: AsPgType,
+{
+    const PG_TYPE: PgType = FOREIGN_KEY {
+        key_type: &Fk::PG_TYPE,
+        target_field: Model::FIELDS[FIELD_INDEX],
+    };
+}
+
+impl<Fk: AsPgType, Model: ModelMeta, const FIELD_INDEX: usize>
+    From<Option<Relation<Fk, Model, FIELD_INDEX>>> for PgParam
+where
+    PgParam: From<Relation<Fk, Model, FIELD_INDEX>>,
+{
+    fn from(value: Option<Relation<Fk, Model, FIELD_INDEX>>) -> Self {
+        match value {
+            Some(value) => PgParam::from(value),
+            None => PgParam::NULL,
+        }
+    }
+}
+
+impl<Fk: AsPgType + NaiveDecodable, Model: ModelMeta, const FIELD_INDEX: usize> FromRowNamed
+    for Option<Relation<Fk, Model, FIELD_INDEX>>
+where
+    Option<Fk>: AsPgType,
+{
+    fn from_row_named(row: &Row, name: &str) -> GasResult<Self> {
+        Ok(Option::<Fk>::from_row_named(row, name)?.map(|fk| {
+            Model::from_row(row)
+                .map(|model| Relation::Loaded(model))
+                .unwrap_or_else(|_| Relation::ForeignKey(fk))
+        }))
     }
 }

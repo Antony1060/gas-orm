@@ -1,11 +1,11 @@
-use crate::models::{audit_logs, person, post, user};
+use crate::models::{audit_logs, order, person, post, product, user};
 use crate::tracing_util::setup_tracing;
 use gas::connection::PgConnection;
 use gas::eq::{PgEq, PgEqTime};
 use gas::error::GasError;
 use gas::group::GroupSorting;
 use gas::types::{Local, NaiveDate, NaiveTime, TimeDelta, Utc};
-use gas::{GasResult, ModelMeta, ModelOps};
+use gas::{GasResult, ModelOps};
 use rust_decimal::Decimal;
 use std::env;
 use std::time::{SystemTime, UNIX_EPOCH};
@@ -25,6 +25,8 @@ async fn main() -> GasResult<()> {
     audit_logs::Model::create_table(&conn, true).await?;
     user::Model::create_table(&conn, true).await?;
     post::Model::create_table(&conn, true).await?;
+    product::Model::create_table(&conn, true).await?;
+    order::Model::create_table(&conn, true).await?;
 
     normal_ops(&conn).await?;
     tracing::info!("----------------");
@@ -73,10 +75,7 @@ async fn foreign_key_ops(conn: &PgConnection) -> GasResult<()> {
     tracing_dbg!(
         "eager loaded",
         post::Model::query()
-            .raw_include(
-                " LEFT JOIN users ON users.id=posts.user_fk",
-                user::Model::FIELDS
-            )
+            .include(post::user)
             .sort(user::id.desc())
             .find_one(conn)
             .await?
@@ -85,10 +84,7 @@ async fn foreign_key_ops(conn: &PgConnection) -> GasResult<()> {
     tracing_dbg!(
         "aggregate on joined",
         post::Model::query()
-            .raw_include(
-                " LEFT JOIN users ON users.id=posts.user_fk",
-                user::Model::FIELDS
-            )
+            .include(post::user)
             .filter(|| user::id.gt(2))
             .sort(post::id.desc())
             .sum(conn, user::id)
@@ -98,12 +94,19 @@ async fn foreign_key_ops(conn: &PgConnection) -> GasResult<()> {
     tracing_dbg!(
         "group fk",
         post::Model::query()
-            .raw_include(
-                " LEFT JOIN users ON users.id=posts.user_fk",
-                user::Model::FIELDS
-            )
+            .include(post::user)
             .group(post::user)
             .count(conn, post::id)
+            .await?
+    );
+
+    tracing_dbg!(
+        "multiple include",
+        order::Model::query()
+            .include(order::user)
+            .include(order::product)
+            .limit(4)
+            .find_all(conn)
             .await?
     );
 

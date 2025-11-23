@@ -46,6 +46,29 @@ pub struct Post {
     #[serial]
     pub id: i64,
     pub title: String,
+    // TODO: references to itself or multiple others
     #[column(name = "user_fk")]
     pub user: Relation<i64, user::Model, { user::id.index }>,
+}
+
+#[gas::model(table_name = "products")]
+#[derive(Debug)]
+pub struct Product {
+    #[primary_key]
+    #[serial]
+    pub id: i64,
+    pub name: String,
+}
+
+#[gas::model(table_name = "orders")]
+#[derive(Debug)]
+pub struct Order {
+    #[primary_key]
+    #[serial]
+    pub id: i64,
+    pub quantity: i32,
+    #[column(name = "user_fk")]
+    pub user: Relation<i64, user::Model, { user::id.index }>,
+    #[column(name = "product_pk")]
+    pub product: Option<Relation<i64, product::Model, { product::id.index }>>,
 }

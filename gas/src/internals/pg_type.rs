@@ -3,6 +3,7 @@ use crate::row::FromRowNamed;
 use crate::types::Decimal;
 use crate::FieldMeta;
 use chrono::{DateTime, FixedOffset, Local, NaiveDate, NaiveDateTime, NaiveTime, Utc};
+use sqlx::{Decode, Postgres, Type};
 use std::borrow::Cow;
 
 #[derive(Debug)]
@@ -69,6 +70,8 @@ impl<T: AsPgType> IsOptional for Option<T> {
     const FACTOR: u8 = 1;
 }
 
+pub(crate) trait NaiveDecodable: for<'a> Decode<'a, Postgres> + Type<Postgres> {}
+
 macro_rules! pg_type_impl {
     ($field_type:ty as $pg_type:expr, $pg_param_conv:expr) => {
         impl AsPgType for $field_type {
@@ -78,6 +81,9 @@ macro_rules! pg_type_impl {
         impl AsPgType for Option<$field_type> {
             const PG_TYPE: PgType = $pg_type;
         }
+
+        impl NaiveDecodable for $field_type {}
+        impl NaiveDecodable for Option<$field_type> {}
 
         // default to 0, blanked implemented to 1 for all Option<T: AsPgType>
         impl IsOptional for $field_type {

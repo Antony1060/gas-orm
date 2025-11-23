@@ -4,10 +4,10 @@ use crate::condition::{Condition, EqExpression};
 use crate::connection::PgExecutionContext;
 use crate::error::GasError;
 use crate::group::Group;
-use crate::internals::{AsPgType, Numeric, PgParam, SqlQuery, SqlStatement};
+use crate::internals::{AsPgType, NaiveDecodable, Numeric, PgParam, SqlQuery, SqlStatement};
 use crate::model::ModelMeta;
 use crate::sort::SortDefinition;
-use crate::{Field, FieldMeta, GasResult};
+use crate::{Field, FieldMeta, GasResult, Relation};
 use std::marker::PhantomData;
 use std::num::NonZeroUsize;
 
@@ -46,8 +46,25 @@ impl<M: ModelMeta> SelectBuilder<M> {
         self
     }
 
-    pub fn raw_include(mut self, join: &str, fields: &'static [&FieldMeta]) -> Self {
-        self.includes.push((join.to_string(), fields));
+    pub fn include<RFk, RModel, const R_FIELD_INDEX: usize, Ty>(
+        mut self,
+        field: Field<Ty, M>,
+    ) -> Self
+    where
+        RFk: AsPgType + NaiveDecodable + 'static,
+        RModel: ModelMeta,
+        Ty: Into<Option<Relation<RFk, RModel, R_FIELD_INDEX>>> + AsPgType,
+    {
+        // TODO: !! unchecked array access
+        self.includes.push((
+            format!(
+                "LEFT JOIN {} ON {}={}",
+                RModel::TABLE_NAME,
+                field.full_name,
+                RModel::FIELDS[R_FIELD_INDEX].full_name
+            ),
+            RModel::FIELDS,
+        ));
         self
     }
 
@@ -129,12 +146,12 @@ impl<M: ModelMeta> SelectBuilder<M> {
     //  if limit is built into the query and then later on enforced by find_one,
     //  the query would fail; not very nice way to enforce an invariant but eh
     fn build<'a>(self, include_limit: bool) -> SqlStatement<'a> {
-        let tmp = self.includes.first().map(|it| it.1).unwrap_or(&[]);
+        let tmp = self.includes.iter().flat_map(|it| it.1);
 
         // sql
         let fields = M::FIELDS
             .iter()
-            .chain(tmp.iter())
+            .chain(tmp)
             .map(|f| format!("{} AS {}", f.full_name, f.alias_name))
             .reduce(|acc, cur| format!("{}, {}", acc, cur))
             .expect("no fields");
@@ -142,6 +159,7 @@ impl<M: ModelMeta> SelectBuilder<M> {
         let mut sql = SqlQuery::from(format!("SELECT {} FROM {}", fields, M::TABLE_NAME));
 
         for include in self.includes {
+            sql.append_str(" ");
             sql.append_str(include.0.as_str());
         }
 
@@ -179,6 +197,7 @@ impl<M: ModelMeta> SelectBuilder<M> {
         ));
 
         for include in self.includes {
+            sql.append_str(" ");
             sql.append_str(include.0.as_str());
         }
 

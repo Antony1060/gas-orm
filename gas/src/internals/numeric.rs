@@ -1,6 +1,5 @@
-use crate::internals::AsPgType;
+use crate::internals::{AsPgType, NaiveDecodable};
 use crate::types::Decimal;
-use crate::NaiveDecodable;
 
 pub trait Numeric: AsPgType + NaiveDecodable {
     type SumType: AsPgType + NaiveDecodable;

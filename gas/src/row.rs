@@ -1,5 +1,5 @@
-use crate::internals::AsPgType;
-use crate::{GasResult, NaiveDecodable};
+use crate::internals::{AsPgType, NaiveDecodable};
+use crate::GasResult;
 use sqlx::postgres::PgRow;
 use sqlx::Row as SqlxRow;
 
