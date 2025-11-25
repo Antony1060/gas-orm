@@ -1,4 +1,5 @@
 use crate::connection::PgExecutionContext;
+use crate::error::GasError;
 use crate::internals::PgType::FOREIGN_KEY;
 use crate::internals::{AsPgType, IsOptional, NaiveDecodable, PgParam, PgType};
 use crate::row::{FromRowNamed, Row};
@@ -26,9 +27,9 @@ where
     PgParam: From<Fk>,
 {
     async fn load_by_key<E: PgExecutionContext>(ctx: E, key: Fk) -> GasResult<Option<Model>> {
-        // TODO: !!!!
-        // 🫠
-        let field = Model::FIELDS[FIELD_INDEX];
+        let field = Model::FIELDS
+            .get(FIELD_INDEX)
+            .ok_or_else(|| GasError::InvalidRelation)?;
 
         let mut select = Model::query();
         unsafe {
@@ -56,10 +57,15 @@ where
         }
     }
 
+    // NOTE: can panic
     pub fn get_foreign_key(&self) -> Fk {
         match self {
             Relation::Loaded(model) => model
-                .get_by_field(Model::FIELDS[FIELD_INDEX])
+                .get_by_field(
+                    Model::FIELDS
+                        .get(FIELD_INDEX)
+                        .expect("field relation is not correctly defined"),
+                )
                 .expect("foreign key should be accessible by field"),
             Relation::ForeignKey(key) => key.clone(),
         }
@@ -77,6 +83,7 @@ impl<Fk: AsPgType, Model: ModelMeta, const FIELD_INDEX: usize> Default
 impl<Fk: AsPgType + NaiveDecodable, Model: ModelMeta, const FIELD_INDEX: usize> AsPgType
     for Relation<Fk, Model, FIELD_INDEX>
 {
+    // NOTE: const time, array access should fail on time
     const PG_TYPE: PgType = FOREIGN_KEY {
         key_type: &Fk::PG_TYPE,
         target_field: Model::FIELDS[FIELD_INDEX],
@@ -115,6 +122,7 @@ impl<Fk: AsPgType + NaiveDecodable, Model: ModelMeta, const FIELD_INDEX: usize> 
 where
     Option<Fk>: AsPgType,
 {
+    // NOTE: const time, array access should fail on time
     const PG_TYPE: PgType = FOREIGN_KEY {
         key_type: &Fk::PG_TYPE,
         target_field: Model::FIELDS[FIELD_INDEX],

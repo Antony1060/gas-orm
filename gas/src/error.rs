@@ -22,4 +22,7 @@ pub enum GasError {
 
     #[error("query yielded no responses: {0}")]
     QueryNoResponse(&'static str),
+
+    #[error("relation wasn't defined correctly")]
+    InvalidRelation,
 }

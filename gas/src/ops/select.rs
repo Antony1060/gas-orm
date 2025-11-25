@@ -55,13 +55,15 @@ impl<M: ModelMeta> SelectBuilder<M> {
         RModel: ModelMeta,
         Ty: Into<Option<Relation<RFk, RModel, R_FIELD_INDEX>>> + AsPgType,
     {
-        // TODO: !! unchecked array access
         self.includes.push((
             format!(
                 "LEFT JOIN {} ON {}={}",
                 RModel::TABLE_NAME,
                 field.full_name,
-                RModel::FIELDS[R_FIELD_INDEX].full_name
+                RModel::FIELDS
+                    .get(R_FIELD_INDEX)
+                    .expect("field relation is not correctly defined")
+                    .full_name,
             ),
             RModel::FIELDS,
         ));
