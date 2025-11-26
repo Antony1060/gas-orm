@@ -38,7 +38,7 @@ pub trait ModelOps: ModelMeta {
         SelectBuilder::new()
     }
 
-    // some trait bounds cannot be enforced if I just do `async fn` here, idk
+    // some trait bounds cannot be enforced if I just do `async fn` here
     fn create_table<E: PgExecutionContext>(
         ctx: E,
         ignore_existing: bool,

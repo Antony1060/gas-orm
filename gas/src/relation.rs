@@ -83,7 +83,9 @@ impl<Fk: AsPgType, Model: ModelMeta, const FIELD_INDEX: usize> Default
 impl<Fk: AsPgType + NaiveDecodable, Model: ModelMeta, const FIELD_INDEX: usize> AsPgType
     for Relation<Fk, Model, FIELD_INDEX>
 {
-    // NOTE: const time, array access should fail on time
+    // NOTE: resolved in compile time, array access should fail on time
+    //  this also has a nice side effect of failing before other places that
+    //  do the same array access even get to run
     const PG_TYPE: PgType = FOREIGN_KEY {
         key_type: &Fk::PG_TYPE,
         target_field: Model::FIELDS[FIELD_INDEX],
