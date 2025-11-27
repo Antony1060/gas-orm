@@ -5,13 +5,6 @@ use std::fmt::{Debug, Formatter};
 use std::marker::PhantomData;
 use std::ops::Deref;
 
-#[derive(Debug)]
-pub enum FieldRelationship {
-    OneToOne,
-    OneToMany,
-    ManyToMany,
-}
-
 #[repr(u8)]
 pub enum FieldFlag {
     Nullable = 1 << 0,
@@ -38,14 +31,13 @@ impl Debug for FieldFlags {
 #[derive(Debug)]
 pub struct FieldMeta {
     // a lot of names
-    pub table_name: &'static str,
+    pub table_name: &'static str,  // table
     pub full_name: &'static str,   // table.column
     pub name: &'static str,        // column
     pub alias_name: &'static str,  // table_column
     pub struct_name: &'static str, // table_column
     pub pg_type: PgType,
     pub flags: FieldFlags,
-    pub relationship: Option<FieldRelationship>,
 }
 
 #[derive(Debug)]

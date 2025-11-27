@@ -148,7 +148,6 @@ fn process_field(
             struct_name: stringify!(#ident),
             pg_type: #pg_type_tokens,
             flags: gas::FieldFlags(#(#flags)|*),
-            relationship: None
         }, #index);
     }))
 }
