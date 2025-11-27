@@ -16,14 +16,15 @@ pub enum FieldRelationship {
 pub enum FieldFlag {
     Nullable = 1 << 0,
     PrimaryKey = 1 << 1,
-    Unique = 1 << 2,
-    Serial = 1 << 3,
+    CompositePrimaryKey = 1 << 2,
+    Unique = 1 << 3,
+    Serial = 1 << 4,
 }
 
 pub struct FieldFlags(pub u8);
 
 impl FieldFlags {
-    pub fn has_flag(&self, flag: FieldFlag) -> bool {
+    pub const fn has_flag(&self, flag: FieldFlag) -> bool {
         (self.0 & (flag as u8)) != 0
     }
 }

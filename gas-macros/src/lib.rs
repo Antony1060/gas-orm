@@ -10,7 +10,7 @@ use proc_macro::TokenStream;
 use proc_macro2::{Ident, Span};
 use quote::quote;
 use syn::spanned::Spanned;
-use syn::{Field, Fields, Index};
+use syn::{parse_quote, Field, Fields, Index};
 
 // this file is a mess lol
 
@@ -53,6 +53,12 @@ struct ModelArgsAttrib {
 #[derive(Debug, FromMeta)]
 struct ColumnArgs {
     name: String,
+}
+
+#[derive(Debug, FromMeta)]
+struct RelationArgs {
+    field: Option<syn::Path>,
+    inverse: Option<syn::Path>,
 }
 
 #[derive(Debug, FromMeta)]
@@ -113,6 +119,10 @@ fn process_field(
 
     if ctx.primary_keys.contains(ident) {
         flags.push(quote! { (gas::FieldFlag::PrimaryKey as u8) })
+    }
+
+    if ctx.primary_keys.len() > 1 {
+        flags.push(quote! { (gas::FieldFlag::CompositePrimaryKey as u8) })
     }
 
     if ctx.serials.contains(ident) {
@@ -412,6 +422,72 @@ fn gen_default_impl(fields: &Fields) -> Result<proc_macro2::TokenStream, syn::Er
     })
 }
 
+fn apply_forward_relation(field: &mut Field, path: syn::Path) -> Result<(), syn::Error> {
+    let ty = &field.ty;
+    // this yields some very very very ugly errors, but hey,
+    //  at least it won't compile if incorrect
+    field.ty = parse_quote! { <#ty as gas::RelationConverter>::ToFull<{
+        gas::internals::assert_type::<<#ty as gas::RelationConverter>::ToField>(&#path);
+
+        assert!(
+            #path.meta.flags.has_flag(gas::FieldFlag::Unique) ||
+                (#path.meta.flags.has_flag(gas::FieldFlag::PrimaryKey) &&
+                    !#path.meta.flags.has_flag(gas::FieldFlag::CompositePrimaryKey)),
+            "relation must point to a field that is unique or a single primary key"
+        );
+
+        #path.index
+    }> };
+    Ok(())
+}
+
+fn apply_inverse_relation(field: &mut Field, _path: syn::Path) -> Result<(), syn::Error> {
+    // TODO:
+    field.ty = parse_quote! { i64 };
+
+    Ok(())
+}
+
+fn apply_relation_type_changes(target: &mut syn::ItemStruct) -> Result<(), syn::Error> {
+    let fields = target.fields.iter_mut().filter_map(|field| {
+        let attr = field
+            .attrs
+            .iter()
+            .find(|attr| attr.path().is_ident("relation"))?
+            .clone();
+
+        Some((field, attr))
+    });
+
+    for (field, relation_attr) in fields {
+        let args: RelationArgs = FromMeta::from_meta(&relation_attr.meta)?;
+
+        if args.field.is_some() && args.inverse.is_some() {
+            Err(syn::Error::new(
+                field.span(),
+                "relation must be either field or inverse",
+            ))?
+        }
+
+        if let Some(path) = args.field {
+            apply_forward_relation(field, path)?;
+            continue;
+        }
+
+        if let Some(path) = args.inverse {
+            apply_inverse_relation(field, path)?;
+            continue;
+        }
+
+        Err(syn::Error::new(
+            field.span(),
+            "missing field: `field` or `inverse`",
+        ))?
+    }
+
+    Ok(())
+}
+
 #[inline(always)]
 fn model_impl(args: TokenStream, input: TokenStream) -> Result<TokenStream, syn::Error> {
     let args_tokens: proc_macro2::TokenStream = args.clone().into();
@@ -428,8 +504,9 @@ fn model_impl(args: TokenStream, input: TokenStream) -> Result<TokenStream, syn:
 
     let mut original_struct = input.clone();
     original_struct.ident = Ident::new("Model", Span::call_site());
+    apply_relation_type_changes(&mut original_struct)?;
 
-    let default_impl_tokens = gen_default_impl(&input.fields)?;
+    let default_impl_tokens = gen_default_impl(&original_struct.fields)?;
 
     Ok(quote! {
         pub mod #mod_identifier {
@@ -472,7 +549,7 @@ pub fn model(args: TokenStream, input: TokenStream) -> TokenStream {
 
 #[proc_macro_derive(
     __model,
-    attributes(primary_key, serial, unique, default, column, __gas_meta)
+    attributes(primary_key, serial, unique, default, column, relation, __gas_meta)
 )]
 pub fn derive_model(input: TokenStream) -> TokenStream {
     derive_model_impl(input).unwrap_or_else(|err| err.to_compile_error().into())

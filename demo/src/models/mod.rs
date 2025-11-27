@@ -1,5 +1,5 @@
 use gas::types::{DateTime, Decimal, NaiveDate, NaiveDateTime, NaiveTime, Utc};
-use gas::Relation;
+use gas::{FullRelation, Relation};
 
 #[gas::model(table_name = "persons")]
 #[derive(Debug)]
@@ -37,6 +37,8 @@ pub struct User {
     #[serial]
     pub id: i64,
     pub name: String,
+    // #[relation(inverse = post::user)]
+    // pub posts: Vec<post::Model>,
 }
 
 #[gas::model(table_name = "posts")]
@@ -48,7 +50,10 @@ pub struct Post {
     pub title: String,
     // TODO: references to itself or multiple others
     #[column(name = "user_fk")]
-    pub user: Relation<i64, user::Model, { user::id.index }>,
+    #[relation(field = user::id)]
+    pub user: Relation<i64, user::Model>,
+    #[relation(field = product::id)]
+    pub user_gasovanje: Relation<i64, product::Model>,
 }
 
 #[gas::model(table_name = "products")]
@@ -57,6 +62,7 @@ pub struct Product {
     #[primary_key]
     #[serial]
     pub id: i64,
+    pub gas: i32,
     pub name: String,
 }
 
@@ -68,7 +74,7 @@ pub struct Order {
     pub id: i64,
     pub quantity: i32,
     #[column(name = "user_fk")]
-    pub user: Relation<i64, user::Model, { user::id.index }>,
-    #[column(name = "product_pk")]
-    pub product: Option<Relation<i64, product::Model, { product::id.index }>>,
+    pub user: FullRelation<i64, user::Model, { user::id.index }>,
+    #[column(name = "product_fk")]
+    pub product: Option<FullRelation<i64, product::Model, { product::id.index }>>,
 }

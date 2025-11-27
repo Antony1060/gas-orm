@@ -3,7 +3,23 @@ use crate::error::GasError;
 use crate::internals::PgType::FOREIGN_KEY;
 use crate::internals::{AsPgType, IsOptional, NaiveDecodable, PgParam, PgType};
 use crate::row::{FromRowNamed, Row};
-use crate::{GasResult, ModelMeta, ModelOps};
+use crate::{Field, GasResult, ModelMeta, ModelOps};
+use std::marker::PhantomData;
+
+pub struct Relation<Fk: AsPgType + 'static, Model: ModelMeta> {
+    _fk_marker: PhantomData<Fk>,
+    _model_marker: PhantomData<Model>,
+}
+
+pub trait RelationConverter {
+    type ToFull<const FIELD_INDEX: usize>;
+    type ToField;
+}
+
+impl<Fk: AsPgType + 'static, Model: ModelMeta> RelationConverter for Relation<Fk, Model> {
+    type ToFull<const FIELD_INDEX: usize> = FullRelation<Fk, Model, FIELD_INDEX>;
+    type ToField = Field<Fk, Model>;
+}
 
 // TODO: enforce that Field<Fk, Model> matches the one provided with macro, e.g.
 //  ```
@@ -14,7 +30,7 @@ use crate::{GasResult, ModelMeta, ModelOps};
 // NOTE: a foreign key must have uniqueness, so it must have a unique constraint or
 //  be a primary key unless it's part of a composite primary key (i.e. there's only one)
 #[derive(Debug, Clone)]
-pub enum Relation<Fk: AsPgType + 'static, Model: ModelMeta, const FIELD_INDEX: usize> {
+pub enum FullRelation<Fk: AsPgType + 'static, Model: ModelMeta, const FIELD_INDEX: usize> {
     // this is cursed
     ForeignKey(Fk),
     Loaded(Model),
@@ -22,7 +38,7 @@ pub enum Relation<Fk: AsPgType + 'static, Model: ModelMeta, const FIELD_INDEX: u
 
 // the idea is that the macro will generate the signature of this type and correctly put in the index
 //  this shit is cursed
-impl<Fk: AsPgType, Model: ModelMeta, const FIELD_INDEX: usize> Relation<Fk, Model, FIELD_INDEX>
+impl<Fk: AsPgType, Model: ModelMeta, const FIELD_INDEX: usize> FullRelation<Fk, Model, FIELD_INDEX>
 where
     PgParam: From<Fk>,
 {
@@ -41,14 +57,14 @@ where
 
     pub async fn load<E: PgExecutionContext>(&mut self, ctx: E) -> GasResult<Option<&Model>> {
         match self {
-            Relation::Loaded(model) => Ok(Some(model)),
-            Relation::ForeignKey(key) => {
+            FullRelation::Loaded(model) => Ok(Some(model)),
+            FullRelation::ForeignKey(key) => {
                 let Some(model) = Self::load_by_key(ctx, key.clone()).await? else {
                     return Ok(None);
                 };
 
-                *self = Relation::Loaded(model);
-                let Relation::Loaded(model) = self else {
+                *self = FullRelation::Loaded(model);
+                let FullRelation::Loaded(model) = self else {
                     unreachable!()
                 };
 
@@ -60,20 +76,20 @@ where
     // NOTE: can panic
     pub fn get_foreign_key(&self) -> Fk {
         match self {
-            Relation::Loaded(model) => model
+            FullRelation::Loaded(model) => model
                 .get_by_field(
                     Model::FIELDS
                         .get(FIELD_INDEX)
                         .expect("field relation is not correctly defined"),
                 )
                 .expect("foreign key should be accessible by field"),
-            Relation::ForeignKey(key) => key.clone(),
+            FullRelation::ForeignKey(key) => key.clone(),
         }
     }
 }
 
 impl<Fk: AsPgType, Model: ModelMeta, const FIELD_INDEX: usize> Default
-    for Relation<Fk, Model, FIELD_INDEX>
+    for FullRelation<Fk, Model, FIELD_INDEX>
 {
     fn default() -> Self {
         Self::ForeignKey(<Fk as Default>::default())
@@ -81,7 +97,7 @@ impl<Fk: AsPgType, Model: ModelMeta, const FIELD_INDEX: usize> Default
 }
 
 impl<Fk: AsPgType + NaiveDecodable, Model: ModelMeta, const FIELD_INDEX: usize> AsPgType
-    for Relation<Fk, Model, FIELD_INDEX>
+    for FullRelation<Fk, Model, FIELD_INDEX>
 {
     // NOTE: resolved in compile time, array access should fail on time
     //  this also has a nice side effect of failing before other places that
@@ -93,34 +109,34 @@ impl<Fk: AsPgType + NaiveDecodable, Model: ModelMeta, const FIELD_INDEX: usize> 
 }
 
 impl<Fk: AsPgType, Model: ModelMeta, const FIELD_INDEX: usize> IsOptional
-    for Relation<Fk, Model, FIELD_INDEX>
+    for FullRelation<Fk, Model, FIELD_INDEX>
 {
     const FACTOR: u8 = 0;
 }
 
 impl<Fk: AsPgType, Model: ModelMeta, const FIELD_INDEX: usize>
-    From<Relation<Fk, Model, FIELD_INDEX>> for PgParam
+    From<FullRelation<Fk, Model, FIELD_INDEX>> for PgParam
 where
     PgParam: From<Fk>,
 {
-    fn from(value: Relation<Fk, Model, FIELD_INDEX>) -> Self {
+    fn from(value: FullRelation<Fk, Model, FIELD_INDEX>) -> Self {
         PgParam::from(value.get_foreign_key())
     }
 }
 
 impl<Fk: AsPgType + NaiveDecodable, Model: ModelMeta, const FIELD_INDEX: usize> FromRowNamed
-    for Relation<Fk, Model, FIELD_INDEX>
+    for FullRelation<Fk, Model, FIELD_INDEX>
 {
     fn from_row_named(row: &Row, name: &str) -> GasResult<Self> {
         Model::from_row(row)
-            .map(|model| Relation::Loaded(model))
-            .or_else(|_| Ok(Relation::ForeignKey(Fk::from_row_named(row, name)?)))
+            .map(|model| FullRelation::Loaded(model))
+            .or_else(|_| Ok(FullRelation::ForeignKey(Fk::from_row_named(row, name)?)))
     }
 }
 
 // optional
 impl<Fk: AsPgType + NaiveDecodable, Model: ModelMeta, const FIELD_INDEX: usize> AsPgType
-    for Option<Relation<Fk, Model, FIELD_INDEX>>
+    for Option<FullRelation<Fk, Model, FIELD_INDEX>>
 where
     Option<Fk>: AsPgType,
 {
@@ -132,11 +148,11 @@ where
 }
 
 impl<Fk: AsPgType, Model: ModelMeta, const FIELD_INDEX: usize>
-    From<Option<Relation<Fk, Model, FIELD_INDEX>>> for PgParam
+    From<Option<FullRelation<Fk, Model, FIELD_INDEX>>> for PgParam
 where
-    PgParam: From<Relation<Fk, Model, FIELD_INDEX>>,
+    PgParam: From<FullRelation<Fk, Model, FIELD_INDEX>>,
 {
-    fn from(value: Option<Relation<Fk, Model, FIELD_INDEX>>) -> Self {
+    fn from(value: Option<FullRelation<Fk, Model, FIELD_INDEX>>) -> Self {
         match value {
             Some(value) => PgParam::from(value),
             None => PgParam::NULL,
@@ -145,15 +161,15 @@ where
 }
 
 impl<Fk: AsPgType + NaiveDecodable, Model: ModelMeta, const FIELD_INDEX: usize> FromRowNamed
-    for Option<Relation<Fk, Model, FIELD_INDEX>>
+    for Option<FullRelation<Fk, Model, FIELD_INDEX>>
 where
     Option<Fk>: AsPgType,
 {
     fn from_row_named(row: &Row, name: &str) -> GasResult<Self> {
         Ok(Option::<Fk>::from_row_named(row, name)?.map(|fk| {
             Model::from_row(row)
-                .map(|model| Relation::Loaded(model))
-                .unwrap_or_else(|_| Relation::ForeignKey(fk))
+                .map(|model| FullRelation::Loaded(model))
+                .unwrap_or_else(|_| FullRelation::ForeignKey(fk))
         }))
     }
 }

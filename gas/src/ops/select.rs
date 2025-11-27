@@ -7,7 +7,7 @@ use crate::group::Group;
 use crate::internals::{AsPgType, NaiveDecodable, Numeric, PgParam, SqlQuery, SqlStatement};
 use crate::model::ModelMeta;
 use crate::sort::SortDefinition;
-use crate::{Field, FieldMeta, GasResult, Relation};
+use crate::{Field, FieldMeta, FullRelation, GasResult};
 use std::marker::PhantomData;
 use std::num::NonZeroUsize;
 
@@ -53,7 +53,7 @@ impl<M: ModelMeta> SelectBuilder<M> {
     where
         RFk: AsPgType + NaiveDecodable + 'static,
         RModel: ModelMeta,
-        Ty: Into<Option<Relation<RFk, RModel, R_FIELD_INDEX>>> + AsPgType,
+        Ty: Into<Option<FullRelation<RFk, RModel, R_FIELD_INDEX>>> + AsPgType,
     {
         self.includes.push((
             format!(

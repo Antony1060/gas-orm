@@ -23,3 +23,9 @@ pub fn generate_update_set_fields(fields: &[&FieldMeta]) -> String {
 pub fn type_id_of_value<T: 'static>(_: &T) -> TypeId {
     TypeId::of::<T>()
 }
+
+trait SameType<T> {}
+
+impl<T> SameType<T> for T {}
+
+pub const fn assert_type<A>(_: &impl SameType<A>) {}
