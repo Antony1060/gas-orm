@@ -52,8 +52,6 @@ pub struct Post {
     #[column(name = "user_fk")]
     #[relation(field = user::id)]
     pub user: Relation<i64, user::Model>,
-    #[relation(field = product::id)]
-    pub user_gasovanje: Relation<i64, product::Model>,
 }
 
 #[gas::model(table_name = "products")]
