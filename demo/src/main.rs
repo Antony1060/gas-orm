@@ -1,9 +1,10 @@
 use crate::models::{audit_logs, order, person, post, product, user};
 use crate::tracing_util::setup_tracing;
 use gas::connection::PgConnection;
-use gas::eq::{PgEq, PgEqTime};
+use gas::eq::{PgEq, PgEqNone, PgEqTime};
 use gas::error::GasError;
 use gas::group::GroupSorting;
+use gas::helpers::OptionHelperOps;
 use gas::types::{Local, NaiveDate, NaiveTime, TimeDelta, Utc};
 use gas::{GasResult, ModelOps};
 use rust_decimal::Decimal;
@@ -109,6 +110,22 @@ async fn foreign_key_ops(conn: &PgConnection) -> GasResult<()> {
             .find_all(conn)
             .await?
     );
+
+    // optional include test
+    let order = order::Model::query()
+        .include(order::product)
+        // tests for filter + sort of related entities
+        .filter(|| order::product.is_not_null())
+        .sort(order::product.desc())
+        .find_one(conn)
+        .await?
+        .res()?;
+
+    tracing_dbg!(order);
+
+    let order_product = order.product;
+
+    tracing_dbg!(order_product);
 
     Ok(())
 }

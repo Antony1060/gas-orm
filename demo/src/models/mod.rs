@@ -60,7 +60,6 @@ pub struct Product {
     #[primary_key]
     #[serial]
     pub id: i64,
-    pub gas: i32,
     pub name: String,
 }
 

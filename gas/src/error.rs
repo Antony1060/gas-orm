@@ -25,4 +25,7 @@ pub enum GasError {
 
     #[error("relation wasn't defined correctly")]
     InvalidRelation,
+
+    #[error("entity doesn't exist")]
+    EntityNotFound,
 }

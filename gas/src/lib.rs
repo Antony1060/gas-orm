@@ -7,6 +7,7 @@ pub mod eq;
 pub mod error;
 pub mod field;
 pub mod group;
+pub mod helpers;
 pub mod internals;
 pub mod model;
 mod ops;
