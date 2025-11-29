@@ -55,24 +55,6 @@ where
         select.find_one(ctx).await
     }
 
-    pub async fn load<E: PgExecutionContext>(&mut self, ctx: E) -> GasResult<Option<&Model>> {
-        match self {
-            FullRelation::Loaded(model) => Ok(Some(model)),
-            FullRelation::ForeignKey(key) => {
-                let Some(model) = Self::load_by_key(ctx, key.clone()).await? else {
-                    return Ok(None);
-                };
-
-                *self = FullRelation::Loaded(model);
-                let FullRelation::Loaded(model) = self else {
-                    unreachable!()
-                };
-
-                Ok(Some(model))
-            }
-        }
-    }
-
     // NOTE: can panic
     pub fn get_foreign_key(&self) -> Fk {
         match self {
@@ -87,6 +69,79 @@ where
         }
     }
 }
+
+pub trait RelationOps<M: ModelMeta> {
+    // will try to lazy load
+    fn load<'a, E: PgExecutionContext>(
+        &'a mut self,
+        ctx: E,
+    ) -> impl Future<Output = GasResult<Option<&'a M>>>
+    where
+        M: 'a;
+
+    // explicit method to get the eagerly loaded variant
+    fn model(&mut self) -> Option<&M>;
+}
+
+impl<Fk: AsPgType, Model: ModelMeta, const FIELD_INDEX: usize> RelationOps<Model>
+    for FullRelation<Fk, Model, FIELD_INDEX>
+where
+    PgParam: From<Fk>,
+{
+    async fn load<'a, E: PgExecutionContext>(&'a mut self, ctx: E) -> GasResult<Option<&'a Model>>
+    where
+        Model: 'a,
+    {
+        match self {
+            FullRelation::Loaded(model) => Ok(Some(model)),
+            FullRelation::ForeignKey(key) => {
+                let Some(model) = Self::load_by_key(ctx, key.clone()).await? else {
+                    return Ok(None);
+                };
+
+                *self = FullRelation::Loaded(model);
+                let FullRelation::Loaded(model) = self else {
+                    unreachable!("relation must be loaded after being assigned a loaded value")
+                };
+
+                Ok(Some(model))
+            }
+        }
+    }
+
+    fn model(&mut self) -> Option<&Model> {
+        match self {
+            FullRelation::Loaded(model) => Some(model),
+            _ => None,
+        }
+    }
+}
+
+// allow load() and model() on Option<FullRelation<...>> to improve ergonomics
+impl<Fk: AsPgType, Model: ModelMeta, const FIELD_INDEX: usize> RelationOps<Model>
+    for Option<FullRelation<Fk, Model, FIELD_INDEX>>
+where
+    PgParam: From<Fk>,
+{
+    async fn load<'a, E: PgExecutionContext>(&'a mut self, ctx: E) -> GasResult<Option<&'a Model>>
+    where
+        Model: 'a,
+    {
+        match self {
+            Some(relation) => relation.load(ctx).await,
+            None => Ok(None),
+        }
+    }
+
+    fn model(&mut self) -> Option<&Model> {
+        match self {
+            Some(relation) => relation.model(),
+            None => None,
+        }
+    }
+}
+
+// things required for the FullRelation type compatible with gas::model macro
 
 impl<Fk: AsPgType, Model: ModelMeta, const FIELD_INDEX: usize> Default
     for FullRelation<Fk, Model, FIELD_INDEX>

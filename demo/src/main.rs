@@ -6,7 +6,7 @@ use gas::error::GasError;
 use gas::group::GroupSorting;
 use gas::helpers::OptionHelperOps;
 use gas::types::{Local, NaiveDate, NaiveTime, TimeDelta, Utc};
-use gas::{GasResult, ModelOps};
+use gas::{GasResult, ModelOps, RelationOps};
 use rust_decimal::Decimal;
 use std::env;
 use std::time::{SystemTime, UNIX_EPOCH};
@@ -112,7 +112,7 @@ async fn foreign_key_ops(conn: &PgConnection) -> GasResult<()> {
     );
 
     // optional include test
-    let order = order::Model::query()
+    let mut order = order::Model::query()
         .include(order::product)
         // tests for filter + sort of related entities
         .filter(|| order::product.is_not_null())
@@ -123,7 +123,7 @@ async fn foreign_key_ops(conn: &PgConnection) -> GasResult<()> {
 
     tracing_dbg!(order);
 
-    let order_product = order.product;
+    let order_product = order.product.model().res()?;
 
     tracing_dbg!(order_product);
 
