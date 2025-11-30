@@ -1,6 +1,6 @@
 use crate::internals::{AsPgType, PgType};
 use crate::sort::{SortDefinition, SortDirection, SortOp};
-use crate::ModelMeta;
+use crate::ModelSidecar;
 use std::fmt::{Debug, Formatter};
 use std::marker::PhantomData;
 use std::ops::Deref;
@@ -42,13 +42,13 @@ pub struct FieldMeta {
 }
 
 #[derive(Debug)]
-pub struct Field<T: AsPgType, M: ModelMeta> {
+pub struct Field<T: AsPgType, M: ModelSidecar> {
     pub meta: FieldMeta,
     _marker: PhantomData<T>,
     _model_marker: PhantomData<M>,
 }
 
-impl<T: AsPgType, M: ModelMeta> Field<T, M> {
+impl<T: AsPgType, M: ModelSidecar> Field<T, M> {
     pub const fn new(meta: FieldMeta) -> Self {
         Self {
             meta,
@@ -72,20 +72,10 @@ impl<T: AsPgType, M: ModelMeta> Field<T, M> {
     }
 }
 
-impl<T: AsPgType, M: ModelMeta> Deref for Field<T, M> {
+impl<T: AsPgType, M: ModelSidecar> Deref for Field<T, M> {
     type Target = FieldMeta;
 
     fn deref(&self) -> &Self::Target {
         &self.meta
     }
-}
-
-pub trait FieldTypeAccessor {
-    type VALUE: AsPgType;
-    type MODEL: ModelMeta;
-}
-
-impl<T: AsPgType, M: ModelMeta> FieldTypeAccessor for Field<T, M> {
-    type VALUE = T;
-    type MODEL = M;
 }

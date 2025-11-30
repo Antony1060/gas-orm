@@ -10,7 +10,11 @@ use crate::ops::update::UpdateOp;
 use crate::row::FromRow;
 use crate::GasResult;
 
+pub trait ModelSidecar {}
+
 pub trait ModelMeta: Sized + Default + Clone + FromRow {
+    type Id: ModelSidecar;
+
     const TABLE_NAME: &'static str;
     const FIELDS: &'static [&'static FieldMeta];
 

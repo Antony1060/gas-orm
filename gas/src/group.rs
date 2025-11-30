@@ -35,7 +35,7 @@ impl GroupSorting {
 }
 
 pub struct Group<M: ModelMeta + 'static, G: AsPgType + 'static> {
-    field: Field<G, M>,
+    field: Field<G, M::Id>,
     select: SelectBuilder<M>,
 
     sort: Option<SortDefinition>,
@@ -43,7 +43,7 @@ pub struct Group<M: ModelMeta + 'static, G: AsPgType + 'static> {
 }
 
 impl<M: ModelMeta, G: AsPgType + 'static> Group<M, G> {
-    pub fn new(field: Field<G, M>, select: SelectBuilder<M>) -> Self {
+    pub fn new(field: Field<G, M::Id>, select: SelectBuilder<M>) -> Self {
         Self {
             field,
             select,
@@ -65,7 +65,7 @@ impl<M: ModelMeta, G: AsPgType + 'static> Group<M, G> {
     pub async fn sum<E: PgExecutionContext, N: Numeric>(
         self,
         ctx: E,
-        field: Field<N, M>,
+        field: Field<N, M::Id>,
     ) -> GasResult<Vec<Summed<G, N::SumType>>> {
         let aggregate_call = format!("SUM({})", field.full_name);
         let (sql, params) = self.build_aggregate_query(&aggregate_call);
@@ -76,7 +76,7 @@ impl<M: ModelMeta, G: AsPgType + 'static> Group<M, G> {
     pub async fn count<E: PgExecutionContext, T: AsPgType>(
         self,
         ctx: E,
-        field: Field<T, M>,
+        field: Field<T, M::Id>,
     ) -> GasResult<Vec<Counted<G>>> {
         let aggregate_call = format!("COUNT({})", field.full_name);
         let (sql, params) = self.build_aggregate_query(&aggregate_call);

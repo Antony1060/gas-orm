@@ -2,7 +2,7 @@ use crate::condition::{Condition, EqExpression};
 use crate::field::Field;
 use crate::internals::{AsPgType, PgParam};
 use crate::types::Decimal;
-use crate::ModelMeta;
+use crate::ModelSidecar;
 use chrono::{DateTime, FixedOffset, Local, NaiveDate, NaiveDateTime, NaiveTime, Utc};
 
 pub trait PgEq<T> {
@@ -35,7 +35,7 @@ pub trait PgEqTime {
     fn is_now_or_after(&self) -> EqExpression;
 }
 
-impl<T, M: ModelMeta> PgEqNone for Field<Option<T>, M>
+impl<T, M: ModelSidecar> PgEqNone for Field<Option<T>, M>
 where
     Option<T>: AsPgType,
 {
@@ -63,7 +63,7 @@ fn make_in_expression(name: &str, params: usize) -> String {
 
 macro_rules! pg_eq_impl {
     ($field_type:ty as $cmp_type:ty, $pg_param:expr) => {
-        impl<M: ModelMeta> PgEq<$cmp_type> for Field<$field_type, M> {
+        impl<M: ModelSidecar> PgEq<$cmp_type> for Field<$field_type, M> {
             fn eq(&self, other: $cmp_type) -> EqExpression {
                 EqExpression::new(
                     Condition::Basic(format!("{}=?", self.full_name)),
@@ -250,7 +250,7 @@ pg_eq_impl!(Option<NaiveTime> as NaiveTime, PgParam::TIME);
 
 macro_rules! pg_timed_now_impl {
     ($field_type:ty, $time_cast:literal) => {
-        impl<M: ModelMeta> PgEqTime for Field<$field_type, M> {
+        impl<M: ModelSidecar> PgEqTime for Field<$field_type, M> {
             fn is_now(&self) -> EqExpression {
                 EqExpression::new(
                     Condition::Basic(format!(concat!("{}=NOW()::", $time_cast), self.full_name)),

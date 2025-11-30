@@ -56,6 +56,10 @@ pub(crate) fn model_impl(args: TokenStream, input: TokenStream) -> Result<TokenS
             #[__gas_meta(#args_tokens)]
             #original_struct
 
+            pub struct __GasOrmInternals_ModelInner;
+
+            impl gas::ModelSidecar for __GasOrmInternals_ModelInner {}
+
             #default_impl_tokens
 
             pub fn default() -> Model {
@@ -83,17 +87,6 @@ pub(crate) fn model_impl(args: TokenStream, input: TokenStream) -> Result<TokenS
 
 fn apply_forward_relation(field: &mut Field, path: syn::Path) -> Result<(), syn::Error> {
     let ty = &field.ty;
-    let meta_path = {
-        let mut meta_path = path.clone();
-        let last = meta_path.segments.last_mut();
-        let Some(last) = last else {
-            return Err(syn::Error::new(path.span(), "invalid path"));
-        };
-
-        last.ident = Ident::new(&format!("{}_meta", last.ident), Span::call_site());
-
-        meta_path
-    };
 
     // this yields some very very very ugly errors, but hey,
     //  at least it won't compile if incorrect
@@ -102,13 +95,13 @@ fn apply_forward_relation(field: &mut Field, path: syn::Path) -> Result<(), syn:
         gas::internals::assert_type::<<#ty as gas::RelationConverter>::ToField>(&#path);
 
         assert!(
-            #meta_path.flags.has_flag(gas::FieldFlag::Unique) ||
-                (#meta_path.flags.has_flag(gas::FieldFlag::PrimaryKey) &&
-                    !#meta_path.flags.has_flag(gas::FieldFlag::CompositePrimaryKey)),
+            #path.meta.flags.has_flag(gas::FieldFlag::Unique) ||
+                (#path.meta.flags.has_flag(gas::FieldFlag::PrimaryKey) &&
+                    !#path.meta.flags.has_flag(gas::FieldFlag::CompositePrimaryKey)),
             "relation must point to a field that is unique or a single primary key"
         );
 
-        #meta_path.index
+        #path.meta.index
     }> };
     Ok(())
 }

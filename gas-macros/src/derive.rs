@@ -69,6 +69,8 @@ pub fn model_impl(_input: TokenStream) -> Result<TokenStream, syn::Error> {
         #(#field_consts)*
 
         impl gas::ModelMeta for Model {
+            type Id = __GasOrmInternals_ModelInner;
+
             const TABLE_NAME: &'static str = #table_name;
             const FIELDS: &'static [&'static gas::FieldMeta] = &[#(&#field_list.meta),*];
 
@@ -323,11 +325,9 @@ fn process_field(
     let alias_name = &field_names.alias_name;
 
     let table_name = ctx.table_name;
-    let meta_ident = Ident::new(&format!("{}_meta", ident), ident.span());
 
     Some(Ok(quote! {
-        #[doc(hidden)]
-        pub const #meta_ident: gas::FieldMeta = gas::FieldMeta {
+        pub const #ident: gas::Field<#ty, __GasOrmInternals_ModelInner> = gas::Field::new(gas::FieldMeta {
             table_name: #table_name,
             full_name: #full_name,
             name: #name,
@@ -336,7 +336,6 @@ fn process_field(
             pg_type: #pg_type_tokens,
             flags: gas::FieldFlags(#(#flags)|*),
             index: #index,
-        };
-        pub const #ident: gas::Field<#ty, Model> = gas::Field::new(#meta_ident);
+        });
     }))
 }

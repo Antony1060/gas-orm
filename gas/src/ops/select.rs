@@ -7,7 +7,7 @@ use crate::group::Group;
 use crate::internals::{AsPgType, NaiveDecodable, Numeric, PgParam, SqlQuery, SqlStatement};
 use crate::model::ModelMeta;
 use crate::sort::SortDefinition;
-use crate::{Field, FieldMeta, FullRelation, GasResult};
+use crate::{Field, FieldMeta, FullRelation, GasResult, ModelSidecar};
 use std::marker::PhantomData;
 use std::num::NonZeroUsize;
 
@@ -48,7 +48,7 @@ impl<M: ModelMeta> SelectBuilder<M> {
 
     pub fn include<RFk, RModel, const R_FIELD_INDEX: usize, Ty>(
         mut self,
-        field: Field<Ty, M>,
+        field: Field<Ty, M::Id>,
     ) -> Self
     where
         RFk: AsPgType + NaiveDecodable + 'static,
@@ -80,7 +80,7 @@ impl<M: ModelMeta> SelectBuilder<M> {
         self
     }
 
-    pub fn group<Ty: AsPgType>(self, field: Field<Ty, M>) -> Group<M, Ty> {
+    pub fn group<Ty: AsPgType>(self, field: Field<Ty, M::Id>) -> Group<M, Ty> {
         Group::new(field, self)
     }
 
@@ -108,7 +108,7 @@ impl<M: ModelMeta> SelectBuilder<M> {
         Ok(items.pop())
     }
 
-    pub async fn sum<E: PgExecutionContext, FM: ModelMeta, N: Numeric>(
+    pub async fn sum<E: PgExecutionContext, FM: ModelSidecar, N: Numeric>(
         self,
         ctx: E,
         field: Field<N, FM>,
@@ -126,7 +126,7 @@ impl<M: ModelMeta> SelectBuilder<M> {
         rows[0].try_get("aggregate")
     }
 
-    pub async fn count<E: PgExecutionContext, FM: ModelMeta, T: AsPgType>(
+    pub async fn count<E: PgExecutionContext, FM: ModelSidecar, T: AsPgType>(
         self,
         ctx: E,
         field: Field<T, FM>,

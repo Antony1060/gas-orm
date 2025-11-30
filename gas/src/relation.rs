@@ -18,12 +18,12 @@ pub trait RelationConverter {
 
 impl<Fk: AsPgType + 'static, Model: ModelMeta> RelationConverter for Relation<Fk, Model> {
     type ToFull<const FIELD_INDEX: usize> = FullRelation<Fk, Model, FIELD_INDEX>;
-    type ToField = Field<Fk, Model>;
+    type ToField = Field<Fk, Model::Id>;
 }
 
 impl<Fk: AsPgType + 'static, Model: ModelMeta> RelationConverter for Option<Relation<Fk, Model>> {
     type ToFull<const FIELD_INDEX: usize> = Option<FullRelation<Fk, Model, FIELD_INDEX>>;
-    type ToField = Field<Fk, Model>;
+    type ToField = Field<Fk, Model::Id>;
 }
 
 // TODO: enforce that Field<Fk, Model> matches the one provided with macro, e.g.
