@@ -19,6 +19,7 @@ pub mod types;
 pub use field::*;
 pub use gas_macros::*;
 pub use model::*;
-pub use relation::*;
+pub use relation::forward::*;
+pub use relation::inverse::*;
 
 pub type GasResult<T> = Result<T, error::GasError>;

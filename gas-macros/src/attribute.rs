@@ -108,7 +108,7 @@ fn apply_forward_relation(field: &mut Field, path: syn::Path) -> Result<(), syn:
 
 fn apply_inverse_relation(field: &mut Field, _path: syn::Path) -> Result<(), syn::Error> {
     // TODO:
-    field.ty = parse_quote! { i64 };
+    // field.ty = parse_quote! { i64 };
 
     Ok(())
 }
