@@ -69,7 +69,7 @@ pub fn model_impl(_input: TokenStream) -> Result<TokenStream, syn::Error> {
         #(#field_consts)*
 
         impl gas::ModelMeta for Model {
-            type Id = __GasOrmInternals_ModelInner;
+            type Id = __;
 
             const TABLE_NAME: &'static str = #table_name;
             const FIELDS: &'static [&'static gas::FieldMeta] = &[#(&#field_list.meta),*];
@@ -327,7 +327,7 @@ fn process_field(
     let table_name = ctx.table_name;
 
     Some(Ok(quote! {
-        pub const #ident: gas::Field<#ty, __GasOrmInternals_ModelInner> = gas::Field::new(gas::FieldMeta {
+        pub const #ident: gas::Field<#ty, __> = gas::Field::new(gas::FieldMeta {
             table_name: #table_name,
             full_name: #full_name,
             name: #name,

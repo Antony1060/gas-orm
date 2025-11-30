@@ -56,9 +56,12 @@ pub(crate) fn model_impl(args: TokenStream, input: TokenStream) -> Result<TokenS
             #[__gas_meta(#args_tokens)]
             #original_struct
 
-            pub struct __GasOrmInternals_ModelInner;
+            // helper struct that comes "together" with Model, this allows limiting things like
+            //  Field to a specific model and also avoiding cyclic type checking
+            #[doc(hidden)]
+            pub struct __;
 
-            impl gas::ModelSidecar for __GasOrmInternals_ModelInner {}
+            impl gas::ModelSidecar for __ {}
 
             #default_impl_tokens
 
@@ -106,9 +109,21 @@ fn apply_forward_relation(field: &mut Field, path: syn::Path) -> Result<(), syn:
     Ok(())
 }
 
-fn apply_inverse_relation(field: &mut Field, _path: syn::Path) -> Result<(), syn::Error> {
-    // TODO:
-    // field.ty = parse_quote! { i64 };
+fn apply_inverse_relation(field: &mut Field, path: syn::Path) -> Result<(), syn::Error> {
+    let ty = &field.ty;
+
+    field.ty = parse_quote! { <#ty as gas::InverseRelationConverter>::ToInverseRelation<{
+        // let index = 2;
+        // let field_meta = <#ty as gas::InverseRelationConverter>::ToModel::FIELDS[index].meta;
+        // if field_meta.flags.has_flag(gas::FieldFlag::Unique) {
+        //     gas::internals::assert_types::<<#ty as gas::InverseRelationConverter>::ToModel, #ty>();
+        // } else {
+        //     gas::internals::assert_types::<Vec<<#ty as gas::InverseRelationConverter>::ToModel>, #ty>();
+        // }
+        //
+        // field_meta.index
+        2
+    }> };
 
     Ok(())
 }

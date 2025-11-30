@@ -1,5 +1,5 @@
 use gas::types::{DateTime, Decimal, NaiveDate, NaiveDateTime, NaiveTime, Utc};
-use gas::{InverseRelation, Relation};
+use gas::Relation;
 
 #[gas::model(table_name = "persons")]
 #[derive(Debug)]
@@ -37,7 +37,8 @@ pub struct User {
     #[serial]
     pub id: i64,
     pub name: String,
-    pub posts: InverseRelation<post::Model>,
+    // #[relation(inverse = post::user)]
+    // pub posts: Vec<post::Model>,
 }
 
 #[gas::model(table_name = "posts")]
