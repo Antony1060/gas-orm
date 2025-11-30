@@ -323,9 +323,11 @@ fn process_field(
     let alias_name = &field_names.alias_name;
 
     let table_name = ctx.table_name;
+    let meta_ident = Ident::new(&format!("{}_meta", ident), ident.span());
 
     Some(Ok(quote! {
-        pub const #ident: gas::Field<#ty, Model> = gas::Field::new(gas::FieldMeta {
+        #[doc(hidden)]
+        pub const #meta_ident: gas::FieldMeta = gas::FieldMeta {
             table_name: #table_name,
             full_name: #full_name,
             name: #name,
@@ -333,6 +335,8 @@ fn process_field(
             struct_name: stringify!(#ident),
             pg_type: #pg_type_tokens,
             flags: gas::FieldFlags(#(#flags)|*),
-        }, #index);
+            index: #index,
+        };
+        pub const #ident: gas::Field<#ty, Model> = gas::Field::new(#meta_ident);
     }))
 }

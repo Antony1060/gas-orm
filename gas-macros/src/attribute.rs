@@ -83,19 +83,32 @@ pub(crate) fn model_impl(args: TokenStream, input: TokenStream) -> Result<TokenS
 
 fn apply_forward_relation(field: &mut Field, path: syn::Path) -> Result<(), syn::Error> {
     let ty = &field.ty;
+    let meta_path = {
+        let mut meta_path = path.clone();
+        let last = meta_path.segments.last_mut();
+        let Some(last) = last else {
+            return Err(syn::Error::new(path.span(), "invalid path"));
+        };
+
+        last.ident = Ident::new(&format!("{}_meta", last.ident), Span::call_site());
+
+        meta_path
+    };
+
     // this yields some very very very ugly errors, but hey,
     //  at least it won't compile if incorrect
     field.ty = parse_quote! { <#ty as gas::RelationConverter>::ToFull<{
+        // figure out a way for this without cycles
         gas::internals::assert_type::<<#ty as gas::RelationConverter>::ToField>(&#path);
 
         assert!(
-            #path.meta.flags.has_flag(gas::FieldFlag::Unique) ||
-                (#path.meta.flags.has_flag(gas::FieldFlag::PrimaryKey) &&
-                    !#path.meta.flags.has_flag(gas::FieldFlag::CompositePrimaryKey)),
+            #meta_path.flags.has_flag(gas::FieldFlag::Unique) ||
+                (#meta_path.flags.has_flag(gas::FieldFlag::PrimaryKey) &&
+                    !#meta_path.flags.has_flag(gas::FieldFlag::CompositePrimaryKey)),
             "relation must point to a field that is unique or a single primary key"
         );
 
-        #path.index
+        #meta_path.index
     }> };
     Ok(())
 }

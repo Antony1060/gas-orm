@@ -1,5 +1,5 @@
 use gas::types::{DateTime, Decimal, NaiveDate, NaiveDateTime, NaiveTime, Utc};
-use gas::{FullRelation, Relation};
+use gas::Relation;
 
 #[gas::model(table_name = "persons")]
 #[derive(Debug)]
@@ -71,7 +71,9 @@ pub struct Order {
     pub id: i64,
     pub quantity: i32,
     #[column(name = "user_fk")]
-    pub user: FullRelation<i64, user::Model, { user::id.index }>,
+    #[relation(field = user::id)]
+    pub user: Relation<i64, user::Model>,
     #[column(name = "product_fk")]
-    pub product: Option<FullRelation<i64, product::Model, { product::id.index }>>,
+    #[relation(field = product::id)]
+    pub product: Option<Relation<i64, product::Model>>,
 }

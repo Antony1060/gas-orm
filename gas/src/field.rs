@@ -38,21 +38,20 @@ pub struct FieldMeta {
     pub struct_name: &'static str, // table_column
     pub pg_type: PgType,
     pub flags: FieldFlags,
+    pub index: usize,
 }
 
 #[derive(Debug)]
 pub struct Field<T: AsPgType, M: ModelMeta> {
     pub meta: FieldMeta,
-    pub index: usize,
     _marker: PhantomData<T>,
     _model_marker: PhantomData<M>,
 }
 
 impl<T: AsPgType, M: ModelMeta> Field<T, M> {
-    pub const fn new(meta: FieldMeta, index: usize) -> Self {
+    pub const fn new(meta: FieldMeta) -> Self {
         Self {
             meta,
-            index,
             _marker: PhantomData,
             _model_marker: PhantomData,
         }
