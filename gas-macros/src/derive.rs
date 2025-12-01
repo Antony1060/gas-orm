@@ -47,11 +47,11 @@ pub fn model_impl(_input: TokenStream) -> Result<TokenStream, syn::Error> {
 
     let mut counter = 0usize..;
 
-    let field_consts = input
+    let (field_consts, field_metas) = input
         .fields
         .iter()
         .filter_map(|field| process_field(&ctx, field, counter.next().unwrap()))
-        .collect::<Result<Vec<_>, syn::Error>>()?;
+        .collect::<Result<(Vec<_>, Vec<_>), syn::Error>>()?;
 
     let field_list = input.fields.iter().filter_map(|field| field.ident.as_ref());
     let filed_list_get_by_field = field_list.clone();
@@ -69,7 +69,7 @@ pub fn model_impl(_input: TokenStream) -> Result<TokenStream, syn::Error> {
         #(#field_consts)*
 
         impl gas::ModelMeta for Model {
-            type Id = __;
+            type Id = __::Inner;
 
             const TABLE_NAME: &'static str = #table_name;
             const FIELDS: &'static [&'static gas::FieldMeta] = &[#(&#field_list.meta),*];
@@ -106,6 +106,19 @@ pub fn model_impl(_input: TokenStream) -> Result<TokenStream, syn::Error> {
                     _ => None
                 }
             }
+        }
+
+        pub mod __ {
+            use super::*;
+
+            // helper struct that comes "together" with Model, this allows limiting things like
+            //  Field to a specific model and also avoiding cyclic type checking
+            #[doc(hidden)]
+            pub struct Inner;
+
+            impl gas::ModelSidecar for Inner {}
+
+            #(#field_metas)*
         }
 
         const _: () = {
@@ -281,7 +294,7 @@ fn process_field(
     ctx: &ModelCtx<'_>,
     field: &Field,
     index: usize,
-) -> Option<Result<proc_macro2::TokenStream, syn::Error>> {
+) -> Option<Result<(proc_macro2::TokenStream, proc_macro2::TokenStream), syn::Error>> {
     let ident = field.ident.as_ref()?;
     let ty = field.ty.clone();
 
@@ -326,16 +339,27 @@ fn process_field(
 
     let table_name = ctx.table_name;
 
-    Some(Ok(quote! {
-        pub const #ident: gas::Field<#ty, __> = gas::Field::new(gas::FieldMeta {
-            table_name: #table_name,
-            full_name: #full_name,
-            name: #name,
-            alias_name: #alias_name,
-            struct_name: stringify!(#ident),
-            pg_type: #pg_type_tokens,
-            flags: gas::FieldFlags(#(#flags)|*),
-            index: #index,
-        });
-    }))
+    let ident_meta = Ident::new(&format!("{}_meta", ident), ident.span());
+    let ident_index = Ident::new(&format!("{}_index", ident), ident.span());
+    let ident_flags = Ident::new(&format!("{}_flags", ident), ident.span());
+
+    Some(Ok((
+        quote! {
+            pub const #ident: gas::Field<#ty, __::Inner> = gas::Field::new(__::#ident_meta);
+        },
+        quote! {
+            pub const #ident_index: usize = #index;
+            pub const #ident_flags: gas::FieldFlags = gas::FieldFlags(#(#flags)|*);
+            pub const #ident_meta: gas::FieldMeta = gas::FieldMeta {
+                table_name: #table_name,
+                full_name: #full_name,
+                name: #name,
+                alias_name: #alias_name,
+                struct_name: stringify!(#ident),
+                pg_type: #pg_type_tokens,
+                flags: #ident_flags,
+                index: #ident_index,
+            };
+        },
+    )))
 }

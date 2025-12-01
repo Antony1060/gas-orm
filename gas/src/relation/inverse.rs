@@ -6,19 +6,17 @@ pub struct InverseRelation<Ret, const FORWARD_FIELD_INDEX: usize> {
     items: Ret,
 }
 
-pub trait InverseRelationConverter {
-    type ToInverseRelation<const FORWARD_FIELD_INDEX: usize>;
-    type ToModel: ModelMeta;
+pub trait InverseInnerConverter {
+    type ToInner;
+    type ToModel;
 }
 
-impl<M: ModelMeta> InverseRelationConverter for Vec<M> {
-    type ToInverseRelation<const FORWARD_FIELD_INDEX: usize> =
-        InverseRelation<Vec<Arc<M>>, FORWARD_FIELD_INDEX>;
+impl<M: ModelMeta> InverseInnerConverter for Vec<M> {
+    type ToInner = Vec<Arc<M>>;
     type ToModel = M;
 }
 
-impl<M: ModelMeta> InverseRelationConverter for M {
-    type ToInverseRelation<const FORWARD_FIELD_INDEX: usize> =
-        InverseRelation<Option<Arc<M>>, FORWARD_FIELD_INDEX>;
+impl<M: ModelMeta> InverseInnerConverter for M {
+    type ToInner = Option<Arc<M>>;
     type ToModel = M;
 }

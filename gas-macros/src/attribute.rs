@@ -4,7 +4,7 @@ use proc_macro::TokenStream;
 use proc_macro2::{Ident, Span};
 use quote::quote;
 use syn::spanned::Spanned;
-use syn::{parse_quote, Field, Fields};
+use syn::{parse_quote, Field, Fields, PathSegment};
 
 // both derive and attribute macro arguments can't be derived from the same struct (I think)
 #[derive(Debug, FromMeta)]
@@ -56,13 +56,6 @@ pub(crate) fn model_impl(args: TokenStream, input: TokenStream) -> Result<TokenS
             #[__gas_meta(#args_tokens)]
             #original_struct
 
-            // helper struct that comes "together" with Model, this allows limiting things like
-            //  Field to a specific model and also avoiding cyclic type checking
-            #[doc(hidden)]
-            pub struct __;
-
-            impl gas::ModelSidecar for __ {}
-
             #default_impl_tokens
 
             pub fn default() -> Model {
@@ -111,18 +104,31 @@ fn apply_forward_relation(field: &mut Field, path: syn::Path) -> Result<(), syn:
 
 fn apply_inverse_relation(field: &mut Field, path: syn::Path) -> Result<(), syn::Error> {
     let ty = &field.ty;
+    let (path_index, path_flags) = {
+        let append = |mut path: syn::Path, suffix: &str| {
+            let last = path.segments.last_mut();
+            let Some(last) = last else { todo!() };
 
-    field.ty = parse_quote! { <#ty as gas::InverseRelationConverter>::ToInverseRelation<{
-        // let index = 2;
-        // let field_meta = <#ty as gas::InverseRelationConverter>::ToModel::FIELDS[index].meta;
-        // if field_meta.flags.has_flag(gas::FieldFlag::Unique) {
-        //     gas::internals::assert_types::<<#ty as gas::InverseRelationConverter>::ToModel, #ty>();
-        // } else {
-        //     gas::internals::assert_types::<Vec<<#ty as gas::InverseRelationConverter>::ToModel>, #ty>();
-        // }
-        //
-        // field_meta.index
-        2
+            last.ident = Ident::new(&format!("{}_{}", last.ident, suffix), Span::call_site());
+            path.segments.insert(
+                path.segments.len() - 1,
+                PathSegment::from(Ident::new("__", Span::call_site())),
+            );
+
+            path
+        };
+
+        (append(path.clone(), "index"), append(path.clone(), "flags"))
+    };
+
+    field.ty = parse_quote! { gas::InverseRelation<<#ty as gas::InverseInnerConverter>::ToInner, {
+        if #path_flags.has_flag(gas::FieldFlag::Unique) {
+            gas::internals::assert_types::<Option<<#ty as gas::InverseInnerConverter>::ToModel>, #ty>();
+        } else {
+            gas::internals::assert_types::<Vec<<#ty as gas::InverseInnerConverter>::ToModel>, #ty>();
+        }
+
+        #path_index
     }> };
 
     Ok(())
