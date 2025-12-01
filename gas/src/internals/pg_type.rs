@@ -25,6 +25,7 @@ pub enum PgType {
         key_type: &'static PgType,
         target_field: &'static FieldMeta,
     },
+    IGNORED,
 }
 
 impl PgType {
@@ -54,6 +55,7 @@ impl PgType {
                 target_field.name
             )
             .into(),
+            PgType::IGNORED => "".into(),
         }
     }
 }

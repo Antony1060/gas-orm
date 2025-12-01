@@ -11,17 +11,17 @@ pub struct Relation<Fk: AsPgType + 'static, Model: ModelMeta> {
     _model_marker: PhantomData<Model>,
 }
 
-pub trait RelationConverter {
+pub trait RelationTypeOps {
     type ToFull<const FIELD_INDEX: usize>;
     type ToField;
 }
 
-impl<Fk: AsPgType + 'static, Model: ModelMeta> RelationConverter for Relation<Fk, Model> {
+impl<Fk: AsPgType + 'static, Model: ModelMeta> RelationTypeOps for Relation<Fk, Model> {
     type ToFull<const FIELD_INDEX: usize> = FullRelation<Fk, Model, FIELD_INDEX>;
     type ToField = Field<Fk, Model::Id>;
 }
 
-impl<Fk: AsPgType + 'static, Model: ModelMeta> RelationConverter for Option<Relation<Fk, Model>> {
+impl<Fk: AsPgType + 'static, Model: ModelMeta> RelationTypeOps for Option<Relation<Fk, Model>> {
     type ToFull<const FIELD_INDEX: usize> = Option<FullRelation<Fk, Model, FIELD_INDEX>>;
     type ToField = Field<Fk, Model::Id>;
 }

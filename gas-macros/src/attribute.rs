@@ -86,9 +86,9 @@ fn apply_forward_relation(field: &mut Field, path: syn::Path) -> Result<(), syn:
 
     // this yields some very very very ugly errors, but hey,
     //  at least it won't compile if incorrect
-    field.ty = parse_quote! { <#ty as gas::RelationConverter>::ToFull<{
+    field.ty = parse_quote! { <#ty as gas::RelationTypeOps>::ToFull<{
         // figure out a way for this without cycles
-        gas::internals::assert_type::<<#ty as gas::RelationConverter>::ToField>(&#path);
+        gas::internals::assert_type::<<#ty as gas::RelationTypeOps>::ToField>(&#path);
 
         assert!(
             #path.meta.flags.has_flag(gas::FieldFlag::Unique) ||
@@ -121,12 +121,14 @@ fn apply_inverse_relation(field: &mut Field, path: syn::Path) -> Result<(), syn:
         (append(path.clone(), "index"), append(path.clone(), "flags"))
     };
 
-    field.ty = parse_quote! { gas::InverseRelation<<#ty as gas::InverseInnerConverter>::ToInner, {
-        if #path_flags.has_flag(gas::FieldFlag::Unique) {
-            gas::internals::assert_types::<Option<<#ty as gas::InverseInnerConverter>::ToModel>, #ty>();
-        } else {
-            gas::internals::assert_types::<Vec<<#ty as gas::InverseInnerConverter>::ToModel>, #ty>();
-        }
+    let _ = &path_flags;
+
+    field.ty = parse_quote! { gas::InverseRelation<<#ty as gas::InverseRelationTypeOps>::Inner, {
+        // if #path_flags.has_flag(gas::FieldFlag::Unique) {
+        //     gas::internals::assert_types::<Option<<#ty as gas::InverseRelationTypeOps>::ToModel>, #ty>();
+        // } else {
+        //     gas::internals::assert_types::<Vec<<#ty as gas::InverseRelationTypeOps>::ToModel>, #ty>();
+        // }
 
         #path_index
     }> };

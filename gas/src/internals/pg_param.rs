@@ -23,6 +23,7 @@ pub enum PgParam {
     TIME(NaiveTime),
     RAW(&'static str),
     NULL,
+    IGNORED,
 }
 
 // very good 👍
@@ -44,6 +45,7 @@ macro_rules! pg_param_all {
             PgParam::TIME(value) => $ex("TIME", value),
             PgParam::RAW(value) => $ex("RAW", value),
             PgParam::NULL => $ex("NULL", Option::<i8>::None),
+            PgParam::IGNORED => $ex("IGNORED", Option::<i8>::None),
         }
     };
 }

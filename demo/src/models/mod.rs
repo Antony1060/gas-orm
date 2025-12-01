@@ -37,8 +37,9 @@ pub struct User {
     #[serial]
     pub id: i64,
     pub name: String,
-    // #[relation(inverse = post::user)]
-    // pub posts: Vec<post::Model>,
+    // currently included in pretty much everything, should be "virtual" and ignored
+    #[relation(inverse = post::user)]
+    pub posts: Vec<post::Model>,
 }
 
 #[gas::model(table_name = "posts")]
