@@ -31,36 +31,36 @@ async fn main() -> GasResult<()> {
 
     normal_ops(&conn).await?;
     tracing::info!("----------------");
-    tracing::info!("by key");
-    tracing::info!("----------------");
-    by_key_ops(&conn).await?;
-    tracing::info!("----------------");
     tracing::info!("transaction");
     tracing::info!("----------------");
     transaction_ops(&conn).await?;
-    tracing::info!("----------------");
-    tracing::info!("(date)(time)");
-    tracing::info!("----------------");
-    datetime_ops(&conn).await?;
-    tracing::info!("----------------");
-    tracing::info!("sorting");
-    tracing::info!("----------------");
-    sort_limit_ops(&conn).await?;
-    tracing::info!("----------------");
-    tracing::info!("aggregate");
-    tracing::info!("----------------");
-    aggregate_ops(&conn).await?;
-    tracing::info!("----------------");
-    tracing::info!("foreign key");
-    tracing::info!("----------------");
-    foreign_key_ops(&conn).await?;
+    // tracing::info!("----------------");
+    // tracing::info!("by key");
+    // tracing::info!("----------------");
+    // by_key_ops(&conn).await?;
+    // tracing::info!("----------------");
+    // tracing::info!("(date)(time)");
+    // tracing::info!("----------------");
+    // datetime_ops(&conn).await?;
+    // tracing::info!("----------------");
+    // tracing::info!("sorting");
+    // tracing::info!("----------------");
+    // sort_limit_ops(&conn).await?;
+    // tracing::info!("----------------");
+    // tracing::info!("aggregate");
+    // tracing::info!("----------------");
+    // aggregate_ops(&conn).await?;
+    // tracing::info!("----------------");
+    // tracing::info!("foreign key");
+    // tracing::info!("----------------");
+    // foreign_key_ops(&conn).await?;
 
-    let rand_name = rand::random_range(10..100);
-    user::Def! {
-        name: format!("John Doe {}", rand_name),
-    }
-    .update_by_key(&conn, 4)
-    .await?;
+    // let rand_name = rand::random_range(10..100);
+    // user::Def! {
+    //     name: format!("John Doe {}", rand_name),
+    // }
+    // .update_by_key(&conn, 4)
+    // .await?;
 
     Ok(())
 }
@@ -227,6 +227,7 @@ async fn sort_limit_ops(conn: &PgConnection) -> GasResult<()> {
         person::Model::query()
             .filter(|| person::bank_account_balance.lte(2000))
             .sort(person::bank_account_balance.desc() >> person::id.asc())
+            .limit(10)
             .find_all(conn)
             .await?
     );
