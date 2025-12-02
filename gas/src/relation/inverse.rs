@@ -3,7 +3,7 @@ use crate::row::{FromRowNamed, Row};
 use crate::{GasResult, ModelMeta};
 use std::sync::Arc;
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Default)]
 pub struct InverseRelation<Ret: Clone + Default, const FORWARD_FIELD_INDEX: usize> {
     #[allow(dead_code)]
     items: Ret,
@@ -17,36 +17,19 @@ pub enum InverseRelationType {
 pub trait InverseRelationTypeOps {
     type Inner: Clone + Default;
     type Model;
+    const TYPE: InverseRelationType;
 }
 
 impl<M: ModelMeta> InverseRelationTypeOps for Vec<M> {
     type Inner = Vec<Arc<M>>;
     type Model = M;
+    const TYPE: InverseRelationType = InverseRelationType::ToMany;
 }
 
 impl<M: ModelMeta> InverseRelationTypeOps for Option<M> {
     type Inner = Option<Arc<M>>;
     type Model = M;
-}
-
-impl<Ret: Clone + Default, const FORWARD_FIELD_INDEX: usize> Clone
-    for InverseRelation<Ret, FORWARD_FIELD_INDEX>
-{
-    fn clone(&self) -> Self {
-        Self {
-            items: self.items.clone(),
-        }
-    }
-}
-
-impl<Ret: Clone + Default, const FORWARD_FIELD_INDEX: usize> Default
-    for InverseRelation<Ret, FORWARD_FIELD_INDEX>
-{
-    fn default() -> Self {
-        Self {
-            items: Ret::default(),
-        }
-    }
+    const TYPE: InverseRelationType = InverseRelationType::ToOne;
 }
 
 impl<Ret: Clone + Default, const FORWARD_FIELD_INDEX: usize> AsPgType

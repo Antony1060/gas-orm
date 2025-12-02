@@ -26,12 +26,6 @@ impl<Fk: AsPgType + 'static, Model: ModelMeta> RelationTypeOps for Option<Relati
     type ToField = Field<Fk, Model::Id>;
 }
 
-// TODO: enforce that Field<Fk, Model> matches the one provided with macro, e.g.
-//  ```
-//  #[foreign(key = account::id)] // account::id must be a Field<i64, account::Model>
-//  // macro should replace this type and make it RelationFull<i64, account::Model, { account::id.index }> while checking if Field<i64, account::Model>
-//  some_fk: Relation<i64, account::Model>
-//  ```
 // NOTE: a foreign key must have uniqueness, so it must have a unique constraint or
 //  be a primary key unless it's part of a composite primary key (i.e. there's only one)
 #[derive(Debug, Clone)]

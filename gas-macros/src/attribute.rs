@@ -124,11 +124,13 @@ fn apply_inverse_relation(field: &mut Field, path: syn::Path) -> Result<(), syn:
     let _ = &path_flags;
 
     field.ty = parse_quote! { gas::InverseRelation<<#ty as gas::InverseRelationTypeOps>::Inner, {
-        // if #path_flags.has_flag(gas::FieldFlag::Unique) {
-        //     gas::internals::assert_types::<Option<<#ty as gas::InverseRelationTypeOps>::ToModel>, #ty>();
-        // } else {
-        //     gas::internals::assert_types::<Vec<<#ty as gas::InverseRelationTypeOps>::ToModel>, #ty>();
-        // }
+        let relation_type = <#ty as gas::InverseRelationTypeOps>::TYPE;
+        let is_unique = #path_flags.has_flag(gas::FieldFlag::Unique);
+        if is_unique && !matches!(relation_type, gas::InverseRelationType::ToOne) {
+            panic!("target foreign key is unique, inverse relation must be defined as Option<Model>");
+        } else if !is_unique && !matches!(relation_type, gas::InverseRelationType::ToMany) {
+            panic!("target foreign key is not unique, inverse relation must be defined as Vec<Model>");
+        }
 
         #path_index
     }> };
