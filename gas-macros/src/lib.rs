@@ -15,6 +15,9 @@ struct FieldNames {
 }
 
 struct ModelCtx<'a> {
+    virtuals: &'a [Ident],
+
+    // all the other fields assume that they're derived from non-virtual fields
     table_name: &'a str,
     primary_keys: &'a [Ident],
     serials: &'a [Ident],
@@ -31,7 +34,16 @@ pub fn model(args: TokenStream, input: TokenStream) -> TokenStream {
 
 #[proc_macro_derive(
     __model,
-    attributes(primary_key, serial, unique, default, column, relation, __gas_meta)
+    attributes(
+        primary_key,
+        serial,
+        unique,
+        default,
+        column,
+        relation,
+        __gas_virtual,
+        __gas_meta
+    )
 )]
 pub fn derive_model(input: TokenStream) -> TokenStream {
     derive::model_impl(input).unwrap_or_else(|err| err.to_compile_error().into())

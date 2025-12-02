@@ -55,6 +55,13 @@ async fn main() -> GasResult<()> {
     tracing::info!("----------------");
     foreign_key_ops(&conn).await?;
 
+    let rand_name = rand::random_range(10..100);
+    user::Def! {
+        name: format!("John Doe {}", rand_name),
+    }
+    .update_by_key(&conn, 4)
+    .await?;
+
     Ok(())
 }
 

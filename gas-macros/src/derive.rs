@@ -4,11 +4,12 @@ use crate::ops::update::gen_update_sql_fn_tokens;
 use crate::ops::update_with_fields::gen_update_with_fields_sql_fn_tokens;
 use crate::{FieldNames, ModelCtx};
 use darling::{FromDeriveInput, FromMeta};
+use itertools::Itertools;
 use proc_macro::TokenStream;
 use proc_macro2::{Ident, Span};
 use quote::quote;
 use syn::spanned::Spanned;
-use syn::{Field, Fields, Index};
+use syn::{Field, Index};
 
 #[derive(Debug, FromDeriveInput)]
 #[darling(attributes(__gas_meta))]
@@ -31,32 +32,46 @@ pub fn model_impl(_input: TokenStream) -> Result<TokenStream, syn::Error> {
 
     let meta: ModelArgs = FromDeriveInput::from_derive_input(&derive_input)?;
 
-    let primary_keys = find_fields_with_attr(&input.fields, "primary_key");
-    let serials = find_fields_with_attr(&input.fields, "serial");
-    let uniques = find_fields_with_attr(&input.fields, "unique");
+    let virtuals =
+        find_fields_with_attr(&input.fields.iter().cloned().collect_vec(), "__gas_virtual");
+    let real_fields = input
+        .fields
+        .into_iter()
+        .filter(|field| {
+            field
+                .ident
+                .as_ref()
+                .map(|ident| !virtuals.contains(ident))
+                .unwrap_or(false)
+        })
+        .collect::<Vec<_>>();
+
+    let primary_keys = find_fields_with_attr(&real_fields, "primary_key");
+    let serials = find_fields_with_attr(&real_fields, "serial");
+    let uniques = find_fields_with_attr(&real_fields, "unique");
 
     let table_name = meta.table_name;
 
     let ctx = ModelCtx {
+        virtuals: &virtuals,
         table_name: &table_name,
         primary_keys: &primary_keys,
         serials: &serials,
         uniques: &uniques,
-        field_columns: &parse_col_names(&table_name, &input.fields)?,
+        field_columns: &parse_col_names(&table_name, &real_fields)?,
     };
 
     let mut counter = 0usize..;
 
-    let (field_consts, field_metas) = input
-        .fields
+    let (field_consts, field_metas) = real_fields
         .iter()
         .filter_map(|field| process_field(&ctx, field, counter.next().unwrap()))
         .collect::<Result<(Vec<_>, Vec<_>), syn::Error>>()?;
 
-    let field_list = input.fields.iter().filter_map(|field| field.ident.as_ref());
+    let field_list = real_fields.iter().filter_map(|field| field.ident.as_ref());
     let filed_list_get_by_field = field_list.clone();
 
-    let key_tokens = gen_key_tokens(&ctx, &input.fields);
+    let key_tokens = gen_key_tokens(&ctx, &real_fields);
 
     let insert_fn = gen_insert_sql_fn_tokens(&ctx)?;
     let update_fn = gen_update_sql_fn_tokens(&ctx)?;
@@ -130,7 +145,7 @@ pub fn model_impl(_input: TokenStream) -> Result<TokenStream, syn::Error> {
         .into())
 }
 
-fn find_fields_with_attr(fields: &Fields, target_attr: &'static str) -> Vec<Ident> {
+fn find_fields_with_attr(fields: &[Field], target_attr: &'static str) -> Vec<Ident> {
     fields
         .iter()
         .cloned()
@@ -144,7 +159,7 @@ fn find_fields_with_attr(fields: &Fields, target_attr: &'static str) -> Vec<Iden
         .collect()
 }
 
-fn gen_key_tokens(ctx: &ModelCtx, fields: &Fields) -> proc_macro2::TokenStream {
+fn gen_key_tokens(ctx: &ModelCtx, fields: &[Field]) -> proc_macro2::TokenStream {
     let primary_key_fields = fields.iter().filter_map(|field| {
         let ident = field.ident.as_ref()?;
         ctx.primary_keys
@@ -223,14 +238,20 @@ fn generate_from_row(ctx: &ModelCtx) -> Result<proc_macro2::TokenStream, syn::Er
             quote! {
                 #ident: gas::row::FromRowNamed::from_row_named(row, #alias_name)?,
             }
-        })
-        .collect::<Vec<_>>();
+        });
+
+    let virtual_defs = ctx.virtuals.iter().map(|ident| {
+        quote! {
+            #ident: gas::row::FromRowNamed::from_row_named(row, stringify!(#ident))?,
+        }
+    });
 
     Ok(quote! {
         impl gas::row::FromRow for Model {
             fn from_row(row: &gas::row::Row) -> gas::GasResult<Model> {
                 Ok(Self {
                     #(#field_defs)*
+                    #(#virtual_defs)*
                 })
             }
         }
@@ -239,7 +260,7 @@ fn generate_from_row(ctx: &ModelCtx) -> Result<proc_macro2::TokenStream, syn::Er
 
 fn parse_col_names(
     table_name: &str,
-    fields: &Fields,
+    fields: &[Field],
 ) -> Result<Vec<(String, FieldNames)>, syn::Error> {
     fields
         .iter()

@@ -135,6 +135,8 @@ fn apply_inverse_relation(field: &mut Field, path: syn::Path) -> Result<(), syn:
         #path_index
     }> };
 
+    field.attrs.push(parse_quote! { #[__gas_virtual] });
+
     Ok(())
 }
 

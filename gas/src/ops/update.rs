@@ -52,6 +52,11 @@ impl<'a, T: ModelMeta> UpdateOp<'a, T> {
             .filter(|field| !field.flags.has_flag(FieldFlag::PrimaryKey))
             .collect::<Vec<_>>();
 
+        dbg!(&fields);
+
+        Ok(())
+        /*
+
         if fields.is_empty() {
             return Err(UPDATE_NO_MODIFIED_FIELDS_ERR);
         }
@@ -63,6 +68,6 @@ impl<'a, T: ModelMeta> UpdateOp<'a, T> {
 
         *self.object = updated;
 
-        Ok(())
+        Ok(())*/
     }
 }

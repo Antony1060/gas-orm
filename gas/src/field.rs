@@ -48,6 +48,15 @@ pub struct Field<T: AsPgType, M: ModelSidecar> {
     _model_marker: PhantomData<M>,
 }
 
+pub enum VirtualFieldType {
+    InverseRelation,
+}
+
+pub struct VirtualField {
+    pub field_type: VirtualFieldType,
+    pub meta: FieldMeta,
+}
+
 impl<T: AsPgType, M: ModelSidecar> Field<T, M> {
     pub const fn new(meta: FieldMeta) -> Self {
         Self {
@@ -73,6 +82,14 @@ impl<T: AsPgType, M: ModelSidecar> Field<T, M> {
 }
 
 impl<T: AsPgType, M: ModelSidecar> Deref for Field<T, M> {
+    type Target = FieldMeta;
+
+    fn deref(&self) -> &Self::Target {
+        &self.meta
+    }
+}
+
+impl Deref for VirtualField {
     type Target = FieldMeta;
 
     fn deref(&self) -> &Self::Target {
