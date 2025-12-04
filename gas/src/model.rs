@@ -17,6 +17,7 @@ pub trait ModelMeta: Sized + Default + Clone + FromRow {
 
     const TABLE_NAME: &'static str;
     const FIELDS: &'static [&'static FieldMeta];
+    const VIRTUAL_FIELDS: &'static [&'static FieldMeta];
 
     type Key;
 

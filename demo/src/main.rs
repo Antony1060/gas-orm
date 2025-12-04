@@ -55,12 +55,13 @@ async fn main() -> GasResult<()> {
     tracing::info!("----------------");
     foreign_key_ops(&conn).await?;
 
-    // let rand_name = rand::random_range(10..100);
-    // user::Def! {
-    //     name: format!("John Doe {}", rand_name),
-    // }
-    // .update_by_key(&conn, 4)
-    // .await?;
+    let rand_name = rand::random_range(10..100);
+    user::Def! {
+        name: format!("John Doe {}", rand_name),
+        posts: gas::InverseRelation::default(),
+    }
+    .update_by_key(&conn, 4)
+    .await?;
 
     Ok(())
 }
@@ -379,7 +380,7 @@ async fn by_key_ops(conn: &PgConnection) -> GasResult<()> {
         return res.map(|_| ());
     };
 
-    dbg!(&res);
+    tracing_dbg!(&res);
 
     // test update invalid key
     let res = person::Def! { first_name: String::from("someone"), }
@@ -389,9 +390,9 @@ async fn by_key_ops(conn: &PgConnection) -> GasResult<()> {
         return res.map(|_| ());
     };
 
-    dbg!(&res);
+    tracing_dbg!(&res);
 
-    // person::Model::delete_by_key(&conn, 4).await?;
+    // person::Model::delete_by_key(conn, 4).await?;
 
     let id_ten = person::Model::find_by_key(conn, 20).await?;
     tracing_dbg!(id_ten);
@@ -407,35 +408,35 @@ async fn normal_ops(conn: &PgConnection) -> GasResult<()> {
     }
     .into_model();
 
-    // tracing_dbg!("before insert", new_person);
-    // tracing_dbg!(
-    //     person::Model::query()
-    //         .filter(|| person::email.eq("nonce"))
-    //         .find_one(conn)
-    //         .await?
-    // );
+    tracing_dbg!("before insert", new_person);
+    tracing_dbg!(
+        person::Model::query()
+            .filter(|| person::email.eq("nonce"))
+            .find_one(conn)
+            .await?
+    );
 
     new_person.insert(conn).await?;
 
-    // tracing_dbg!("after insert", new_person);
-    // tracing_dbg!(
-    //     person::Model::query()
-    //         .filter(|| person::email.eq("nonce") & person::id.eq(new_person.id))
-    //         .find_one(conn)
-    //         .await?
-    // );
-    //
-    // new_person.last_name = String::from("Doe");
-    // new_person.bank_account_balance = Decimal::from(2000);
-    // new_person.update(conn).await?;
-    //
-    // tracing_dbg!(
-    //     "after update",
-    //     person::Model::query()
-    //         .filter(|| person::email.eq("nonce") & person::id.eq(new_person.id))
-    //         .find_one(conn)
-    //         .await?
-    // );
+    tracing_dbg!("after insert", new_person);
+    tracing_dbg!(
+        person::Model::query()
+            .filter(|| person::email.eq("nonce") & person::id.eq(new_person.id))
+            .find_one(conn)
+            .await?
+    );
+
+    new_person.last_name = String::from("Doe");
+    new_person.bank_account_balance = Decimal::from(2000);
+    new_person.update(conn).await?;
+
+    tracing_dbg!(
+        "after update",
+        person::Model::query()
+            .filter(|| person::email.eq("nonce") & person::id.eq(new_person.id))
+            .find_one(conn)
+            .await?
+    );
 
     let persons = person::Model::query()
         .filter(|| person::email.eq("nonce"))

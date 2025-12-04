@@ -36,14 +36,15 @@ pub fn model_impl(_input: TokenStream) -> Result<TokenStream, syn::Error> {
         find_fields_with_attr(&input.fields.iter().cloned().collect_vec(), "__gas_virtual");
     let real_fields = input
         .fields
-        .into_iter()
-        .filter(|field| {
+        .iter()
+        .filter(|&field| {
             field
                 .ident
                 .as_ref()
                 .map(|ident| !virtuals.contains(ident))
                 .unwrap_or(false)
         })
+        .cloned()
         .collect::<Vec<_>>();
 
     let primary_keys = find_fields_with_attr(&real_fields, "primary_key");
@@ -63,7 +64,8 @@ pub fn model_impl(_input: TokenStream) -> Result<TokenStream, syn::Error> {
 
     let mut counter = 0usize..;
 
-    let (field_consts, field_metas) = real_fields
+    let (field_consts, field_metas) = input
+        .fields
         .iter()
         .filter_map(|field| process_field(&ctx, field, counter.next().unwrap()))
         .collect::<Result<(Vec<_>, Vec<_>), syn::Error>>()?;
@@ -88,6 +90,7 @@ pub fn model_impl(_input: TokenStream) -> Result<TokenStream, syn::Error> {
 
             const TABLE_NAME: &'static str = #table_name;
             const FIELDS: &'static [&'static gas::FieldMeta] = &[#(&#field_list.meta),*];
+            const VIRTUAL_FIELDS: &'static [&'static gas::FieldMeta] = &[#(&#virtuals.meta),*];
 
             #key_tokens
 
@@ -319,12 +322,17 @@ fn process_field(
     let ident = field.ident.as_ref()?;
     let ty = field.ty.clone();
 
-    // I love O(n)
+    let virtual_names = FieldNames {
+        column_name: ident.to_string(),
+        full_name: format!("virtual.{}", ident),
+        alias_name: format!("virtual_{}", ident),
+    };
     let field_names = ctx
         .field_columns
         .iter()
         .find(|(it, _)| it == &ident.to_string())
-        .map(|(_, v)| v)?;
+        .map(|(_, v)| v)
+        .unwrap_or(&virtual_names);
 
     let pg_type_tokens = proc_type_to_pg_type(&ty);
     let pg_type_tokens = match pg_type_tokens {
@@ -354,6 +362,11 @@ fn process_field(
         flags.push(quote! { (gas::FieldFlag::Unique as u8) })
     }
 
+    let is_virtual = ctx.virtuals.contains(ident);
+    if is_virtual {
+        flags.push(quote! { (gas::FieldFlag::Virtual as u8) })
+    }
+
     let full_name = &field_names.full_name;
     let name = &field_names.column_name;
     let alias_name = &field_names.alias_name;
@@ -365,8 +378,15 @@ fn process_field(
     let ident_flags = Ident::new(&format!("{}_flags", ident), ident.span());
 
     Some(Ok((
-        quote! {
-            pub const #ident: gas::Field<#ty, __::Inner> = gas::Field::new(__::#ident_meta);
+        if !is_virtual {
+            quote! {
+                pub const #ident: gas::Field<#ty, __::Inner> = gas::Field::new(__::#ident_meta);
+            }
+        } else {
+            let virtual_field_type = get_virtual_field_type()?;
+            quote! {
+                pub const #ident: gas::VirtualField<__::Inner> = gas::VirtualField::new(#virtual_field_type, __::#ident_meta);
+            }
         },
         quote! {
             pub const #ident_index: usize = #index;
@@ -383,4 +403,11 @@ fn process_field(
             };
         },
     )))
+}
+
+fn get_virtual_field_type() -> Option<proc_macro2::TokenStream> {
+    // currently the only one supported, the function is not that useful lol
+    Some(quote! {
+        gas::VirtualFieldType::InverseRelation
+    })
 }

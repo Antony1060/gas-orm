@@ -12,6 +12,10 @@ pub enum FieldFlag {
     CompositePrimaryKey = 1 << 2,
     Unique = 1 << 3,
     Serial = 1 << 4,
+    ForeignKey = 1 << 5,
+
+    // ORM specific
+    Virtual = 1 << 6,
 }
 
 pub struct FieldFlags(pub u8);
@@ -52,9 +56,10 @@ pub enum VirtualFieldType {
     InverseRelation,
 }
 
-pub struct VirtualField {
+pub struct VirtualField<M: ModelSidecar> {
     pub field_type: VirtualFieldType,
     pub meta: FieldMeta,
+    _model_marker: PhantomData<M>,
 }
 
 impl<T: AsPgType, M: ModelSidecar> Field<T, M> {
@@ -89,7 +94,17 @@ impl<T: AsPgType, M: ModelSidecar> Deref for Field<T, M> {
     }
 }
 
-impl Deref for VirtualField {
+impl<M: ModelSidecar> VirtualField<M> {
+    pub const fn new(field_type: VirtualFieldType, meta: FieldMeta) -> Self {
+        Self {
+            field_type,
+            meta,
+            _model_marker: PhantomData,
+        }
+    }
+}
+
+impl<M: ModelSidecar> Deref for VirtualField<M> {
     type Target = FieldMeta;
 
     fn deref(&self) -> &Self::Target {
