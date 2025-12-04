@@ -209,7 +209,8 @@ where
     fn from(value: Option<FullRelation<Fk, Model, FIELD_INDEX>>) -> Self {
         match value {
             Some(value) => PgParam::from(value),
-            None => PgParam::NULL,
+            // TODO:
+            None => unreachable!(), //PgParam::NULL(PgType::TEXT),
         }
     }
 }

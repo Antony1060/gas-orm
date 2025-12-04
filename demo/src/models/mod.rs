@@ -37,7 +37,7 @@ pub struct User {
     #[serial]
     pub id: i64,
     pub name: String,
-    // TODO: currently included in pretty much everything, should be "virtual" and ignored
+    // TODO: can be inverse to any field
     #[relation(inverse = post::user)]
     pub posts: Vec<post::Model>,
 }

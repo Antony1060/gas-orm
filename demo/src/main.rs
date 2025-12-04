@@ -31,29 +31,29 @@ async fn main() -> GasResult<()> {
 
     normal_ops(&conn).await?;
     tracing::info!("----------------");
+    tracing::info!("by key");
+    tracing::info!("----------------");
+    by_key_ops(&conn).await?;
+    tracing::info!("----------------");
     tracing::info!("transaction");
     tracing::info!("----------------");
     transaction_ops(&conn).await?;
-    // tracing::info!("----------------");
-    // tracing::info!("by key");
-    // tracing::info!("----------------");
-    // by_key_ops(&conn).await?;
-    // tracing::info!("----------------");
-    // tracing::info!("(date)(time)");
-    // tracing::info!("----------------");
-    // datetime_ops(&conn).await?;
-    // tracing::info!("----------------");
-    // tracing::info!("sorting");
-    // tracing::info!("----------------");
-    // sort_limit_ops(&conn).await?;
-    // tracing::info!("----------------");
-    // tracing::info!("aggregate");
-    // tracing::info!("----------------");
-    // aggregate_ops(&conn).await?;
-    // tracing::info!("----------------");
-    // tracing::info!("foreign key");
-    // tracing::info!("----------------");
-    // foreign_key_ops(&conn).await?;
+    tracing::info!("----------------");
+    tracing::info!("(date)(time)");
+    tracing::info!("----------------");
+    datetime_ops(&conn).await?;
+    tracing::info!("----------------");
+    tracing::info!("sorting");
+    tracing::info!("----------------");
+    sort_limit_ops(&conn).await?;
+    tracing::info!("----------------");
+    tracing::info!("aggregate");
+    tracing::info!("----------------");
+    aggregate_ops(&conn).await?;
+    tracing::info!("----------------");
+    tracing::info!("foreign key");
+    tracing::info!("----------------");
+    foreign_key_ops(&conn).await?;
 
     // let rand_name = rand::random_range(10..100);
     // user::Def! {
@@ -340,16 +340,16 @@ async fn transaction_ops(conn: &PgConnection) -> GasResult<()> {
     let mut person = person::Def! {
         first_name: String::from("Some"),
         last_name: String::from("Person"),
-        email: format!("{}@person.com", since_epoch.as_secs()),
+        email: format!("{}@person.com", since_epoch.as_millis()),
     };
 
-    person.phone_number = Some(String::from("192"));
+    person.phone_number = Some(String::from("0192"));
     person.bank_account_balance = Decimal::from(2000);
     person.insert(&mut tx).await?;
 
     tracing_dbg!(person);
 
-    match rand::random_bool(0.4) {
+    match rand::random_bool(0.0) {
         true => {
             tracing::warn!("saving tx");
             tx.save().await
@@ -382,7 +382,7 @@ async fn by_key_ops(conn: &PgConnection) -> GasResult<()> {
     dbg!(&res);
 
     // test update invalid key
-    let res = person::Def! { first_name: String::from("gaser"), }
+    let res = person::Def! { first_name: String::from("someone"), }
         .update_by_key(conn, 0)
         .await;
     let Err(GasError::QueryNoResponse(_)) = res else {
@@ -407,35 +407,35 @@ async fn normal_ops(conn: &PgConnection) -> GasResult<()> {
     }
     .into_model();
 
-    tracing_dbg!("before insert", new_person);
-    tracing_dbg!(
-        person::Model::query()
-            .filter(|| person::email.eq("nonce"))
-            .find_one(conn)
-            .await?
-    );
+    // tracing_dbg!("before insert", new_person);
+    // tracing_dbg!(
+    //     person::Model::query()
+    //         .filter(|| person::email.eq("nonce"))
+    //         .find_one(conn)
+    //         .await?
+    // );
 
     new_person.insert(conn).await?;
 
-    tracing_dbg!("after insert", new_person);
-    tracing_dbg!(
-        person::Model::query()
-            .filter(|| person::email.eq("nonce") & person::id.eq(new_person.id))
-            .find_one(conn)
-            .await?
-    );
-
-    new_person.last_name = String::from("Doe");
-    new_person.bank_account_balance = Decimal::from(2000);
-    new_person.update(conn).await?;
-
-    tracing_dbg!(
-        "after update",
-        person::Model::query()
-            .filter(|| person::email.eq("nonce") & person::id.eq(new_person.id))
-            .find_one(conn)
-            .await?
-    );
+    // tracing_dbg!("after insert", new_person);
+    // tracing_dbg!(
+    //     person::Model::query()
+    //         .filter(|| person::email.eq("nonce") & person::id.eq(new_person.id))
+    //         .find_one(conn)
+    //         .await?
+    // );
+    //
+    // new_person.last_name = String::from("Doe");
+    // new_person.bank_account_balance = Decimal::from(2000);
+    // new_person.update(conn).await?;
+    //
+    // tracing_dbg!(
+    //     "after update",
+    //     person::Model::query()
+    //         .filter(|| person::email.eq("nonce") & person::id.eq(new_person.id))
+    //         .find_one(conn)
+    //         .await?
+    // );
 
     let persons = person::Model::query()
         .filter(|| person::email.eq("nonce"))

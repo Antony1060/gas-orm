@@ -1,8 +1,8 @@
+use crate::ModelSidecar;
 use crate::condition::{Condition, EqExpression};
 use crate::field::Field;
 use crate::internals::{AsPgType, PgParam};
 use crate::types::Decimal;
-use crate::ModelSidecar;
 use chrono::{DateTime, FixedOffset, Local, NaiveDate, NaiveDateTime, NaiveTime, Utc};
 
 pub trait PgEq<T> {
@@ -67,42 +67,42 @@ macro_rules! pg_eq_impl {
             fn eq(&self, other: $cmp_type) -> EqExpression {
                 EqExpression::new(
                     Condition::Basic(format!("{}=?", self.full_name)),
-                    vec![$pg_param(other.into())],
+                    vec![$pg_param(Some(other.into()))],
                 )
             }
 
             fn neq(&self, other: $cmp_type) -> EqExpression {
                 EqExpression::new(
                     Condition::Basic(format!("{}!=?", self.full_name)),
-                    vec![$pg_param(other.into())],
+                    vec![$pg_param(Some(other.into()))],
                 )
             }
 
             fn lt(&self, other: $cmp_type) -> EqExpression {
                 EqExpression::new(
                     Condition::Basic(format!("{}<?", self.full_name)),
-                    vec![$pg_param(other.into())],
+                    vec![$pg_param(Some(other.into()))],
                 )
             }
 
             fn lte(&self, other: $cmp_type) -> EqExpression {
                 EqExpression::new(
                     Condition::Basic(format!("{}<=?", self.full_name)),
-                    vec![$pg_param(other.into())],
+                    vec![$pg_param(Some(other.into()))],
                 )
             }
 
             fn gt(&self, other: $cmp_type) -> EqExpression {
                 EqExpression::new(
                     Condition::Basic(format!("{}>?", self.full_name)),
-                    vec![$pg_param(other.into())],
+                    vec![$pg_param(Some(other.into()))],
                 )
             }
 
             fn gte(&self, other: $cmp_type) -> EqExpression {
                 EqExpression::new(
                     Condition::Basic(format!("{}>=?", self.full_name)),
-                    vec![$pg_param(other.into())],
+                    vec![$pg_param(Some(other.into()))],
                 )
             }
 
@@ -111,7 +111,11 @@ macro_rules! pg_eq_impl {
 
                 EqExpression::new(
                     Condition::Basic(condition),
-                    other.iter().map(|it| (*it).into()).map($pg_param).collect(),
+                    other
+                        .iter()
+                        .map(|it| (*it).into())
+                        .map(|it| $pg_param(Some(it)))
+                        .collect(),
                 )
             }
         }

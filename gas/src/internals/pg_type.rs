@@ -6,7 +6,7 @@ use chrono::{DateTime, FixedOffset, Local, NaiveDate, NaiveDateTime, NaiveTime, 
 use sqlx::{Decode, Postgres, Type};
 use std::borrow::Cow;
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub enum PgType {
     TEXT,
     SMALLINT,
@@ -94,16 +94,13 @@ macro_rules! pg_type_impl {
 
         impl From<$field_type> for PgParam {
             fn from(value: $field_type) -> Self {
-                $pg_param_conv(value)
+                PgParam::from(Some(value))
             }
         }
 
         impl From<Option<$field_type>> for PgParam {
             fn from(value: Option<$field_type>) -> Self {
-                match value {
-                    Some(value) => PgParam::from(value),
-                    None => PgParam::NULL,
-                }
+                $pg_param_conv(value)
             }
         }
     };

@@ -4,25 +4,24 @@ use std::fmt::{Display, Formatter};
 
 #[derive(Debug, Clone)]
 pub enum PgParam {
-    TEXT(String),
-    SMALLINT(i16),
-    INTEGER(i32),
-    BIGINT(i64),
-    REAL(f32),
-    DOUBLE(f64),
-    DECIMAL(Decimal),
-    TIMESTAMP(NaiveDateTime),
+    TEXT(Option<String>),
+    SMALLINT(Option<i16>),
+    INTEGER(Option<i32>),
+    BIGINT(Option<i64>),
+    REAL(Option<f32>),
+    DOUBLE(Option<f64>),
+    DECIMAL(Option<Decimal>),
+    TIMESTAMP(Option<NaiveDateTime>),
     // I don't think there's a more ergonomic way to do this
     #[allow(nonstandard_style)]
-    TIMESTAMP_TZ_UTC(DateTime<Utc>),
+    TIMESTAMP_TZ_UTC(Option<DateTime<Utc>>),
     #[allow(nonstandard_style)]
-    TIMESTAMP_TZ_LOCAL(DateTime<Local>),
+    TIMESTAMP_TZ_LOCAL(Option<DateTime<Local>>),
     #[allow(nonstandard_style)]
-    TIMESTAMP_TZ_FIXED_OFFSET(DateTime<FixedOffset>),
-    DATE(NaiveDate),
-    TIME(NaiveTime),
-    RAW(&'static str),
-    NULL,
+    TIMESTAMP_TZ_FIXED_OFFSET(Option<DateTime<FixedOffset>>),
+    DATE(Option<NaiveDate>),
+    TIME(Option<NaiveTime>),
+    RAW(Option<&'static str>),
     IGNORED,
 }
 
@@ -44,7 +43,6 @@ macro_rules! pg_param_all {
             PgParam::DATE(value) => $ex("DATE", value),
             PgParam::TIME(value) => $ex("TIME", value),
             PgParam::RAW(value) => $ex("RAW", value),
-            PgParam::NULL => $ex("NULL", Option::<i8>::None),
             PgParam::IGNORED => $ex("IGNORED", Option::<i8>::None),
         }
     };
