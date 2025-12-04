@@ -37,7 +37,6 @@ pub struct User {
     #[serial]
     pub id: i64,
     pub name: String,
-    // TODO: can be inverse to any field, can also be to unrelated fields
     #[relation(inverse = post::user)]
     pub posts: Vec<post::Model>,
 }

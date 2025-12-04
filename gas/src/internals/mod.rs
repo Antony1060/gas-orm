@@ -29,3 +29,5 @@ pub trait SameType<T> {}
 impl<T> SameType<T> for T {}
 
 pub const fn assert_type<A>(_: &impl SameType<A>) {}
+
+pub const fn assert_types_param<A, B: SameType<A>>() {}

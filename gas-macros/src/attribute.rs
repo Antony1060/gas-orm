@@ -87,7 +87,6 @@ fn apply_forward_relation(field: &mut Field, path: syn::Path) -> Result<(), syn:
     // this yields some very very very ugly errors, but hey,
     //  at least it won't compile if incorrect
     field.ty = parse_quote! { <#ty as gas::RelationTypeOps>::ToFull<{
-        // figure out a way for this without cycles
         gas::internals::assert_type::<<#ty as gas::RelationTypeOps>::ToField>(&#path);
 
         assert!(
@@ -107,29 +106,51 @@ fn apply_forward_relation(field: &mut Field, path: syn::Path) -> Result<(), syn:
 
 fn apply_inverse_relation(field: &mut Field, path: syn::Path) -> Result<(), syn::Error> {
     let ty = &field.ty;
-    let (path_index, path_flags) = {
-        let append = |mut path: syn::Path, suffix: &str| {
+    let (path_index, path_flags, path_sidecar) = {
+        let append = |mut path: syn::Path, value: &str, append: bool| {
             let last = path.segments.last_mut();
-            let Some(last) = last else { todo!() };
+            let Some(last) = last else {
+                return Err(syn::Error::new(
+                    Span::call_site(),
+                    "invalid inverse relation path",
+                ));
+            };
 
-            last.ident = Ident::new(&format!("{}_{}", last.ident, suffix), Span::call_site());
+            if append {
+                last.ident = Ident::new(&format!("{}_{}", last.ident, value), Span::call_site());
+            } else {
+                last.ident = Ident::new(value, Span::call_site());
+            }
             path.segments.insert(
                 path.segments.len() - 1,
                 PathSegment::from(Ident::new("__", Span::call_site())),
             );
 
-            path
+            Ok(path)
         };
 
-        (append(path.clone(), "index"), append(path.clone(), "flags"))
+        (
+            append(path.clone(), "index", true)?,
+            append(path.clone(), "flags", true)?,
+            append(path.clone(), "Inner", false)?,
+        )
     };
 
     let _ = &path_flags;
 
     field.ty = parse_quote! { gas::InverseRelation<<#ty as gas::InverseRelationTypeOps>::Inner, {
+        // since #path is not used anywhere in the constant logic (using it would cause type cycles)
+        //  we add this useless assignment so highlighting works in IDEs
+        let _ = #path;
+
         if !#path_flags.has_flag(gas::FieldFlag::ForeignKey) {
             panic!("target is not a foreign key");
         }
+
+        gas::internals::assert_types_param::<
+            <<#ty as gas::InverseRelationTypeOps>::Model as gas::ModelMeta>::Id,
+            #path_sidecar
+        >();
 
         let relation_type = <#ty as gas::InverseRelationTypeOps>::TYPE;
         let is_unique = #path_flags.has_flag(gas::FieldFlag::Unique);
