@@ -32,6 +32,7 @@ pub fn model_impl(_input: TokenStream) -> Result<TokenStream, syn::Error> {
 
     let meta: ModelArgs = FromDeriveInput::from_derive_input(&derive_input)?;
 
+    // TODO (low priority): extract these magic string constants to some module
     let virtuals =
         find_fields_with_attr(&input.fields.iter().cloned().collect_vec(), "__gas_virtual");
     let real_fields = input
@@ -50,6 +51,7 @@ pub fn model_impl(_input: TokenStream) -> Result<TokenStream, syn::Error> {
     let primary_keys = find_fields_with_attr(&real_fields, "primary_key");
     let serials = find_fields_with_attr(&real_fields, "serial");
     let uniques = find_fields_with_attr(&real_fields, "unique");
+    let foreign_keys = find_fields_with_attr(&real_fields, "__gas_foreign_key");
 
     let table_name = meta.table_name;
 
@@ -59,6 +61,7 @@ pub fn model_impl(_input: TokenStream) -> Result<TokenStream, syn::Error> {
         primary_keys: &primary_keys,
         serials: &serials,
         uniques: &uniques,
+        foreign_keys: &foreign_keys,
         field_columns: &parse_col_names(&table_name, &real_fields)?,
     };
 
@@ -360,6 +363,10 @@ fn process_field(
 
     if ctx.uniques.contains(ident) {
         flags.push(quote! { (gas::FieldFlag::Unique as u8) })
+    }
+
+    if ctx.foreign_keys.contains(ident) {
+        flags.push(quote! { (gas::FieldFlag::ForeignKey as u8) })
     }
 
     let is_virtual = ctx.virtuals.contains(ident);

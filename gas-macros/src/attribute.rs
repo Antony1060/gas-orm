@@ -99,6 +99,9 @@ fn apply_forward_relation(field: &mut Field, path: syn::Path) -> Result<(), syn:
 
         #path.meta.index
     }> };
+
+    field.attrs.push(parse_quote! { #[__gas_foreign_key] });
+
     Ok(())
 }
 
@@ -124,6 +127,10 @@ fn apply_inverse_relation(field: &mut Field, path: syn::Path) -> Result<(), syn:
     let _ = &path_flags;
 
     field.ty = parse_quote! { gas::InverseRelation<<#ty as gas::InverseRelationTypeOps>::Inner, {
+        if !#path_flags.has_flag(gas::FieldFlag::ForeignKey) {
+            panic!("target is not a foreign key");
+        }
+
         let relation_type = <#ty as gas::InverseRelationTypeOps>::TYPE;
         let is_unique = #path_flags.has_flag(gas::FieldFlag::Unique);
         if is_unique && !matches!(relation_type, gas::InverseRelationType::ToOne) {

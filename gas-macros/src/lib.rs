@@ -22,6 +22,7 @@ struct ModelCtx<'a> {
     primary_keys: &'a [Ident],
     serials: &'a [Ident],
     uniques: &'a [Ident],
+    foreign_keys: &'a [Ident],
 
     // field.ident -> names
     field_columns: &'a [(String, FieldNames)],
@@ -32,6 +33,9 @@ pub fn model(args: TokenStream, input: TokenStream) -> TokenStream {
     attribute::model_impl(args, input).unwrap_or_else(|err| err.to_compile_error().into())
 }
 
+// attributes prefixed with __gas should never be used on their own, instead they are inserted by other macros
+//  this makes "communication" between the attribute and derive macro easier,
+//  there's probably a better way, but this is good for now
 #[proc_macro_derive(
     __model,
     attributes(
@@ -41,8 +45,9 @@ pub fn model(args: TokenStream, input: TokenStream) -> TokenStream {
         default,
         column,
         relation,
+        __gas_meta,
         __gas_virtual,
-        __gas_meta
+        __gas_foreign_key,
     )
 )]
 pub fn derive_model(input: TokenStream) -> TokenStream {
