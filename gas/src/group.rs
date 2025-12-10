@@ -1,7 +1,7 @@
 use crate::connection::PgExecutionContext;
 use crate::internals::{AsPgType, Numeric, SqlQuery, SqlStatement};
 use crate::ops::select::SelectBuilder;
-use crate::row::{FromRow, FromRowNamed, Row};
+use crate::row::{FromRow, FromRowNamed, ResponseCtx, Row};
 use crate::sort::{SortDefinition, SortDirection, SortOp};
 use crate::{Field, GasResult, ModelMeta};
 use std::num::NonZeroUsize;
@@ -129,10 +129,10 @@ pub struct Counted<G: AsPgType> {
 }
 
 impl<G: AsPgType> FromRow for Counted<G> {
-    fn from_row(row: &Row) -> GasResult<Self> {
+    fn from_row(ctx: &ResponseCtx, row: &Row) -> GasResult<Self> {
         Ok(Self {
-            key: G::from_row_named(row, "key")?,
-            count: <i64 as FromRowNamed>::from_row_named(row, "aggregate")?,
+            key: G::from_row_named(ctx, row, "key")?,
+            count: <i64 as FromRowNamed>::from_row_named(ctx, row, "aggregate")?,
         })
     }
 }
@@ -144,10 +144,10 @@ pub struct Summed<G: AsPgType, N: Numeric> {
 }
 
 impl<G: AsPgType, N: Numeric> FromRow for Summed<G, N> {
-    fn from_row(row: &Row) -> GasResult<Self> {
+    fn from_row(ctx: &ResponseCtx, row: &Row) -> GasResult<Self> {
         Ok(Self {
-            key: G::from_row_named(row, "key")?,
-            sum: N::from_row_named(row, "aggregate")?,
+            key: G::from_row_named(ctx, row, "key")?,
+            sum: N::from_row_named(ctx, row, "aggregate")?,
         })
     }
 }

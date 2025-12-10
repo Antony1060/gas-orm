@@ -2,7 +2,7 @@ use crate::connection::PgExecutionContext;
 use crate::error::GasError;
 use crate::internals::PgType::FOREIGN_KEY;
 use crate::internals::{AsPgType, IsOptional, NaiveDecodable, PgParam, PgType};
-use crate::row::{FromRowNamed, Row};
+use crate::row::{FromRowNamed, ResponseCtx, Row};
 use crate::{Field, GasResult, ModelMeta, ModelOps};
 use std::marker::PhantomData;
 
@@ -181,10 +181,14 @@ where
 impl<Fk: AsPgType + NaiveDecodable, Model: ModelMeta, const FIELD_INDEX: usize> FromRowNamed
     for FullRelation<Fk, Model, FIELD_INDEX>
 {
-    fn from_row_named(row: &Row, name: &str) -> GasResult<Self> {
-        Model::from_row(row)
+    fn from_row_named(ctx: &ResponseCtx, row: &Row, name: &str) -> GasResult<Self> {
+        Model::from_row(ctx, row)
             .map(|model| FullRelation::Loaded(model))
-            .or_else(|_| Ok(FullRelation::ForeignKey(Fk::from_row_named(row, name)?)))
+            .or_else(|_| {
+                Ok(FullRelation::ForeignKey(Fk::from_row_named(
+                    ctx, row, name,
+                )?))
+            })
     }
 }
 
@@ -220,9 +224,9 @@ impl<Fk: AsPgType + NaiveDecodable, Model: ModelMeta, const FIELD_INDEX: usize> 
 where
     Option<Fk>: AsPgType,
 {
-    fn from_row_named(row: &Row, name: &str) -> GasResult<Self> {
-        Ok(Option::<Fk>::from_row_named(row, name)?.map(|fk| {
-            Model::from_row(row)
+    fn from_row_named(ctx: &ResponseCtx, row: &Row, name: &str) -> GasResult<Self> {
+        Ok(Option::<Fk>::from_row_named(ctx, row, name)?.map(|fk| {
+            Model::from_row(ctx, row)
                 .map(|model| FullRelation::Loaded(model))
                 .unwrap_or_else(|_| FullRelation::ForeignKey(fk))
         }))

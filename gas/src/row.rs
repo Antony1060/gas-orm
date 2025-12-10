@@ -23,15 +23,19 @@ impl Row {
 }
 
 pub trait FromRow: Sized {
-    fn from_row(row: &Row) -> GasResult<Self>;
+    fn from_row(ctx: &ResponseCtx, row: &Row) -> GasResult<Self>;
+}
+
+pub struct ResponseCtx<'a> {
+    pub all_rows: &'a [Row],
 }
 
 pub trait FromRowNamed: Sized {
-    fn from_row_named(row: &Row, name: &str) -> GasResult<Self>;
+    fn from_row_named(ctx: &ResponseCtx, row: &Row, name: &str) -> GasResult<Self>;
 }
 
 impl<T: AsPgType + NaiveDecodable> FromRowNamed for T {
-    fn from_row_named(row: &Row, name: &str) -> GasResult<Self> {
+    fn from_row_named(_ctx: &ResponseCtx, row: &Row, name: &str) -> GasResult<Self> {
         row.try_get::<T>(name)
     }
 }

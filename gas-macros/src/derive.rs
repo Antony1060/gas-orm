@@ -242,19 +242,19 @@ fn generate_from_row(ctx: &ModelCtx) -> Result<proc_macro2::TokenStream, syn::Er
             let ident = Ident::new(ident, Span::call_site());
 
             quote! {
-                #ident: gas::row::FromRowNamed::from_row_named(row, #alias_name)?,
+                #ident: gas::row::FromRowNamed::from_row_named(ctx, row, #alias_name)?,
             }
         });
 
     let virtual_defs = ctx.virtuals.iter().map(|ident| {
         quote! {
-            #ident: gas::row::FromRowNamed::from_row_named(row, stringify!(#ident))?,
+            #ident: gas::row::FromRowNamed::from_row_named(ctx, row, stringify!(#ident))?,
         }
     });
 
     Ok(quote! {
         impl gas::row::FromRow for Model {
-            fn from_row(row: &gas::row::Row) -> gas::GasResult<Model> {
+            fn from_row(ctx: &gas::row::ResponseCtx, row: &gas::row::Row) -> gas::GasResult<Model> {
                 Ok(Self {
                     #(#field_defs)*
                     #(#virtual_defs)*

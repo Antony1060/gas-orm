@@ -1,7 +1,7 @@
 use crate::error::GasError;
 use crate::internals::SqlQuery;
 use crate::internals::{pg_param_all, PgParam};
-use crate::row::{FromRow, Row};
+use crate::row::{FromRow, ResponseCtx, Row};
 use crate::GasResult;
 use sqlx::postgres::{PgArguments, PgPoolOptions};
 use sqlx::Arguments;
@@ -66,8 +66,10 @@ pub(crate) trait PgExecutionContext: Sized {
     ) -> GasResult<Vec<T>> {
         let rows = self.execute(sql, params).await?;
 
-        rows.into_iter()
-            .map(|row| FromRow::from_row(&row))
+        let ctx = ResponseCtx { all_rows: &rows };
+
+        rows.iter()
+            .map(|row| FromRow::from_row(&ctx, row))
             .collect::<Result<Vec<T>, _>>()
     }
 
