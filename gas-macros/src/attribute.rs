@@ -106,7 +106,7 @@ fn apply_forward_relation(field: &mut Field, path: syn::Path) -> Result<(), syn:
 
 fn apply_inverse_relation(field: &mut Field, path: syn::Path) -> Result<(), syn::Error> {
     let ty = &field.ty;
-    let (path_index, path_flags, path_sidecar) = {
+    let (path_index, path_flags, path_sidecar, path_fk_type_alias) = {
         let append = |mut path: syn::Path, value: &str, append: bool| {
             let last = path.segments.last_mut();
             let Some(last) = last else {
@@ -133,12 +133,13 @@ fn apply_inverse_relation(field: &mut Field, path: syn::Path) -> Result<(), syn:
             append(path.clone(), "index", true)?,
             append(path.clone(), "flags", true)?,
             append(path.clone(), "Inner", false)?,
+            append(path.clone(), "fk_type", true)?,
         )
     };
 
     let _ = &path_flags;
 
-    field.ty = parse_quote! { gas::InverseRelation<<#ty as gas::InverseRelationTypeOps>::Inner, {
+    field.ty = parse_quote! { gas::InverseRelation<#path_fk_type_alias, <#ty as gas::InverseRelationTypeOps>::Inner, {
         // since #path is not used anywhere in the constant logic (using it would cause type cycles)
         //  we add this useless assignment so highlighting works in IDEs
         let _ = #path;

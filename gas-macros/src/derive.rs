@@ -383,6 +383,16 @@ fn process_field(
     let ident_meta = Ident::new(&format!("{}_meta", ident), ident.span());
     let ident_index = Ident::new(&format!("{}_index", ident), ident.span());
     let ident_flags = Ident::new(&format!("{}_flags", ident), ident.span());
+    let ident_fk_type_alias = Ident::new(&format!("{}_fk_type", ident), ident.span());
+
+    let fk_type_def = if !ctx.foreign_keys.contains(ident) {
+        quote! {}
+    } else {
+        quote! {
+            #[allow(non_camel_case_types)]
+            pub type #ident_fk_type_alias = i64;
+        }
+    };
 
     Some(Ok((
         if !is_virtual {
@@ -396,6 +406,7 @@ fn process_field(
             }
         },
         quote! {
+            #fk_type_def
             pub const #ident_index: usize = #index;
             pub const #ident_flags: gas::FieldFlags = gas::FieldFlags(#(#flags)|*);
             pub const #ident_meta: gas::FieldMeta = gas::FieldMeta {
