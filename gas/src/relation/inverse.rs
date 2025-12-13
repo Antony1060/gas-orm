@@ -36,9 +36,9 @@ pub trait InverseRelationTypeOps {
     const TYPE: InverseRelationType;
 }
 
-// TODO: these will probably cause depth problems, figure out later
+// 📦, maybe replace with Arc
 type ToManyContainer<M> = Box<[M]>;
-type ToOneContainer<M> = Option<M>;
+type ToOneContainer<M> = Option<Box<M>>;
 
 impl<M: ModelMeta> InverseRelationTypeOps for Vec<M> {
     type Inner = ToManyContainer<M>;
@@ -107,54 +107,26 @@ impl<
 where
     PgParam: From<Fk>,
 {
-    fn from_row_named(_ctx: &ResponseCtx, _row: &Row, _name: &str) -> GasResult<Self> {
-        let mut instance = Self {
-            parent_fk: FromRowNamed::from_row_named(
-                _ctx,
-                _row,
-                Self::get_fk_own_field().alias_name,
-            )?,
-            loaded: false,
-            items: ToManyContainer::<M>::default(),
-            _marker: PhantomData,
-        };
-
-        // crimes
-        Handle::current().block_on(async move {
-            instance
-                .reload(&crate::connection::get_default_connection())
-                .await?;
-
-            Ok(instance)
-        })
+    fn from_row_named(ctx: &ResponseCtx, row: &Row, _name: &str) -> GasResult<Self> {
+        Self::new_from_row_slow(ctx, row)
     }
 }
 
-// impl<
-//     SelfModel: ModelMeta,
-//     Fk: AsPgType + 'static,
-//     M: ModelMeta,
-//     const FORWARD_FIELD_INDEX: usize,
-//     const OWN_FIELD_INDEX: usize,
-// > FromRowNamed
-//     for InverseRelation<SelfModel, Fk, ToOneContainer<M>, FORWARD_FIELD_INDEX, OWN_FIELD_INDEX>
-// where
-//     PgParam: From<Fk>,
-// {
-//     fn from_row_named(_ctx: &ResponseCtx, _row: &Row, _name: &str) -> GasResult<Self> {
-//         todo!();
-//         Ok(Self {
-//             parent_fk: FromRowNamed::from_row_named(
-//                 _ctx,
-//                 _row,
-//                 Self::get_fk_own_field().alias_name,
-//             )?,
-//             loaded: false,
-//             items: ToOneContainer::<M>::default(),
-//             _marker: PhantomData,
-//         })
-//     }
-// }
+impl<
+    SelfModel: ModelMeta,
+    Fk: AsPgType + 'static,
+    M: ModelMeta,
+    const FORWARD_FIELD_INDEX: usize,
+    const OWN_FIELD_INDEX: usize,
+> FromRowNamed
+    for InverseRelation<SelfModel, Fk, ToOneContainer<M>, FORWARD_FIELD_INDEX, OWN_FIELD_INDEX>
+where
+    PgParam: From<Fk>,
+{
+    fn from_row_named(ctx: &ResponseCtx, row: &Row, _name: &str) -> GasResult<Self> {
+        Self::new_from_row_slow(ctx, row)
+    }
+}
 
 impl<
     SelfModel: ModelMeta,
@@ -185,6 +157,24 @@ where
         InverseRelationOps<Ret>,
     PgParam: From<Fk>,
 {
+    fn new_from_row_slow(ctx: &ResponseCtx, row: &Row) -> GasResult<Self> {
+        let mut instance = Self {
+            parent_fk: FromRowNamed::from_row_named(ctx, row, Self::get_fk_own_field().alias_name)?,
+            loaded: false,
+            items: Ret::default(),
+            _marker: PhantomData,
+        };
+
+        // crimes
+        Handle::current().block_on(async move {
+            instance
+                .reload(&crate::connection::get_default_connection())
+                .await?;
+
+            Ok(instance)
+        })
+    }
+
     pub async fn load<E: PgExecutionContext>(&mut self, ctx: E) -> GasResult<&Ret> {
         if self.loaded {
             return Ok(&self.items);
@@ -226,7 +216,6 @@ impl<
 where
     PgParam: From<Fk>,
 {
-    // NOTE: untested
     async fn reload<'a, E: PgExecutionContext>(
         &'a mut self,
         ctx: E,
@@ -265,7 +254,7 @@ where
 
         let resp = select.find_one(ctx).await?;
         self.loaded = true;
-        self.items = resp;
+        self.items = resp.map(Box::from);
         Ok(&self.items)
     }
 }
