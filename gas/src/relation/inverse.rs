@@ -6,6 +6,7 @@ use crate::row::{FromRowNamed, ResponseCtx, Row};
 use crate::{FieldMeta, GasResult, ModelMeta, ModelOps};
 use std::marker::PhantomData;
 use std::ops::Deref;
+use tokio::runtime::Handle;
 
 #[allow(dead_code)]
 #[derive(Debug, Clone, Default)]
@@ -107,7 +108,7 @@ where
     PgParam: From<Fk>,
 {
     fn from_row_named(_ctx: &ResponseCtx, _row: &Row, _name: &str) -> GasResult<Self> {
-        Ok(Self {
+        let mut instance = Self {
             parent_fk: FromRowNamed::from_row_named(
                 _ctx,
                 _row,
@@ -116,6 +117,15 @@ where
             loaded: false,
             items: ToManyContainer::<M>::default(),
             _marker: PhantomData,
+        };
+
+        // crimes
+        Handle::current().block_on(async move {
+            instance
+                .reload(&crate::connection::get_default_connection())
+                .await?;
+
+            Ok(instance)
         })
     }
 }

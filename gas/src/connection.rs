@@ -8,6 +8,10 @@ use sqlx::Arguments;
 use sqlx::PgPool;
 use std::mem;
 use std::sync::Arc;
+use tokio::sync::OnceCell;
+
+// crimes
+pub(crate) static DEFAULT_CONNECTION: OnceCell<PgConnection> = OnceCell::const_new();
 
 #[derive(Clone)]
 pub struct PgConnection {
@@ -40,6 +44,20 @@ impl PgConnection {
     }
 }
 
+pub fn set_default_connection(connection: &PgConnection) {
+    let Ok(_) = DEFAULT_CONNECTION.set(connection.clone()) else {
+        panic!("cannot set default connection twice")
+    };
+}
+
+pub fn get_default_connection() -> PgConnection {
+    let Some(connection) = DEFAULT_CONNECTION.get() else {
+        panic!("default connection not set")
+    };
+
+    connection.clone()
+}
+
 impl PgTransaction {
     pub async fn save(&mut self) -> GasResult<()> {
         let tx = mem::replace(self, self.connection.transaction().await?);
@@ -66,11 +84,15 @@ pub(crate) trait PgExecutionContext: Sized {
     ) -> GasResult<Vec<T>> {
         let rows = self.execute(sql, params).await?;
 
-        let ctx = ResponseCtx { all_rows: &rows };
+        tokio::task::spawn_blocking(move || {
+            let ctx = ResponseCtx { all_rows: &rows };
 
-        rows.iter()
-            .map(|row| FromRow::from_row(&ctx, row))
-            .collect::<Result<Vec<T>, _>>()
+            rows.iter()
+                .map(|row| FromRow::from_row(&ctx, row))
+                .collect::<Result<Vec<T>, _>>()
+        })
+        .await
+        .unwrap()
     }
 
     fn prepare_query(sql: SqlQuery, params: &[PgParam]) -> GasResult<(String, PgArguments)> {

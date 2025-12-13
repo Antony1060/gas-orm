@@ -22,7 +22,7 @@ impl Row {
     }
 }
 
-pub trait FromRow: Sized {
+pub trait FromRow: Sized + Send + 'static {
     fn from_row(ctx: &ResponseCtx, row: &Row) -> GasResult<Self>;
 }
 
@@ -30,7 +30,7 @@ pub struct ResponseCtx<'a> {
     pub all_rows: &'a [Row],
 }
 
-pub trait FromRowNamed: Sized {
+pub trait FromRowNamed: Sized + Send + 'static {
     fn from_row_named(ctx: &ResponseCtx, row: &Row, name: &str) -> GasResult<Self>;
 }
 

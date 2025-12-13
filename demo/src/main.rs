@@ -22,6 +22,8 @@ async fn main() -> GasResult<()> {
         PgConnection::new_connection_pool("postgres://postgres:strong_password@localhost/postgres")
             .await?;
 
+    gas::connection::set_default_connection(&conn);
+
     person::Model::create_table(&conn, true).await?;
     audit_logs::Model::create_table(&conn, true).await?;
     user::Model::create_table(&conn, true).await?;
