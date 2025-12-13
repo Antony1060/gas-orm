@@ -82,7 +82,7 @@ pub(crate) fn model_impl(args: TokenStream, input: TokenStream) -> Result<TokenS
 }
 
 fn apply_forward_relation(field: &mut Field, path: syn::Path) -> Result<(), syn::Error> {
-    let ty = &field.ty;
+    let ty = field.ty.clone();
 
     // this yields some very very very ugly errors, but hey,
     //  at least it won't compile if incorrect
@@ -99,14 +99,16 @@ fn apply_forward_relation(field: &mut Field, path: syn::Path) -> Result<(), syn:
         #path.meta.index
     }> };
 
-    field.attrs.push(parse_quote! { #[__gas_foreign_key] });
+    field
+        .attrs
+        .push(parse_quote! { #[__gas_foreign_key(<#ty as gas::RelationTypeOps>::ToNaive)] });
 
     Ok(())
 }
 
 fn apply_inverse_relation(field: &mut Field, path: syn::Path) -> Result<(), syn::Error> {
     let ty = &field.ty;
-    let (path_index, path_flags, path_sidecar, path_fk_type_alias) = {
+    let (path_index, path_flags, path_sidecar, path_fk_type_alias, path_fk_remote_field_index) = {
         let append = |mut path: syn::Path, value: &str, append: bool| {
             let last = path.segments.last_mut();
             let Some(last) = last else {
@@ -134,12 +136,13 @@ fn apply_inverse_relation(field: &mut Field, path: syn::Path) -> Result<(), syn:
             append(path.clone(), "flags", true)?,
             append(path.clone(), "Inner", false)?,
             append(path.clone(), "fk_type", true)?,
+            append(path.clone(), "fk_remote_index", true)?,
         )
     };
 
     let _ = &path_flags;
 
-    field.ty = parse_quote! { gas::InverseRelation<#path_fk_type_alias, <#ty as gas::InverseRelationTypeOps>::Inner, {
+    field.ty = parse_quote! { gas::InverseRelation<Model, #path_fk_type_alias, <#ty as gas::InverseRelationTypeOps>::Inner, {
         // since #path is not used anywhere in the constant logic (using it would cause type cycles)
         //  we add this useless assignment so highlighting works in IDEs
         let _ = #path;
@@ -162,7 +165,7 @@ fn apply_inverse_relation(field: &mut Field, path: syn::Path) -> Result<(), syn:
         }
 
         #path_index
-    }> };
+    }, { #path_fk_remote_field_index }> };
 
     field.attrs.push(parse_quote! { #[__gas_virtual] });
 

@@ -22,7 +22,7 @@ struct ModelCtx<'a> {
     primary_keys: &'a [Ident],
     serials: &'a [Ident],
     uniques: &'a [Ident],
-    foreign_keys: &'a [Ident],
+    foreign_keys: &'a [(Ident, syn::Type)],
 
     // field.ident -> names
     field_columns: &'a [(String, FieldNames)],

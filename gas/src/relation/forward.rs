@@ -14,16 +14,19 @@ pub struct Relation<Fk: AsPgType + 'static, Model: ModelMeta> {
 pub trait RelationTypeOps {
     type ToFull<const FIELD_INDEX: usize>;
     type ToField;
+    type ToNaive;
 }
 
 impl<Fk: AsPgType + 'static, Model: ModelMeta> RelationTypeOps for Relation<Fk, Model> {
     type ToFull<const FIELD_INDEX: usize> = FullRelation<Fk, Model, FIELD_INDEX>;
     type ToField = Field<Fk, Model::Id>;
+    type ToNaive = Fk;
 }
 
 impl<Fk: AsPgType + 'static, Model: ModelMeta> RelationTypeOps for Option<Relation<Fk, Model>> {
     type ToFull<const FIELD_INDEX: usize> = Option<FullRelation<Fk, Model, FIELD_INDEX>>;
     type ToField = Field<Fk, Model::Id>;
+    type ToNaive = Fk;
 }
 
 // NOTE: a foreign key must have uniqueness, so it must have a unique constraint or

@@ -3,18 +3,25 @@ use crate::error::GasError;
 use crate::internals::{AsPgType, IsOptional, PgParam, PgType};
 use crate::ops::select::SelectBuilder;
 use crate::row::{FromRowNamed, ResponseCtx, Row};
-use crate::{GasResult, ModelMeta, ModelOps};
+use crate::{FieldMeta, GasResult, ModelMeta, ModelOps};
+use std::marker::PhantomData;
 use std::ops::Deref;
 
 #[allow(dead_code)]
 #[derive(Debug, Clone, Default)]
-pub struct InverseRelation<Fk: AsPgType, Ret: Clone + Default, const FORWARD_FIELD_INDEX: usize>
-where
+pub struct InverseRelation<
+    SelfModel: ModelMeta,
+    Fk: AsPgType,
+    Ret: Clone + Default,
+    const FORWARD_FIELD_INDEX: usize,
+    const OWN_FIELD_INDEX: usize,
+> where
     PgParam: From<Fk>,
 {
     parent_fk: Fk,
     loaded: bool,
     items: Ret,
+    _marker: PhantomData<SelfModel>,
 }
 
 pub enum InverseRelationType {
@@ -44,67 +51,108 @@ impl<M: ModelMeta> InverseRelationTypeOps for Option<M> {
     const TYPE: InverseRelationType = InverseRelationType::ToOne;
 }
 
-impl<Fk: AsPgType, Ret: Clone + Default, const FORWARD_FIELD_INDEX: usize> AsPgType
-    for InverseRelation<Fk, Ret, FORWARD_FIELD_INDEX>
+impl<
+    SelfModel: ModelMeta,
+    Fk: AsPgType,
+    Ret: Clone + Default,
+    const FORWARD_FIELD_INDEX: usize,
+    const OWN_FIELD_INDEX: usize,
+> AsPgType for InverseRelation<SelfModel, Fk, Ret, FORWARD_FIELD_INDEX, OWN_FIELD_INDEX>
 where
-    InverseRelation<Fk, Ret, FORWARD_FIELD_INDEX>: FromRowNamed,
+    InverseRelation<SelfModel, Fk, Ret, FORWARD_FIELD_INDEX, OWN_FIELD_INDEX>: FromRowNamed,
     PgParam: From<Fk>,
 {
     const PG_TYPE: PgType = PgType::IGNORED;
 }
 
-impl<Fk: AsPgType, Ret: Clone + Default, const FORWARD_FIELD_INDEX: usize> IsOptional
-    for InverseRelation<Fk, Ret, FORWARD_FIELD_INDEX>
+impl<
+    SelfModel: ModelMeta,
+    Fk: AsPgType,
+    Ret: Clone + Default,
+    const FORWARD_FIELD_INDEX: usize,
+    const OWN_FIELD_INDEX: usize,
+> IsOptional for InverseRelation<SelfModel, Fk, Ret, FORWARD_FIELD_INDEX, OWN_FIELD_INDEX>
 where
     PgParam: From<Fk>,
 {
     const FACTOR: u8 = 0;
 }
 
-impl<Fk: AsPgType, Ret: Clone + Default, const FORWARD_FIELD_INDEX: usize>
-    From<InverseRelation<Fk, Ret, FORWARD_FIELD_INDEX>> for PgParam
+impl<
+    SelfModel: ModelMeta,
+    Fk: AsPgType,
+    Ret: Clone + Default,
+    const FORWARD_FIELD_INDEX: usize,
+    const OWN_FIELD_INDEX: usize,
+> From<InverseRelation<SelfModel, Fk, Ret, FORWARD_FIELD_INDEX, OWN_FIELD_INDEX>> for PgParam
 where
     PgParam: From<Fk>,
 {
-    fn from(_value: InverseRelation<Fk, Ret, FORWARD_FIELD_INDEX>) -> Self {
+    fn from(
+        _value: InverseRelation<SelfModel, Fk, Ret, FORWARD_FIELD_INDEX, OWN_FIELD_INDEX>,
+    ) -> Self {
         PgParam::IGNORED
     }
 }
 
-impl<Fk: AsPgType, M: ModelMeta, const FORWARD_FIELD_INDEX: usize> FromRowNamed
-    for InverseRelation<Fk, ToManyContainer<M>, FORWARD_FIELD_INDEX>
+impl<
+    SelfModel: ModelMeta,
+    Fk: AsPgType + 'static,
+    M: ModelMeta,
+    const FORWARD_FIELD_INDEX: usize,
+    const OWN_FIELD_INDEX: usize,
+> FromRowNamed
+    for InverseRelation<SelfModel, Fk, ToManyContainer<M>, FORWARD_FIELD_INDEX, OWN_FIELD_INDEX>
 where
     PgParam: From<Fk>,
 {
     fn from_row_named(_ctx: &ResponseCtx, _row: &Row, _name: &str) -> GasResult<Self> {
-        // TODO:
         Ok(Self {
-            // TODO: somehow get the name of the field inside and make a row get
-            parent_fk: Fk::default(),
+            parent_fk: FromRowNamed::from_row_named(
+                _ctx,
+                _row,
+                Self::get_fk_own_field().alias_name,
+            )?,
             loaded: false,
             items: ToManyContainer::<M>::default(),
+            _marker: PhantomData,
         })
     }
 }
 
-impl<Fk: AsPgType, M: ModelMeta, const FORWARD_FIELD_INDEX: usize> FromRowNamed
-    for InverseRelation<Fk, ToOneContainer<M>, FORWARD_FIELD_INDEX>
-where
-    PgParam: From<Fk>,
-{
-    fn from_row_named(_ctx: &ResponseCtx, _row: &Row, _name: &str) -> GasResult<Self> {
-        // TODO:
-        Ok(Self {
-            // TODO: somehow get the name of the field inside and make a row get
-            parent_fk: Fk::default(),
-            loaded: false,
-            items: ToOneContainer::<M>::default(),
-        })
-    }
-}
+// impl<
+//     SelfModel: ModelMeta,
+//     Fk: AsPgType + 'static,
+//     M: ModelMeta,
+//     const FORWARD_FIELD_INDEX: usize,
+//     const OWN_FIELD_INDEX: usize,
+// > FromRowNamed
+//     for InverseRelation<SelfModel, Fk, ToOneContainer<M>, FORWARD_FIELD_INDEX, OWN_FIELD_INDEX>
+// where
+//     PgParam: From<Fk>,
+// {
+//     fn from_row_named(_ctx: &ResponseCtx, _row: &Row, _name: &str) -> GasResult<Self> {
+//         todo!();
+//         Ok(Self {
+//             parent_fk: FromRowNamed::from_row_named(
+//                 _ctx,
+//                 _row,
+//                 Self::get_fk_own_field().alias_name,
+//             )?,
+//             loaded: false,
+//             items: ToOneContainer::<M>::default(),
+//             _marker: PhantomData,
+//         })
+//     }
+// }
 
-impl<Fk: AsPgType, Ret: Clone + Default, const FORWARD_FIELD_INDEX: usize> Deref
-    for InverseRelation<Fk, Ret, FORWARD_FIELD_INDEX>
+impl<
+    SelfModel: ModelMeta,
+    Fk: AsPgType,
+    Ret: Clone + Default,
+    const FORWARD_FIELD_INDEX: usize,
+    const OWN_FIELD_INDEX: usize,
+> Deref for InverseRelation<SelfModel, Fk, Ret, FORWARD_FIELD_INDEX, OWN_FIELD_INDEX>
 where
     PgParam: From<Fk>,
 {
@@ -115,10 +163,16 @@ where
     }
 }
 
-impl<Fk: AsPgType, Ret: Clone + Default, const FORWARD_FIELD_INDEX: usize>
-    InverseRelation<Fk, Ret, FORWARD_FIELD_INDEX>
+impl<
+    SelfModel: ModelMeta,
+    Fk: AsPgType + 'static,
+    Ret: Clone + Default,
+    const FORWARD_FIELD_INDEX: usize,
+    const OWN_FIELD_INDEX: usize,
+> InverseRelation<SelfModel, Fk, Ret, FORWARD_FIELD_INDEX, OWN_FIELD_INDEX>
 where
-    InverseRelation<Fk, Ret, FORWARD_FIELD_INDEX>: InverseRelationOps<Ret>,
+    InverseRelation<SelfModel, Fk, Ret, FORWARD_FIELD_INDEX, OWN_FIELD_INDEX>:
+        InverseRelationOps<Ret>,
     PgParam: From<Fk>,
 {
     pub async fn load<E: PgExecutionContext>(&mut self, ctx: E) -> GasResult<&Ret> {
@@ -127,6 +181,18 @@ where
         }
 
         self.reload(ctx).await
+    }
+
+    fn get_fk_own_field() -> &'static FieldMeta {
+        SelfModel::FIELDS
+            .get(OWN_FIELD_INDEX)
+            .expect("invalid relation")
+    }
+
+    pub fn update_parent(&mut self, model: &SelfModel) {
+        self.parent_fk = model
+            .get_by_field(Self::get_fk_own_field())
+            .expect("invalid relation");
     }
 }
 
@@ -139,9 +205,14 @@ pub trait InverseRelationOps<Ret> {
         Ret: 'a;
 }
 
-impl<Fk: AsPgType, M: ModelMeta, const FORWARD_FIELD_INDEX: usize>
-    InverseRelationOps<ToManyContainer<M>>
-    for InverseRelation<Fk, ToManyContainer<M>, FORWARD_FIELD_INDEX>
+impl<
+    SelfModel: ModelMeta,
+    Fk: AsPgType,
+    M: ModelMeta,
+    const FORWARD_FIELD_INDEX: usize,
+    const OWN_FIELD_INDEX: usize,
+> InverseRelationOps<ToManyContainer<M>>
+    for InverseRelation<SelfModel, Fk, ToManyContainer<M>, FORWARD_FIELD_INDEX, OWN_FIELD_INDEX>
 where
     PgParam: From<Fk>,
 {
@@ -162,9 +233,14 @@ where
     }
 }
 
-impl<Fk: AsPgType, M: ModelMeta, const FORWARD_FIELD_INDEX: usize>
-    InverseRelationOps<ToOneContainer<M>>
-    for InverseRelation<Fk, ToOneContainer<M>, FORWARD_FIELD_INDEX>
+impl<
+    SelfModel: ModelMeta,
+    Fk: AsPgType,
+    M: ModelMeta,
+    const FORWARD_FIELD_INDEX: usize,
+    const OWN_FIELD_INDEX: usize,
+> InverseRelationOps<ToOneContainer<M>>
+    for InverseRelation<SelfModel, Fk, ToOneContainer<M>, FORWARD_FIELD_INDEX, OWN_FIELD_INDEX>
 where
     PgParam: From<Fk>,
 {

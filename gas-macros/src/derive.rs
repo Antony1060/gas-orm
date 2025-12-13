@@ -9,7 +9,7 @@ use proc_macro::TokenStream;
 use proc_macro2::{Ident, Span};
 use quote::quote;
 use syn::spanned::Spanned;
-use syn::{Field, Index};
+use syn::{Field, Index, Meta, MetaList, Type};
 
 #[derive(Debug, FromDeriveInput)]
 #[darling(attributes(__gas_meta))]
@@ -51,7 +51,6 @@ pub fn model_impl(_input: TokenStream) -> Result<TokenStream, syn::Error> {
     let primary_keys = find_fields_with_attr(&real_fields, "primary_key");
     let serials = find_fields_with_attr(&real_fields, "serial");
     let uniques = find_fields_with_attr(&real_fields, "unique");
-    let foreign_keys = find_fields_with_attr(&real_fields, "__gas_foreign_key");
 
     let table_name = meta.table_name;
 
@@ -61,7 +60,7 @@ pub fn model_impl(_input: TokenStream) -> Result<TokenStream, syn::Error> {
         primary_keys: &primary_keys,
         serials: &serials,
         uniques: &uniques,
-        foreign_keys: &foreign_keys,
+        foreign_keys: &parse_foreign_keys(&real_fields),
         field_columns: &parse_col_names(&table_name, &real_fields)?,
     };
 
@@ -161,6 +160,25 @@ fn find_fields_with_attr(fields: &[Field], target_attr: &'static str) -> Vec<Ide
                 .iter()
                 .find(|attr| attr.path().is_ident(target_attr))
                 .and_then(|_| field.ident.clone())
+        })
+        .collect()
+}
+
+fn parse_foreign_keys(fields: &[Field]) -> Vec<(Ident, Type)> {
+    fields
+        .iter()
+        .cloned()
+        .filter_map(|field| {
+            field
+                .attrs
+                .iter()
+                .find(|attr| attr.path().is_ident("__gas_foreign_key"))
+                .and_then(|attr| {
+                    let Meta::List(MetaList { tokens, .. }) = &attr.meta else {
+                        return None;
+                    };
+                    Some((field.ident.clone()?, syn::parse_quote! { #tokens }))
+                })
         })
         .collect()
 }
@@ -365,7 +383,8 @@ fn process_field(
         flags.push(quote! { (gas::FieldFlag::Unique as u8) })
     }
 
-    if ctx.foreign_keys.contains(ident) {
+    let maybe_foreign_key = ctx.foreign_keys.iter().find(|(it, _)| it == ident);
+    if maybe_foreign_key.is_some() {
         flags.push(quote! { (gas::FieldFlag::ForeignKey as u8) })
     }
 
@@ -384,14 +403,16 @@ fn process_field(
     let ident_index = Ident::new(&format!("{}_index", ident), ident.span());
     let ident_flags = Ident::new(&format!("{}_flags", ident), ident.span());
     let ident_fk_type_alias = Ident::new(&format!("{}_fk_type", ident), ident.span());
+    let ident_fk_remote_index = Ident::new(&format!("{}_fk_remote_index", ident), ident.span());
 
-    let fk_type_def = if !ctx.foreign_keys.contains(ident) {
-        quote! {}
-    } else {
+    let fk_extra_vars = if let Some((_, fk_type)) = maybe_foreign_key {
         quote! {
             #[allow(non_camel_case_types)]
-            pub type #ident_fk_type_alias = i64;
+            pub type #ident_fk_type_alias = #fk_type;
+            pub const #ident_fk_remote_index: usize = 0;
         }
+    } else {
+        quote! {}
     };
 
     Some(Ok((
@@ -406,7 +427,7 @@ fn process_field(
             }
         },
         quote! {
-            #fk_type_def
+            #fk_extra_vars
             pub const #ident_index: usize = #index;
             pub const #ident_flags: gas::FieldFlags = gas::FieldFlags(#(#flags)|*);
             pub const #ident_meta: gas::FieldMeta = gas::FieldMeta {
