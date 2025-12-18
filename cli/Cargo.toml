@@ -1,0 +1,12 @@
+[package]
+name = "cli"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+anyhow = "1.0.100"
+camino = "1.2.2"
+ra_ap_load-cargo = "0.0.310"
+ra_ap_paths = "0.0.310"
+ra_ap_project_model = "0.0.310"
+ra_ap_syntax = "0.0.310"
