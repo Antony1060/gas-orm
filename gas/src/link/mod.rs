@@ -8,6 +8,7 @@ mod portable_pg_type;
 pub use portable_field_meta::*;
 pub use portable_pg_type::*;
 
+#[derive(Eq, PartialEq, Hash, PartialOrd, Ord)]
 pub struct FixedStr<const SIZE: usize = 64>([u8; SIZE]);
 
 impl<const SIZE: usize> TryFrom<&str> for FixedStr<SIZE> {
