@@ -58,6 +58,27 @@ impl PgType {
             PgType::IGNORED => "".into(),
         }
     }
+
+    pub const unsafe fn as_sql_type_const(&self, is_serial: bool) -> &'static str {
+        match self {
+            PgType::TEXT => "TEXT",
+            PgType::SMALLINT if is_serial => "SMALLSERIAL",
+            PgType::SMALLINT => "SMALLINT",
+            PgType::INTEGER if is_serial => "SERIAL",
+            PgType::INTEGER => "INTEGER",
+            PgType::BIGINT if is_serial => "BIGSERIAL",
+            PgType::BIGINT => "BIGINT",
+            PgType::REAL => "REAL",
+            PgType::DOUBLE => "DOUBLE",
+            PgType::DECIMAL => "DECIMAL",
+            PgType::TIMESTAMP => "TIMESTAMP",
+            PgType::TIMESTAMP_TZ => "TIMESTAMP WITH TIME ZONE",
+            PgType::DATE => "DATE",
+            PgType::TIME => "TIME",
+            PgType::IGNORED => "",
+            _ => panic!("unhandled state"),
+        }
+    }
 }
 
 pub trait AsPgType: Clone + Default + FromRowNamed {

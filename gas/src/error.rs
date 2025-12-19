@@ -28,4 +28,7 @@ pub enum GasError {
 
     #[error("entity doesn't exist")]
     EntityNotFound,
+
+    #[error("internal ORM error: {0}")]
+    InternalError(Cow<'static, str>),
 }

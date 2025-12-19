@@ -1,20 +1,8 @@
+use gas::link::PortableFieldMeta;
 use object::{Object, ObjectSection};
-use std::ffi::CStr;
 use std::fs;
 use std::mem::MaybeUninit;
 use std::path::Path;
-
-#[derive(Debug)]
-pub struct FieldMeta {
-    pub table_name: *const str,
-    pub full_name: *const str,
-    pub name: *const str,
-    pub alias_name: *const str,
-    pub struct_name: *const str,
-    pub pg_type: gas::internals::PgType,
-    pub flags: gas::FieldFlags,
-    pub index: usize,
-}
 
 fn main() -> anyhow::Result<()> {
     let args = std::env::args().skip(1);
@@ -39,7 +27,7 @@ fn main() -> anyhow::Result<()> {
     let binding = fs::read(binary_path)?;
     let file = object::File::parse(&*binding)?;
 
-    let sz = size_of::<([u8; 64], FieldMeta)>();
+    let sz = size_of::<PortableFieldMeta>();
 
     for section in file.sections() {
         let data = section.data()?;
@@ -61,15 +49,13 @@ fn main() -> anyhow::Result<()> {
 
             assert_eq!(f.len(), sz);
 
-            let mut meta = MaybeUninit::<([u8; 64], FieldMeta)>::uninit();
-            let (col_name, meta) = unsafe {
+            let mut meta = MaybeUninit::<PortableFieldMeta>::uninit();
+            let meta = unsafe {
                 std::ptr::copy_nonoverlapping(f.as_ptr(), meta.as_mut_ptr() as *mut u8, sz);
                 meta.assume_init()
             };
 
-            let col_name = CStr::from_bytes_until_nul(&col_name)?;
-
-            dbg!(&col_name, &meta);
+            dbg!(&meta);
         }
     }
 
