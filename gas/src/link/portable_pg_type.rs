@@ -48,3 +48,12 @@ impl PortablePgType {
         }
     }
 }
+
+impl From<PortablePgType> for PgType {
+    fn from(pg_type: PortablePgType) -> Self {
+        match pg_type {
+            PortablePgType::Raw(pg_type) => pg_type,
+            PortablePgType::ForeignKey { .. } => todo!(),
+        }
+    }
+}

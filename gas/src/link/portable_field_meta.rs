@@ -9,6 +9,7 @@ pub struct PortableFieldMeta {
     pub name: FixedStr,
     pub pg_type: PortablePgType,
     pub flags: FieldFlags,
+    pub index: usize,
 }
 
 impl TryFrom<FieldMeta> for PortableFieldMeta {
@@ -20,6 +21,7 @@ impl TryFrom<FieldMeta> for PortableFieldMeta {
             name: FixedStr::try_from(meta.name)?,
             pg_type: PortablePgType::try_from(meta.pg_type)?,
             flags: meta.flags,
+            index: meta.index,
         })
     }
 }
@@ -33,6 +35,7 @@ impl PortableFieldMeta {
                 name: FixedStr::from_unchecked(meta.name),
                 pg_type: PortablePgType::from_unchecked(meta.pg_type),
                 flags: meta.flags,
+                index: meta.index,
             }
         }
     }

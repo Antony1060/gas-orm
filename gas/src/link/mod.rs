@@ -40,6 +40,12 @@ impl<const SIZE: usize> FixedStr<SIZE> {
     }
 }
 
+impl From<FixedStr> for String {
+    fn from(value: FixedStr) -> Self {
+        String::from_utf8_lossy(&value.0).to_string()
+    }
+}
+
 impl<const SIZE: usize> Debug for FixedStr<SIZE> {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         let str = CStr::from_bytes_until_nul(&self.0);
