@@ -16,7 +16,7 @@ pub struct SelectBuilder<T: ModelMeta> {
     pub(crate) filter: Option<EqExpression>,
     sort: Option<SortDefinition>,
     limit: Option<NonZeroUsize>,
-    includes: Vec<(String, &'static [&'static FieldMeta])>,
+    includes: Vec<(String, &'static [FieldMeta])>,
     _marker: PhantomData<T>,
 }
 

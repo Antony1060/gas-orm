@@ -9,7 +9,7 @@ use proc_macro::TokenStream;
 use proc_macro2::{Ident, Span};
 use quote::quote;
 use syn::spanned::Spanned;
-use syn::{Field, Index, Meta, MetaList, Type};
+use syn::{Field, Index, LitStr, Meta, MetaList};
 
 #[derive(Debug, FromDeriveInput)]
 #[darling(attributes(__gas_meta))]
@@ -72,8 +72,11 @@ pub fn model_impl(_input: TokenStream) -> Result<TokenStream, syn::Error> {
         .filter_map(|field| process_field(&ctx, field, counter.next().unwrap()))
         .collect::<Result<(Vec<_>, Vec<_>), syn::Error>>()?;
 
-    let field_list = real_fields.iter().filter_map(|field| field.ident.as_ref());
-    let filed_list_get_by_field = field_list.clone();
+    let field_list = real_fields
+        .iter()
+        .filter_map(|field| field.ident.as_ref())
+        .collect::<Vec<_>>();
+    let field_list_len = field_list.len();
 
     let key_tokens = gen_key_tokens(&ctx, &real_fields);
 
@@ -84,6 +87,11 @@ pub fn model_impl(_input: TokenStream) -> Result<TokenStream, syn::Error> {
 
     let from_row_impl = generate_from_row(&ctx)?;
 
+    let link_section_name: LitStr = LitStr::new(
+        &format!("__gas_internals,__{}", table_name),
+        Span::call_site(),
+    );
+
     Ok(quote! {
         #(#field_consts)*
 
@@ -91,8 +99,8 @@ pub fn model_impl(_input: TokenStream) -> Result<TokenStream, syn::Error> {
             type Id = __::Inner;
 
             const TABLE_NAME: &'static str = #table_name;
-            const FIELDS: &'static [&'static gas::FieldMeta] = &[#(&#field_list.meta),*];
-            const VIRTUAL_FIELDS: &'static [&'static gas::FieldMeta] = &[#(&#virtuals.meta),*];
+            const FIELDS: &'static [gas::FieldMeta] = &[#(#field_list.meta),*];
+            const VIRTUAL_FIELDS: &'static [gas::FieldMeta] = &[#(#virtuals.meta),*];
 
             #key_tokens
 
@@ -116,8 +124,8 @@ pub fn model_impl(_input: TokenStream) -> Result<TokenStream, syn::Error> {
                 let struct_name = field.struct_name;
                 let type_id_t = std::any::TypeId::of::<T>();
                 match struct_name {
-                    #(stringify!(#filed_list_get_by_field) => {
-                        let value = &self.#filed_list_get_by_field;
+                    #(stringify!(#field_list) => {
+                        let value = &self.#field_list;
                         if type_id_t != gas::internals::type_id_of_value(value) {
                             return None;
                         }
@@ -135,6 +143,10 @@ pub fn model_impl(_input: TokenStream) -> Result<TokenStream, syn::Error> {
             //  Field to a specific model and also avoiding cyclic type checking
             #[doc(hidden)]
             pub struct Inner;
+
+            #[unsafe(link_section = #link_section_name)]
+            #[used]
+            static FIELDS: [gas::FieldMeta; #field_list_len] = [#(#field_list.meta),*];
 
             impl gas::ModelSidecar for Inner {}
 
@@ -164,7 +176,7 @@ fn find_fields_with_attr(fields: &[Field], target_attr: &'static str) -> Vec<Ide
         .collect()
 }
 
-fn parse_foreign_keys(fields: &[Field]) -> Vec<(Ident, Type)> {
+fn parse_foreign_keys(fields: &[Field]) -> Vec<(Ident, syn::Type)> {
     fields
         .iter()
         .cloned()

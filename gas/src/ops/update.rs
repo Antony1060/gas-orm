@@ -44,7 +44,7 @@ impl<'a, T: ModelMeta> UpdateOp<'a, T> {
         let fields = fields
             .iter()
             .map(|field| {
-                *T::FIELDS
+                T::FIELDS
                     .iter()
                     .find(|it| it.struct_name == *field)
                     .expect("field mismatch")
