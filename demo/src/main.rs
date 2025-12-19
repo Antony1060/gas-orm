@@ -57,12 +57,6 @@ async fn main() -> GasResult<()> {
     tracing::info!("----------------");
     foreign_key_ops(&conn).await?;
 
-    println!(
-        "{} {}",
-        std::mem::size_of::<gas::FieldMeta>(),
-        std::mem::align_of::<gas::FieldMeta>()
-    );
-
     Ok(())
 }
 

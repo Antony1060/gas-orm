@@ -146,7 +146,12 @@ pub fn model_impl(_input: TokenStream) -> Result<TokenStream, syn::Error> {
 
             #[unsafe(link_section = #link_section_name)]
             #[used]
-            static FIELDS: [gas::FieldMeta; #field_list_len] = [#(#field_list.meta),*];
+            static FIELDS: [([u8; 64], gas::FieldMeta); #field_list_len] = [#(({
+                let mut val = [0; 64];
+                unsafe { std::ptr::copy_nonoverlapping(#field_list.meta.name.as_bytes().as_ptr(), val.as_mut_ptr(), #field_list.meta.name.as_bytes().len()); }
+
+                val
+            }, #field_list.meta)),*];
 
             impl gas::ModelSidecar for Inner {}
 

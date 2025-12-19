@@ -1,4 +1,5 @@
 use object::{Object, ObjectSection};
+use std::ffi::CStr;
 use std::fs;
 use std::mem::MaybeUninit;
 use std::path::Path;
@@ -38,7 +39,7 @@ fn main() -> anyhow::Result<()> {
     let binding = fs::read(binary_path)?;
     let file = object::File::parse(&*binding)?;
 
-    let sz = size_of::<FieldMeta>();
+    let sz = size_of::<([u8; 64], FieldMeta)>();
 
     for section in file.sections() {
         let data = section.data()?;
@@ -60,15 +61,16 @@ fn main() -> anyhow::Result<()> {
 
             assert_eq!(f.len(), sz);
 
-            let mut meta = MaybeUninit::<FieldMeta>::uninit();
-            let meta = unsafe {
+            let mut meta = MaybeUninit::<([u8; 64], FieldMeta)>::uninit();
+            let (col_name, meta) = unsafe {
                 std::ptr::copy_nonoverlapping(f.as_ptr(), meta.as_mut_ptr() as *mut u8, sz);
                 meta.assume_init()
             };
 
-            dbg!(&meta);
+            let col_name = CStr::from_bytes_until_nul(&col_name)?;
+
+            dbg!(&col_name, &meta);
         }
-        break;
     }
 
     Ok(())
