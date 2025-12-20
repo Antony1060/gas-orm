@@ -9,7 +9,7 @@ use proc_macro::TokenStream;
 use proc_macro2::{Ident, Span};
 use quote::quote;
 use syn::spanned::Spanned;
-use syn::{Field, Index, LitStr, Meta, MetaList};
+use syn::{Field, Index, Meta, MetaList};
 
 #[derive(Debug, FromDeriveInput)]
 #[darling(attributes(__gas_meta))]
@@ -87,11 +87,6 @@ pub fn model_impl(_input: TokenStream) -> Result<TokenStream, syn::Error> {
 
     let from_row_impl = generate_from_row(&ctx)?;
 
-    let link_section_name: LitStr = LitStr::new(
-        &format!("__gas_internals,__{}", table_name),
-        Span::call_site(),
-    );
-
     Ok(quote! {
         #(#field_consts)*
 
@@ -144,7 +139,7 @@ pub fn model_impl(_input: TokenStream) -> Result<TokenStream, syn::Error> {
             #[doc(hidden)]
             pub struct Inner;
 
-            #[unsafe(link_section = #link_section_name)]
+            #[unsafe(link_section = "__gas_internals,__fields")]
             #[used]
             static FIELDS: [gas::link::PortableFieldMeta; #field_list_len] = unsafe {
                 [#(gas::link::PortableFieldMeta::from_unchecked(#field_list.meta)),*]

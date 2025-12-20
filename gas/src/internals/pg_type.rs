@@ -31,20 +31,6 @@ pub enum PgType {
 impl PgType {
     pub fn as_sql_type(&self, is_serial: bool) -> Cow<'static, str> {
         match self {
-            PgType::TEXT => "TEXT".into(),
-            PgType::SMALLINT if is_serial => "SMALLSERIAL".into(),
-            PgType::SMALLINT => "SMALLINT".into(),
-            PgType::INTEGER if is_serial => "SERIAL".into(),
-            PgType::INTEGER => "INTEGER".into(),
-            PgType::BIGINT if is_serial => "BIGSERIAL".into(),
-            PgType::BIGINT => "BIGINT".into(),
-            PgType::REAL => "REAL".into(),
-            PgType::DOUBLE => "DOUBLE".into(),
-            PgType::DECIMAL => "DECIMAL".into(),
-            PgType::TIMESTAMP => "TIMESTAMP".into(),
-            PgType::TIMESTAMP_TZ => "TIMESTAMP WITH TIME ZONE".into(),
-            PgType::DATE => "DATE".into(),
-            PgType::TIME => "TIME".into(),
             PgType::FOREIGN_KEY {
                 key_type,
                 target_field,
@@ -55,10 +41,11 @@ impl PgType {
                 target_field.name
             )
             .into(),
-            PgType::IGNORED => "".into(),
+            _ => unsafe { self.as_sql_type_const(is_serial) }.into(),
         }
     }
 
+    #[allow(clippy::missing_safety_doc)]
     pub const unsafe fn as_sql_type_const(&self, is_serial: bool) -> &'static str {
         match self {
             PgType::TEXT => "TEXT",
