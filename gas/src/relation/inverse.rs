@@ -167,9 +167,7 @@ where
 
         // crimes
         Handle::current().block_on(async move {
-            instance
-                .reload(&crate::connection::get_default_connection())
-                .await?;
+            instance.reload(&ctx.connection).await?;
 
             Ok(instance)
         })

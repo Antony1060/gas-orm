@@ -556,7 +556,6 @@ dependencies = [
  "chrono",
  "gas-macros",
  "lazy_static",
- "once_cell",
  "regex",
  "rust_decimal",
  "sqlx",

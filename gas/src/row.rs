@@ -1,3 +1,4 @@
+use crate::connection::PgConnection;
 use crate::internals::{AsPgType, NaiveDecodable};
 use crate::GasResult;
 use sqlx::postgres::PgRow;
@@ -27,6 +28,13 @@ pub trait FromRow: Sized + Send + 'static {
 }
 
 pub struct ResponseCtx<'a> {
+    // a reference to a connection that initiated the request
+    //  if it was with a &PgConnection itself, it will be that
+    //  if it was with a &mut PgTransaction, it will be with a connection that made the transaction
+    //  This field is useful sometimes if additional selects are needed while handling the from_row,
+    //      concretely by the InverseRelation (currently implemented in a very bad way)
+    //  That being said, don't use the connection for anything other than selects (without side effects)
+    pub(crate) connection: PgConnection,
     pub all_rows: &'a [Row],
 }
 

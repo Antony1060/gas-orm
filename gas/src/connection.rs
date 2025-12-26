@@ -8,10 +8,6 @@ use sqlx::Arguments;
 use sqlx::PgPool;
 use std::mem;
 use std::sync::Arc;
-use tokio::sync::OnceCell;
-
-// crimes
-pub(crate) static DEFAULT_CONNECTION: OnceCell<PgConnection> = OnceCell::const_new();
 
 #[derive(Clone)]
 pub struct PgConnection {
@@ -44,20 +40,6 @@ impl PgConnection {
     }
 }
 
-pub fn set_default_connection(connection: &PgConnection) {
-    let Ok(_) = DEFAULT_CONNECTION.set(connection.clone()) else {
-        panic!("cannot set default connection twice")
-    };
-}
-
-pub fn get_default_connection() -> PgConnection {
-    let Some(connection) = DEFAULT_CONNECTION.get() else {
-        panic!("default connection not set")
-    };
-
-    connection.clone()
-}
-
 impl PgTransaction {
     pub async fn save(&mut self) -> GasResult<()> {
         let tx = mem::replace(self, self.connection.transaction().await?);
@@ -77,15 +59,22 @@ impl PgTransaction {
 pub(crate) trait PgExecutionContext: Sized {
     async fn execute(self, sql: SqlQuery, params: &[PgParam]) -> GasResult<Vec<Row>>;
 
+    fn get_backing_connection(&self) -> PgConnection;
+
     async fn execute_parsed<T: FromRow>(
         self,
         sql: SqlQuery<'_>,
         params: &[PgParam],
     ) -> GasResult<Vec<T>> {
+        let connection = self.get_backing_connection();
+
         let rows = self.execute(sql, params).await?;
 
         tokio::task::spawn_blocking(move || {
-            let ctx = ResponseCtx { all_rows: &rows };
+            let ctx = ResponseCtx {
+                all_rows: &rows,
+                connection,
+            };
 
             rows.iter()
                 .map(|row| FromRow::from_row(&ctx, row))
@@ -123,6 +112,10 @@ impl PgExecutionContext for &PgConnection {
 
         Ok(rows.into_iter().map(Row::from).collect())
     }
+
+    fn get_backing_connection(&self) -> PgConnection {
+        PgConnection::clone(self)
+    }
 }
 
 impl PgExecutionContext for &mut PgTransaction {
@@ -134,5 +127,9 @@ impl PgExecutionContext for &mut PgTransaction {
             .await?;
 
         Ok(rows.into_iter().map(Row::from).collect())
+    }
+
+    fn get_backing_connection(&self) -> PgConnection {
+        self.connection.clone()
     }
 }
