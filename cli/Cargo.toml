@@ -7,3 +7,4 @@ edition = "2024"
 anyhow = "1.0.100"
 object = "0.38.0"
 gas = { path = "../gas" }
+thiserror = "2.0.17"

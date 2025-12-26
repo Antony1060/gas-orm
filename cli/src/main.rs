@@ -1,3 +1,4 @@
+mod project;
 mod utils;
 
 use std::fs;

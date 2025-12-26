@@ -217,6 +217,7 @@ dependencies = [
  "anyhow",
  "gas",
  "object",
+ "thiserror",
 ]
 
 [[package]]
