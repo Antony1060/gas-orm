@@ -3,14 +3,11 @@ use crate::error::GasError;
 use crate::internals::{AsPgType, IsOptional, PgParam, PgType};
 use crate::ops::select::SelectBuilder;
 use crate::row::FromRowNamed;
-#[cfg(feature = "orm")]
 use crate::row::{ResponseCtx, Row};
-#[cfg(feature = "orm")]
 use crate::FieldMeta;
 use crate::{GasResult, ModelMeta, ModelOps};
 use std::marker::PhantomData;
 use std::ops::Deref;
-#[cfg(feature = "orm")]
 use tokio::runtime::Handle;
 
 #[allow(dead_code)]
@@ -101,7 +98,6 @@ where
     }
 }
 
-#[cfg(feature = "orm")]
 impl<
     SelfModel: ModelMeta,
     Fk: AsPgType + 'static,
@@ -118,7 +114,6 @@ where
     }
 }
 
-#[cfg(feature = "orm")]
 impl<
     SelfModel: ModelMeta,
     Fk: AsPgType + 'static,
@@ -152,7 +147,6 @@ where
     }
 }
 
-#[cfg(feature = "orm")]
 impl<
     SelfModel: ModelMeta,
     Fk: AsPgType + 'static,

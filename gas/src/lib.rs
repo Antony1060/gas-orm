@@ -18,7 +18,6 @@ pub mod sort;
 pub mod types;
 
 pub use field::*;
-#[cfg(feature = "orm")]
 pub use gas_macros::*;
 pub use model::*;
 pub use relation::forward::*;

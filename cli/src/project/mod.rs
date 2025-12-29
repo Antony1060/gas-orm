@@ -5,7 +5,7 @@ pub struct CargoProject {
 }
 
 impl CargoProject {
-    pub fn from_path(path: PathBuf) -> Result<Self> {
+    pub fn from_path(path: PathBuf) -> Result<Self, anyhow::Error> {
         Ok(CargoProject { path })
     }
 }
