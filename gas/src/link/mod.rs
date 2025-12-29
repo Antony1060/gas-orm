@@ -21,18 +21,23 @@ impl<const SIZE: usize> TryFrom<&str> for FixedStr<SIZE> {
             ));
         }
 
-        Ok(unsafe { Self::from_unchecked(value) })
+        Ok(unsafe { Self::from_panicking(value) })
     }
 }
 
 impl<const SIZE: usize> FixedStr<SIZE> {
     #[allow(clippy::missing_safety_doc)]
-    pub const unsafe fn from_unchecked(value: &str) -> Self {
+    pub const unsafe fn from_panicking(value: &str) -> Self {
+        if value.len() >= SIZE {
+            panic!("value is too long");
+        }
+
         let mut buffer = [0u8; SIZE];
         unsafe {
             std::ptr::copy_nonoverlapping(
                 value.as_bytes().as_ptr(),
                 buffer.as_mut_ptr(),
+                // TODO: buffer overflow
                 value.len(),
             );
         }

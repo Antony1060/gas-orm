@@ -39,9 +39,9 @@ impl PortablePgType {
                     key_type,
                     target_field,
                 } => Self::ForeignKey {
-                    key_sql_type: FixedStr::from_unchecked(key_type.as_sql_type_const(false)),
-                    target_table_name: FixedStr::from_unchecked(target_field.table_name),
-                    target_column_name: FixedStr::from_unchecked(target_field.name),
+                    key_sql_type: FixedStr::from_panicking(key_type.as_sql_type_const(false)),
+                    target_table_name: FixedStr::from_panicking(target_field.table_name),
+                    target_column_name: FixedStr::from_panicking(target_field.name),
                 },
                 _ => Self::Raw(pg_type),
             }

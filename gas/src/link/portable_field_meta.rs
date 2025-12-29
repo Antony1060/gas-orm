@@ -31,8 +31,8 @@ impl PortableFieldMeta {
     pub const unsafe fn from_unchecked(meta: FieldMeta) -> Self {
         unsafe {
             Self {
-                table_name: FixedStr::from_unchecked(meta.table_name),
-                name: FixedStr::from_unchecked(meta.name),
+                table_name: FixedStr::from_panicking(meta.table_name),
+                name: FixedStr::from_panicking(meta.name),
                 pg_type: PortablePgType::from_unchecked(meta.pg_type),
                 flags: meta.flags,
                 index: meta.index,
