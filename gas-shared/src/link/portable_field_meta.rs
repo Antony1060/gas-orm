@@ -1,4 +1,4 @@
-use crate::error::GasError;
+use crate::error::GasSharedError;
 use crate::link::portable_pg_type::PortablePgType;
 use crate::link::FixedStr;
 use crate::{FieldFlags, FieldMeta};
@@ -13,7 +13,7 @@ pub struct PortableFieldMeta {
 }
 
 impl TryFrom<FieldMeta> for PortableFieldMeta {
-    type Error = GasError;
+    type Error = GasSharedError;
 
     fn try_from(meta: FieldMeta) -> Result<Self, Self::Error> {
         Ok(Self {

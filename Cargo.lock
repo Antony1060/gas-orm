@@ -215,7 +215,7 @@ name = "cli"
 version = "0.1.0"
 dependencies = [
  "anyhow",
- "gas",
+ "gas-shared",
  "object",
  "thiserror",
 ]
@@ -556,6 +556,7 @@ version = "0.1.0"
 dependencies = [
  "chrono",
  "gas-macros",
+ "gas-shared",
  "lazy_static",
  "regex",
  "rust_decimal",
@@ -574,6 +575,13 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn 2.0.110",
+]
+
+[[package]]
+name = "gas-shared"
+version = "0.1.0"
+dependencies = [
+ "thiserror",
 ]
 
 [[package]]

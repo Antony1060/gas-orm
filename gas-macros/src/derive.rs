@@ -139,7 +139,7 @@ pub fn model_impl(_input: TokenStream) -> Result<TokenStream, syn::Error> {
             #[doc(hidden)]
             pub struct Inner;
 
-            #[unsafe(link_section = "__gas_internals,__fields")]
+            #[unsafe(link_section = ".__gas_internals,__fields")]
             #[used]
             static FIELDS: [gas::link::PortableFieldMeta; #field_list_len] =
                 [#(gas::link::PortableFieldMeta::from_unchecked(#field_list.meta)),*];

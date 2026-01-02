@@ -6,6 +6,7 @@ pub mod sql_query;
 
 use crate::FieldMeta;
 pub use def_model::*;
+pub use gas_shared::internals::pg_type::*;
 pub(crate) use numeric::*;
 pub use pg_param::*;
 pub use pg_type::*;

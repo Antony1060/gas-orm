@@ -1,4 +1,4 @@
-use crate::error::GasError;
+use crate::error::GasSharedError;
 use crate::internals::PgType;
 use crate::link::FixedStr;
 
@@ -13,7 +13,7 @@ pub enum PortablePgType {
 }
 
 impl TryFrom<PgType> for PortablePgType {
-    type Error = GasError;
+    type Error = GasSharedError;
 
     fn try_from(pg_type: PgType) -> Result<Self, Self::Error> {
         Ok(match pg_type {

@@ -9,7 +9,6 @@ pub mod field;
 pub mod group;
 pub mod helpers;
 pub mod internals;
-pub mod link;
 pub mod model;
 mod ops;
 pub mod relation;
@@ -19,6 +18,7 @@ pub mod types;
 
 pub use field::*;
 pub use gas_macros::*;
+pub use gas_shared::*;
 pub use model::*;
 pub use relation::forward::*;
 pub use relation::inverse::*;

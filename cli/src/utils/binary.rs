@@ -1,4 +1,4 @@
-use gas::link::{FixedStr, PortableFieldMeta};
+use gas_shared::link::{FixedStr, PortableFieldMeta};
 use object::{Object, ObjectSection};
 use std::collections::HashMap;
 use std::mem::MaybeUninit;
@@ -11,8 +11,8 @@ pub fn parse_fields(file: &object::File) -> anyhow::Result<Box<[PortableFieldMet
     for section in file.sections() {
         let data = section.data()?;
 
-        if !matches!(section.segment_name()?, Some(segment) if segment == "__gas_internals")
-            && !section.name()?.starts_with("__gas_internals")
+        if !matches!(section.segment_name()?, Some(segment) if segment == ".__gas_internals")
+            && !section.name()?.starts_with(".__gas_internals")
         {
             continue;
         }

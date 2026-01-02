@@ -1,10 +1,10 @@
-use crate::error::GasError;
 use std::ffi::CStr;
 use std::fmt::{Debug, Formatter};
 
 mod portable_field_meta;
 mod portable_pg_type;
 
+use crate::error::GasSharedError;
 pub use portable_field_meta::*;
 pub use portable_pg_type::*;
 
@@ -12,11 +12,11 @@ pub use portable_pg_type::*;
 pub struct FixedStr<const SIZE: usize = 64>([u8; SIZE]);
 
 impl<const SIZE: usize> TryFrom<&str> for FixedStr<SIZE> {
-    type Error = GasError;
+    type Error = GasSharedError;
 
     fn try_from(value: &str) -> Result<Self, Self::Error> {
         if value.len() >= SIZE {
-            return Err(GasError::InternalError(
+            return Err(GasSharedError::InternalError(
                 format!("string is larger than {} bytes", SIZE - 1).into(),
             ));
         }

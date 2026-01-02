@@ -6,5 +6,5 @@ edition = "2024"
 [dependencies]
 anyhow = "1.0.100"
 object = "0.38.0"
-gas = { path = "../gas" }
+gas-shared = { path = "../gas-shared" }
 thiserror = "2.0.17"

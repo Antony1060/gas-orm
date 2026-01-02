@@ -1,4 +1,5 @@
 use crate::internals::PgParam;
+pub use gas_shared::error::GasSharedError;
 use std::borrow::Cow;
 
 #[derive(thiserror::Error, Debug)]
@@ -29,6 +30,12 @@ pub enum GasError {
     #[error("entity doesn't exist")]
     EntityNotFound,
 
-    #[error("internal ORM error: {0}")]
-    InternalError(Cow<'static, str>),
+    #[error("{0}")]
+    SharedError(GasSharedError),
+}
+
+impl From<GasSharedError> for GasError {
+    fn from(value: GasSharedError) -> Self {
+        Self::SharedError(value)
+    }
 }
