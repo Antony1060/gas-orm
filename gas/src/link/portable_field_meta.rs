@@ -27,16 +27,13 @@ impl TryFrom<FieldMeta> for PortableFieldMeta {
 }
 
 impl PortableFieldMeta {
-    #[allow(clippy::missing_safety_doc)]
-    pub const unsafe fn from_unchecked(meta: FieldMeta) -> Self {
-        unsafe {
-            Self {
-                table_name: FixedStr::from_panicking(meta.table_name),
-                name: FixedStr::from_panicking(meta.name),
-                pg_type: PortablePgType::from_unchecked(meta.pg_type),
-                flags: meta.flags,
-                index: meta.index,
-            }
+    pub const fn from_unchecked(meta: FieldMeta) -> Self {
+        Self {
+            table_name: FixedStr::from_panicking(meta.table_name),
+            name: FixedStr::from_panicking(meta.name),
+            pg_type: PortablePgType::from_unchecked(meta.pg_type),
+            flags: meta.flags,
+            index: meta.index,
         }
     }
 }

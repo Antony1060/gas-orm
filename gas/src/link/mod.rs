@@ -21,25 +21,23 @@ impl<const SIZE: usize> TryFrom<&str> for FixedStr<SIZE> {
             ));
         }
 
-        Ok(unsafe { Self::from_panicking(value) })
+        Ok(Self::from_panicking(value))
     }
 }
 
 impl<const SIZE: usize> FixedStr<SIZE> {
     #[allow(clippy::missing_safety_doc)]
-    pub const unsafe fn from_panicking(value: &str) -> Self {
-        if value.len() >= SIZE {
-            panic!("value is too long");
-        }
+    pub const fn from_panicking(value: &str) -> Self {
+        let bytes = value.as_bytes();
+        assert!(bytes.len() <= SIZE);
 
         let mut buffer = [0u8; SIZE];
         unsafe {
-            std::ptr::copy_nonoverlapping(
-                value.as_bytes().as_ptr(),
-                buffer.as_mut_ptr(),
-                // TODO: buffer overflow
-                value.len(),
-            );
+            // SAFETY:
+            //  bytes is valid for its length
+            //  buffer is valid for SIZE (bytes fit inside buffer, check above)
+            //  bytes will not overlap with buffer
+            std::ptr::copy_nonoverlapping(bytes.as_ptr(), buffer.as_mut_ptr(), bytes.len());
         }
 
         Self(buffer)

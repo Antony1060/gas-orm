@@ -34,6 +34,10 @@ pub struct ResponseCtx<'a> {
     //  This field is useful sometimes if additional selects are needed while handling the from_row,
     //      concretely by the InverseRelation (currently implemented in a very bad way)
     //  That being said, don't use the connection for anything other than selects (without side effects)
+    // NOTE: this currently has bug where when data changed in a transaction, the select that
+    //  queries the database will partially have new data, and partially not,
+    //  depending on if the query included an inverse field
+    // TODO (low priority): use the actual PgExecutionContext implementor
     pub(crate) connection: PgConnection,
     pub all_rows: &'a [Row],
 }

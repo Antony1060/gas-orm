@@ -41,13 +41,15 @@ impl PgType {
                 target_field.name
             )
             .into(),
-            _ => unsafe { self.as_sql_type_const(is_serial) }.into(),
+            _ => self.as_sql_type_const(is_serial).into(),
         }
     }
 
-    #[allow(clippy::missing_safety_doc)]
-    pub const unsafe fn as_sql_type_const(&self, is_serial: bool) -> &'static str {
+    // NOTE: panics
+    pub const fn as_sql_type_const(&self, is_serial: bool) -> &'static str {
         match self {
+            PgType::FOREIGN_KEY { .. } => panic!("can not evaluate foreign key at const time"),
+
             PgType::TEXT => "TEXT",
             PgType::SMALLINT if is_serial => "SMALLSERIAL",
             PgType::SMALLINT => "SMALLINT",
@@ -63,7 +65,6 @@ impl PgType {
             PgType::DATE => "DATE",
             PgType::TIME => "TIME",
             PgType::IGNORED => "",
-            _ => panic!("unhandled state"),
         }
     }
 }

@@ -32,19 +32,17 @@ impl TryFrom<PgType> for PortablePgType {
 
 impl PortablePgType {
     #[allow(clippy::missing_safety_doc)]
-    pub const unsafe fn from_unchecked(pg_type: PgType) -> Self {
-        unsafe {
-            match pg_type {
-                PgType::FOREIGN_KEY {
-                    key_type,
-                    target_field,
-                } => Self::ForeignKey {
-                    key_sql_type: FixedStr::from_panicking(key_type.as_sql_type_const(false)),
-                    target_table_name: FixedStr::from_panicking(target_field.table_name),
-                    target_column_name: FixedStr::from_panicking(target_field.name),
-                },
-                _ => Self::Raw(pg_type),
-            }
+    pub const fn from_unchecked(pg_type: PgType) -> Self {
+        match pg_type {
+            PgType::FOREIGN_KEY {
+                key_type,
+                target_field,
+            } => Self::ForeignKey {
+                key_sql_type: FixedStr::from_panicking(key_type.as_sql_type_const(false)),
+                target_table_name: FixedStr::from_panicking(target_field.table_name),
+                target_column_name: FixedStr::from_panicking(target_field.name),
+            },
+            _ => Self::Raw(pg_type),
         }
     }
 }

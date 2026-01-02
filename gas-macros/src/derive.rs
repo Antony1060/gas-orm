@@ -141,9 +141,8 @@ pub fn model_impl(_input: TokenStream) -> Result<TokenStream, syn::Error> {
 
             #[unsafe(link_section = "__gas_internals,__fields")]
             #[used]
-            static FIELDS: [gas::link::PortableFieldMeta; #field_list_len] = unsafe {
-                [#(gas::link::PortableFieldMeta::from_unchecked(#field_list.meta)),*]
-            };
+            static FIELDS: [gas::link::PortableFieldMeta; #field_list_len] =
+                [#(gas::link::PortableFieldMeta::from_unchecked(#field_list.meta)),*];
 
             impl gas::ModelSidecar for Inner {}
 
