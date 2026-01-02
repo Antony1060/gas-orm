@@ -37,7 +37,7 @@ pub struct ResponseCtx<'a> {
     // NOTE: this currently has bug where when data changed in a transaction, the select that
     //  queries the database will partially have new data, and partially not,
     //  depending on if the query included an inverse field
-    // TODO (low priority): use the actual PgExecutionContext implementor
+    // TODO (low priority): use the actual PgExecutor implementor
     pub(crate) connection: PgConnection,
     pub all_rows: &'a [Row],
 }

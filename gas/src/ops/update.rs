@@ -1,4 +1,4 @@
-use crate::connection::PgExecutionContext;
+use crate::connection::PgExecutor;
 use crate::error::GasError;
 use crate::model::ModelMeta;
 use crate::{FieldFlag, GasResult};
@@ -24,7 +24,7 @@ impl<'a, T: ModelMeta> UpdateOp<'a, T> {
         Self { object }
     }
 
-    pub(crate) async fn run<E: PgExecutionContext>(self, ctx: E) -> GasResult<()> {
+    pub(crate) async fn run<E: PgExecutor>(self, ctx: E) -> GasResult<()> {
         let (sql, params) = self.object.gen_update_sql();
 
         let mut rows = ctx.execute_parsed::<T>(sql, &params).await?;
@@ -35,7 +35,7 @@ impl<'a, T: ModelMeta> UpdateOp<'a, T> {
         Ok(())
     }
 
-    pub(crate) async fn run_with_fields<E: PgExecutionContext>(
+    pub(crate) async fn run_with_fields<E: PgExecutor>(
         self,
         ctx: E,
         fields: &[&'static str],

@@ -1,4 +1,4 @@
-use crate::connection::PgExecutionContext;
+use crate::connection::PgExecutor;
 use crate::internals::SqlQuery;
 use crate::model::ModelMeta;
 use crate::{FieldFlag, GasResult};
@@ -19,7 +19,7 @@ impl<T: ModelMeta> CreateOp<T> {
     }
 
     // could be at compile-time, but I don't care, it's create_table, who cares
-    pub(crate) async fn run<E: PgExecutionContext>(self, ctx: E) -> GasResult<()> {
+    pub(crate) async fn run<E: PgExecutor>(self, ctx: E) -> GasResult<()> {
         let mut sql = SqlQuery::from("CREATE TABLE ");
 
         if self.ignore_existing {

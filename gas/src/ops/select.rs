@@ -1,7 +1,7 @@
 #![allow(private_bounds)]
 
 use crate::condition::{Condition, EqExpression};
-use crate::connection::PgExecutionContext;
+use crate::connection::PgExecutor;
 use crate::error::GasError;
 use crate::group::Group;
 use crate::internals::{AsPgType, NaiveDecodable, Numeric, PgParam, SqlQuery, SqlStatement};
@@ -84,7 +84,7 @@ impl<M: ModelMeta> SelectBuilder<M> {
         Group::new(field, self)
     }
 
-    pub async fn find_all<E: PgExecutionContext>(self, ctx: E) -> GasResult<Vec<M>> {
+    pub async fn find_all<E: PgExecutor>(self, ctx: E) -> GasResult<Vec<M>> {
         let (sql, params) = self.build(true);
 
         let items = ctx.execute_parsed::<M>(sql, &params).await?;
@@ -92,7 +92,7 @@ impl<M: ModelMeta> SelectBuilder<M> {
         Ok(items)
     }
 
-    pub async fn find_one<E: PgExecutionContext>(self, ctx: E) -> GasResult<Option<M>> {
+    pub async fn find_one<E: PgExecutor>(self, ctx: E) -> GasResult<Option<M>> {
         let (mut sql, params) = self.build(false);
 
         sql.append_str(" LIMIT 1");
@@ -108,7 +108,7 @@ impl<M: ModelMeta> SelectBuilder<M> {
         Ok(items.pop())
     }
 
-    pub async fn sum<E: PgExecutionContext, FM: ModelSidecar, N: Numeric>(
+    pub async fn sum<E: PgExecutor, FM: ModelSidecar, N: Numeric>(
         self,
         ctx: E,
         field: Field<N, FM>,
@@ -126,7 +126,7 @@ impl<M: ModelMeta> SelectBuilder<M> {
         rows[0].try_get("aggregate")
     }
 
-    pub async fn count<E: PgExecutionContext, FM: ModelSidecar, T: AsPgType>(
+    pub async fn count<E: PgExecutor, FM: ModelSidecar, T: AsPgType>(
         self,
         ctx: E,
         field: Field<T, FM>,

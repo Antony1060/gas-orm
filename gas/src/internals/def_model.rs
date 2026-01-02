@@ -1,4 +1,4 @@
-use crate::connection::PgExecutionContext;
+use crate::connection::PgExecutor;
 use crate::ops::update::UpdateOp;
 use crate::{GasResult, ModelMeta};
 use std::fmt::{Debug, Formatter};
@@ -17,11 +17,7 @@ impl<T: ModelMeta> DefModel<T> {
         }
     }
 
-    pub async fn update_by_key<E: PgExecutionContext>(
-        mut self,
-        ctx: E,
-        key: T::Key,
-    ) -> GasResult<T> {
+    pub async fn update_by_key<E: PgExecutor>(mut self, ctx: E, key: T::Key) -> GasResult<T> {
         self.apply_key(key);
 
         // this way of updating is slightly more inefficient because

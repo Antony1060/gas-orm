@@ -1,4 +1,4 @@
-use crate::connection::PgExecutionContext;
+use crate::connection::PgExecutor;
 use crate::internals::{AsPgType, Numeric, SqlQuery, SqlStatement};
 use crate::ops::select::SelectBuilder;
 use crate::row::{FromRow, FromRowNamed, ResponseCtx, Row};
@@ -62,7 +62,7 @@ impl<M: ModelMeta, G: AsPgType + 'static> Group<M, G> {
         self
     }
 
-    pub async fn sum<E: PgExecutionContext, N: Numeric>(
+    pub async fn sum<E: PgExecutor, N: Numeric>(
         self,
         ctx: E,
         field: Field<N, M::Id>,
@@ -73,7 +73,7 @@ impl<M: ModelMeta, G: AsPgType + 'static> Group<M, G> {
         ctx.execute_parsed(sql, &params).await
     }
 
-    pub async fn count<E: PgExecutionContext, T: AsPgType>(
+    pub async fn count<E: PgExecutor, T: AsPgType>(
         self,
         ctx: E,
         field: Field<T, M::Id>,

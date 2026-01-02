@@ -56,7 +56,7 @@ impl PgTransaction {
     }
 }
 
-pub(crate) trait PgExecutionContext: Sized {
+pub(crate) trait PgExecutor: Sized {
     async fn execute(self, sql: SqlQuery, params: &[PgParam]) -> GasResult<Vec<Row>>;
 
     fn get_backing_connection(&self) -> PgConnection;
@@ -102,7 +102,7 @@ pub(crate) trait PgExecutionContext: Sized {
     }
 }
 
-impl PgExecutionContext for &PgConnection {
+impl PgExecutor for &PgConnection {
     async fn execute(self, sql: SqlQuery<'_>, params: &[PgParam]) -> GasResult<Vec<Row>> {
         let (query, arguments) = Self::prepare_query(sql, params)?;
 
@@ -118,7 +118,7 @@ impl PgExecutionContext for &PgConnection {
     }
 }
 
-impl PgExecutionContext for &mut PgTransaction {
+impl PgExecutor for &mut PgTransaction {
     async fn execute(self, sql: SqlQuery<'_>, params: &[PgParam]) -> GasResult<Vec<Row>> {
         let (query, arguments) = Self::prepare_query(sql, params)?;
 

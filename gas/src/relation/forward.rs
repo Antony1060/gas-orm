@@ -1,4 +1,4 @@
-use crate::connection::PgExecutionContext;
+use crate::connection::PgExecutor;
 use crate::error::GasError;
 use crate::internals::PgType::FOREIGN_KEY;
 use crate::internals::{AsPgType, IsOptional, NaiveDecodable, PgParam, PgType};
@@ -44,7 +44,7 @@ impl<Fk: AsPgType, Model: ModelMeta, const FIELD_INDEX: usize> FullRelation<Fk, 
 where
     PgParam: From<Fk>,
 {
-    async fn load_by_key<E: PgExecutionContext>(ctx: E, key: Fk) -> GasResult<Option<Model>> {
+    async fn load_by_key<E: PgExecutor>(ctx: E, key: Fk) -> GasResult<Option<Model>> {
         let field = Model::FIELDS
             .get(FIELD_INDEX)
             .ok_or_else(|| GasError::InvalidRelation)?;
@@ -74,7 +74,7 @@ where
 
 pub trait RelationOps<M: ModelMeta> {
     // will try to lazy load
-    fn load<'a, E: PgExecutionContext>(
+    fn load<'a, E: PgExecutor>(
         &'a mut self,
         ctx: E,
     ) -> impl Future<Output = GasResult<Option<&'a M>>>
@@ -90,7 +90,7 @@ impl<Fk: AsPgType, Model: ModelMeta, const FIELD_INDEX: usize> RelationOps<Model
 where
     PgParam: From<Fk>,
 {
-    async fn load<'a, E: PgExecutionContext>(&'a mut self, ctx: E) -> GasResult<Option<&'a Model>>
+    async fn load<'a, E: PgExecutor>(&'a mut self, ctx: E) -> GasResult<Option<&'a Model>>
     where
         Model: 'a,
     {
@@ -125,7 +125,7 @@ impl<Fk: AsPgType, Model: ModelMeta, const FIELD_INDEX: usize> RelationOps<Model
 where
     PgParam: From<Fk>,
 {
-    async fn load<'a, E: PgExecutionContext>(&'a mut self, ctx: E) -> GasResult<Option<&'a Model>>
+    async fn load<'a, E: PgExecutor>(&'a mut self, ctx: E) -> GasResult<Option<&'a Model>>
     where
         Model: 'a,
     {

@@ -1,4 +1,4 @@
-use crate::connection::PgExecutionContext;
+use crate::connection::PgExecutor;
 use crate::error::GasError;
 use crate::internals::{AsPgType, IsOptional, PgParam, PgType};
 use crate::ops::select::SelectBuilder;
@@ -175,7 +175,7 @@ where
         })
     }
 
-    pub async fn load<E: PgExecutionContext>(&mut self, ctx: E) -> GasResult<&Ret> {
+    pub async fn load<E: PgExecutor>(&mut self, ctx: E) -> GasResult<&Ret> {
         if self.loaded {
             return Ok(&self.items);
         }
@@ -197,10 +197,7 @@ where
 }
 
 pub trait InverseRelationOps<Ret> {
-    fn reload<'a, E: PgExecutionContext>(
-        &'a mut self,
-        ctx: E,
-    ) -> impl Future<Output = GasResult<&'a Ret>>
+    fn reload<'a, E: PgExecutor>(&'a mut self, ctx: E) -> impl Future<Output = GasResult<&'a Ret>>
     where
         Ret: 'a;
 }
@@ -216,10 +213,7 @@ impl<
 where
     PgParam: From<Fk>,
 {
-    async fn reload<'a, E: PgExecutionContext>(
-        &'a mut self,
-        ctx: E,
-    ) -> GasResult<&'a ToManyContainer<M>>
+    async fn reload<'a, E: PgExecutor>(&'a mut self, ctx: E) -> GasResult<&'a ToManyContainer<M>>
     where
         M: 'a,
     {
@@ -243,10 +237,7 @@ impl<
 where
     PgParam: From<Fk>,
 {
-    async fn reload<'a, E: PgExecutionContext>(
-        &'a mut self,
-        ctx: E,
-    ) -> GasResult<&'a ToOneContainer<M>>
+    async fn reload<'a, E: PgExecutor>(&'a mut self, ctx: E) -> GasResult<&'a ToOneContainer<M>>
     where
         M: 'a,
     {
