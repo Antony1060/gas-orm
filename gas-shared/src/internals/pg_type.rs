@@ -1,5 +1,5 @@
+use crate::const_util;
 use crate::field::FieldMeta;
-use std::borrow::Cow;
 
 #[derive(Clone, Debug)]
 pub enum PgType {
@@ -24,27 +24,8 @@ pub enum PgType {
 }
 
 impl PgType {
-    pub fn as_sql_type(&self, is_serial: bool) -> Cow<'static, str> {
+    pub const fn as_sql_type(&self, is_serial: bool) -> &'static str {
         match self {
-            PgType::FOREIGN_KEY {
-                key_type,
-                target_field,
-            } => format!(
-                "{} REFERENCES {}({})",
-                key_type.as_sql_type(false),
-                target_field.table_name,
-                target_field.name
-            )
-            .into(),
-            _ => self.as_sql_type_const(is_serial).into(),
-        }
-    }
-
-    // NOTE: panics
-    pub const fn as_sql_type_const(&self, is_serial: bool) -> &'static str {
-        match self {
-            PgType::FOREIGN_KEY { .. } => panic!("can not evaluate foreign key at const time"),
-
             PgType::TEXT => "TEXT",
             PgType::SMALLINT if is_serial => "SMALLSERIAL",
             PgType::SMALLINT => "SMALLINT",
@@ -60,6 +41,22 @@ impl PgType {
             PgType::DATE => "DATE",
             PgType::TIME => "TIME",
             PgType::IGNORED => "",
+            PgType::FOREIGN_KEY {
+                key_type,
+                target_field,
+            } => {
+                // NOTE: 256 should be enough
+                //  64 is currently the name for table_name and name because of the FixedStr bound in gas_shared::link
+                //  2 * 64 + len(" REFERENCES ()")(14) + len(largest_as_sql_type_value)(24) = 166
+                const_util::join_static_str::<256>(&[
+                    key_type.as_sql_type(false),
+                    " REFERENCES ",
+                    target_field.table_name,
+                    "(",
+                    target_field.name,
+                    ")",
+                ])
+            }
         }
     }
 }
