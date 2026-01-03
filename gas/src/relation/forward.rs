@@ -1,6 +1,5 @@
 use crate::connection::PgExecutor;
 use crate::error::GasError;
-use crate::internals::PgType::FOREIGN_KEY;
 use crate::internals::{AsPgType, IsOptional, NaiveDecodable, PgParam, PgType};
 use crate::row::{FromRowNamed, ResponseCtx, Row};
 use crate::{Field, GasResult, ModelMeta, ModelOps};
@@ -159,7 +158,7 @@ impl<Fk: AsPgType + NaiveDecodable, Model: ModelMeta, const FIELD_INDEX: usize> 
     // NOTE: resolved in compile time, array access should fail on time
     //  this also has a nice side effect of failing before other places that
     //  do the same array access even get to run
-    const PG_TYPE: PgType = FOREIGN_KEY {
+    const PG_TYPE: PgType = PgType::FOREIGN_KEY {
         key_type: &Fk::PG_TYPE,
         target_field: &Model::FIELDS[FIELD_INDEX],
     };
@@ -201,11 +200,7 @@ impl<Fk: AsPgType + NaiveDecodable, Model: ModelMeta, const FIELD_INDEX: usize> 
 where
     Option<Fk>: AsPgType,
 {
-    // NOTE: const time, array access should fail on time
-    const PG_TYPE: PgType = FOREIGN_KEY {
-        key_type: &Fk::PG_TYPE,
-        target_field: &Model::FIELDS[FIELD_INDEX],
-    };
+    const PG_TYPE: PgType = <FullRelation<Fk, Model, FIELD_INDEX> as AsPgType>::PG_TYPE;
 }
 
 impl<Fk: AsPgType, Model: ModelMeta, const FIELD_INDEX: usize>
@@ -216,8 +211,7 @@ where
     fn from(value: Option<FullRelation<Fk, Model, FIELD_INDEX>>) -> Self {
         match value {
             Some(value) => PgParam::from(value),
-            // TODO:
-            None => unreachable!(), //PgParam::NULL(PgType::TEXT),
+            None => PgParam::IGNORED,
         }
     }
 }

@@ -20,8 +20,9 @@ impl TryFrom<PgType> for PortablePgType {
             PgType::FOREIGN_KEY {
                 key_type,
                 target_field,
+                ..
             } => Self::ForeignKey {
-                key_sql_type: FixedStr::try_from(key_type.as_sql_type(false))?,
+                key_sql_type: FixedStr::try_from(key_type.as_sql_type(false).as_ref())?,
                 target_table_name: FixedStr::try_from(target_field.table_name)?,
                 target_column_name: FixedStr::try_from(target_field.name)?,
             },
@@ -37,8 +38,9 @@ impl PortablePgType {
             PgType::FOREIGN_KEY {
                 key_type,
                 target_field,
+                ..
             } => Self::ForeignKey {
-                key_sql_type: FixedStr::from_panicking(key_type.as_sql_type(false)),
+                key_sql_type: FixedStr::from_panicking(key_type.as_sql_type_const(false)),
                 target_table_name: FixedStr::from_panicking(target_field.table_name),
                 target_column_name: FixedStr::from_panicking(target_field.name),
             },
