@@ -60,3 +60,9 @@ impl<const SIZE: usize> Debug for FixedStr<SIZE> {
         write!(f, "[{str:?}; {}]", SIZE)
     }
 }
+
+impl<const SIZE: usize> AsRef<str> for FixedStr<SIZE> {
+    fn as_ref(&self) -> &str {
+        unsafe { str::from_utf8_unchecked(&self.0) }
+    }
+}

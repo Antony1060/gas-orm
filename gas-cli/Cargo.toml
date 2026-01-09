@@ -1,0 +1,16 @@
+[package]
+name = "gas-cli"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+object = "0.38.0"
+gas-shared = { path = "../gas-shared" }
+thiserror = "2.0.17"
+clap = { version = "4.5.54", features = ["derive"] }
+tokio = { version = "1.49.0", features = ["full"] }
+async-trait = "0.1.89"
+console = "0.16.2"
+indicatif = "0.18.3"
+cargo_metadata = "0.23.1"
+cargo_toml = "0.22.3"
