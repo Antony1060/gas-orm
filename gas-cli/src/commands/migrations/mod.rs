@@ -6,7 +6,7 @@ mod info;
 mod sync;
 
 #[derive(Debug, clap::Subcommand)]
-enum MigrationOperation {
+pub enum MigrationOperation {
     Info,
     Sync,
 }
@@ -14,16 +14,16 @@ enum MigrationOperation {
 #[derive(Debug, clap::Parser)]
 pub struct MigrationArgs {
     #[arg(long, short = 'p', default_value = ".")]
-    project_path: String,
+    pub project_path: String,
     #[arg(
         long,
         short = 'm',
         default_value = "./migrations",
         help = "relative to project_path"
     )]
-    migrations_dir: String,
+    pub migrations_dir: String,
     #[command(subcommand)]
-    operation: MigrationOperation,
+    pub operation: MigrationOperation,
 }
 
 impl CommandImplProvider for MigrationArgs {

@@ -1,5 +1,5 @@
 use crate::error::{GasCliError, GasCliResult};
-use gas_shared::link::{FixedStr, PortableFieldMeta};
+use gas_shared::link::PortableFieldMeta;
 use object::{Object, ObjectSection};
 use std::collections::HashMap;
 use std::mem::MaybeUninit;
@@ -9,10 +9,10 @@ use tokio::fs;
 // TODO: move to shared
 const LINK_SECTION_PREFIX: &str = ".__gas_internals";
 
-pub type BinaryFields<'a> = HashMap<&'a FixedStr, Vec<&'a PortableFieldMeta>>;
+pub type BinaryFields = HashMap<String, Vec<PortableFieldMeta>>;
 
 pub struct ProjectModelState {
-    pub fields: Box<[PortableFieldMeta]>,
+    pub fields: BinaryFields,
 }
 
 impl ProjectModelState {
@@ -22,14 +22,16 @@ impl ProjectModelState {
 
         let fields = Self::parse_fields(&file)?;
 
-        Ok(ProjectModelState { fields })
+        Ok(ProjectModelState {
+            fields: Self::get_organized(fields),
+        })
     }
 
-    pub fn get_organized(&self) -> BinaryFields<'_> {
+    fn get_organized(fields: Box<[PortableFieldMeta]>) -> BinaryFields {
         let mut map = BinaryFields::new();
 
-        for meta in &self.fields {
-            let fields = map.entry(&meta.table_name).or_default();
+        for meta in fields {
+            let fields = map.entry(String::from(&meta.table_name)).or_default();
             fields.push(meta);
         }
 

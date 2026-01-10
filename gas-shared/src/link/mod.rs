@@ -44,8 +44,8 @@ impl<const SIZE: usize> FixedStr<SIZE> {
     }
 }
 
-impl From<FixedStr> for String {
-    fn from(value: FixedStr) -> Self {
+impl From<&FixedStr> for String {
+    fn from(value: &FixedStr) -> Self {
         String::from_utf8_lossy(&value.0).to_string()
     }
 }
