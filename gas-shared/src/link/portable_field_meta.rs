@@ -3,7 +3,8 @@ use crate::link::portable_pg_type::PortablePgType;
 use crate::link::FixedStr;
 use crate::{FieldFlags, FieldMeta};
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct PortableFieldMeta {
     pub table_name: FixedStr,
     pub name: FixedStr,

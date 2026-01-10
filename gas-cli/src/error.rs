@@ -30,4 +30,10 @@ pub enum GasCliError {
 
     #[error("failed to parse binary: {0}")]
     ObjectBinaryParseError(#[from] object::Error),
+
+    #[error("failed to (de)serialize: {0}")]
+    SerdeError(#[from] serde_json::Error),
+
+    #[error("general failure")]
+    GeneralFailure,
 }

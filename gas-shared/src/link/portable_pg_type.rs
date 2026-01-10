@@ -2,7 +2,8 @@ use crate::error::GasSharedError;
 use crate::internals::PgType;
 use crate::link::FixedStr;
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum PortablePgType {
     Raw(PgType),
     ForeignKey {

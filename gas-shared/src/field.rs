@@ -14,6 +14,8 @@ pub enum FieldFlag {
     Virtual = 1 << 6,
 }
 
+#[derive(Clone)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct FieldFlags(pub u8);
 
 impl FieldFlags {

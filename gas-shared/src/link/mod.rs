@@ -8,7 +8,7 @@ use crate::error::GasSharedError;
 pub use portable_field_meta::*;
 pub use portable_pg_type::*;
 
-#[derive(Eq, PartialEq, Hash, PartialOrd, Ord)]
+#[derive(Clone, Eq, PartialEq, Hash, PartialOrd, Ord)]
 pub struct FixedStr<const SIZE: usize = 64>([u8; SIZE]);
 
 impl<const SIZE: usize> TryFrom<&str> for FixedStr<SIZE> {
@@ -44,9 +44,17 @@ impl<const SIZE: usize> FixedStr<SIZE> {
     }
 }
 
-impl From<&FixedStr> for String {
-    fn from(value: &FixedStr) -> Self {
-        String::from_utf8_lossy(&value.0).to_string()
+impl<const SIZE: usize> AsRef<str> for FixedStr<SIZE> {
+    fn as_ref(&self) -> &str {
+        let size = self.0.iter().position(|it| *it == 0).unwrap_or(SIZE);
+
+        unsafe { str::from_utf8_unchecked(&self.0[0..size]) }
+    }
+}
+
+impl<const SIZE: usize> From<&FixedStr<SIZE>> for String {
+    fn from(value: &FixedStr<SIZE>) -> Self {
+        value.as_ref().to_string()
     }
 }
 
@@ -61,8 +69,25 @@ impl<const SIZE: usize> Debug for FixedStr<SIZE> {
     }
 }
 
-impl<const SIZE: usize> AsRef<str> for FixedStr<SIZE> {
-    fn as_ref(&self) -> &str {
-        unsafe { str::from_utf8_unchecked(&self.0) }
+#[cfg(feature = "serde")]
+impl<const SIZE: usize> serde::Serialize for FixedStr<SIZE> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        serializer.serialize_str(self.as_ref())
+    }
+}
+
+#[cfg(feature = "serde")]
+impl<'de, const SIZE: usize> serde::Deserialize<'de> for FixedStr<SIZE> {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        use serde::de::Error;
+
+        Self::try_from(<&str>::deserialize(deserializer)?)
+            .map_err(|e| D::Error::custom(e.to_string()))
     }
 }

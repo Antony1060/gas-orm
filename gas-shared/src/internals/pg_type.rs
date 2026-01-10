@@ -2,6 +2,7 @@ use crate::field::FieldMeta;
 use std::borrow::Cow;
 
 #[derive(Clone, Debug)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum PgType {
     TEXT,
     SMALLINT,
@@ -15,6 +16,10 @@ pub enum PgType {
     TIMESTAMP_TZ,
     DATE,
     TIME,
+    // we can skip this for serde
+    //  every time serde is needed, it should go through the PortablePgType type
+    //  which handles the FOREIGN_KEY variant differently
+    #[cfg_attr(feature = "serde", serde(skip))]
     #[allow(nonstandard_style)]
     FOREIGN_KEY {
         key_type: &'static PgType,

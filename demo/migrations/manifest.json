@@ -1,0 +1,227 @@
+{
+  "version": "V1_0_0",
+  "state": {
+    "persons": [
+      {
+        "table_name": "persons",
+        "name": "id",
+        "pg_type": {
+          "Raw": "BIGINT"
+        },
+        "flags": 18,
+        "index": 0
+      },
+      {
+        "table_name": "persons",
+        "name": "first_name",
+        "pg_type": {
+          "Raw": "TEXT"
+        },
+        "flags": 0,
+        "index": 1
+      },
+      {
+        "table_name": "persons",
+        "name": "last_name",
+        "pg_type": {
+          "Raw": "TEXT"
+        },
+        "flags": 0,
+        "index": 2
+      },
+      {
+        "table_name": "persons",
+        "name": "email",
+        "pg_type": {
+          "Raw": "TEXT"
+        },
+        "flags": 8,
+        "index": 3
+      },
+      {
+        "table_name": "persons",
+        "name": "phone_number",
+        "pg_type": {
+          "Raw": "TEXT"
+        },
+        "flags": 1,
+        "index": 4
+      },
+      {
+        "table_name": "persons",
+        "name": "bank_balance",
+        "pg_type": {
+          "Raw": "DECIMAL"
+        },
+        "flags": 0,
+        "index": 5
+      }
+    ],
+    "posts": [
+      {
+        "table_name": "posts",
+        "name": "id",
+        "pg_type": {
+          "Raw": "BIGINT"
+        },
+        "flags": 18,
+        "index": 0
+      },
+      {
+        "table_name": "posts",
+        "name": "title",
+        "pg_type": {
+          "Raw": "TEXT"
+        },
+        "flags": 0,
+        "index": 1
+      },
+      {
+        "table_name": "posts",
+        "name": "user_fk",
+        "pg_type": {
+          "ForeignKey": {
+            "key_sql_type": "BIGINT",
+            "target_table_name": "users",
+            "target_column_name": "id"
+          }
+        },
+        "flags": 32,
+        "index": 2
+      }
+    ],
+    "audit_logs": [
+      {
+        "table_name": "audit_logs",
+        "name": "id",
+        "pg_type": {
+          "Raw": "BIGINT"
+        },
+        "flags": 18,
+        "index": 0
+      },
+      {
+        "table_name": "audit_logs",
+        "name": "created_at",
+        "pg_type": {
+          "Raw": "TIMESTAMP_TZ"
+        },
+        "flags": 0,
+        "index": 1
+      },
+      {
+        "table_name": "audit_logs",
+        "name": "updated_at",
+        "pg_type": {
+          "Raw": "TIMESTAMP"
+        },
+        "flags": 0,
+        "index": 2
+      },
+      {
+        "table_name": "audit_logs",
+        "name": "random_date",
+        "pg_type": {
+          "Raw": "DATE"
+        },
+        "flags": 0,
+        "index": 3
+      },
+      {
+        "table_name": "audit_logs",
+        "name": "random_time",
+        "pg_type": {
+          "Raw": "TIME"
+        },
+        "flags": 0,
+        "index": 4
+      }
+    ],
+    "products": [
+      {
+        "table_name": "products",
+        "name": "id",
+        "pg_type": {
+          "Raw": "BIGINT"
+        },
+        "flags": 18,
+        "index": 0
+      },
+      {
+        "table_name": "products",
+        "name": "name",
+        "pg_type": {
+          "Raw": "TEXT"
+        },
+        "flags": 0,
+        "index": 1
+      }
+    ],
+    "orders": [
+      {
+        "table_name": "orders",
+        "name": "id",
+        "pg_type": {
+          "Raw": "BIGINT"
+        },
+        "flags": 18,
+        "index": 0
+      },
+      {
+        "table_name": "orders",
+        "name": "quantity",
+        "pg_type": {
+          "Raw": "INTEGER"
+        },
+        "flags": 0,
+        "index": 1
+      },
+      {
+        "table_name": "orders",
+        "name": "user_fk",
+        "pg_type": {
+          "ForeignKey": {
+            "key_sql_type": "BIGINT",
+            "target_table_name": "users",
+            "target_column_name": "id"
+          }
+        },
+        "flags": 32,
+        "index": 2
+      },
+      {
+        "table_name": "orders",
+        "name": "product_fk",
+        "pg_type": {
+          "ForeignKey": {
+            "key_sql_type": "BIGINT",
+            "target_table_name": "products",
+            "target_column_name": "id"
+          }
+        },
+        "flags": 33,
+        "index": 3
+      }
+    ],
+    "users": [
+      {
+        "table_name": "users",
+        "name": "id",
+        "pg_type": {
+          "Raw": "BIGINT"
+        },
+        "flags": 18,
+        "index": 0
+      },
+      {
+        "table_name": "users",
+        "name": "name",
+        "pg_type": {
+          "Raw": "TEXT"
+        },
+        "flags": 0,
+        "index": 1
+      }
+    ]
+  }
+}

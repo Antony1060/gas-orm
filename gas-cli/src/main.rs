@@ -1,10 +1,12 @@
 mod binary;
 mod commands;
 mod error;
+mod manifest;
 mod project;
 mod util;
 
 use crate::commands::{CommandDef, CommandImplProvider};
+use crate::error::GasCliError;
 use clap::Parser;
 use std::process::ExitCode;
 
@@ -22,7 +24,10 @@ async fn main() -> ExitCode {
     let handler = cli.command.get_command();
 
     if let Err(err) = handler.execute().await {
-        eprintln!("command failed: {err}");
+        if !matches!(err, GasCliError::GeneralFailure) {
+            eprintln!("command failed: {err}");
+        };
+
         return ExitCode::FAILURE;
     }
 

@@ -4,7 +4,6 @@ use crate::error::GasCliResult;
 use crate::project::CargoProject;
 use crate::util;
 use console::style;
-use std::path::PathBuf;
 use std::time::Duration;
 
 // compiles the binary and gets the current state of the binary while logging,
@@ -16,7 +15,7 @@ pub async fn migrations_cli_common_program_state(
         let spinner = util::progress::default_spinner("Building...");
         spinner.enable_steady_tick(Duration::from_millis(100));
 
-        let project = CargoProject::from_path(PathBuf::from(&args.project_path)).await?;
+        let project = CargoProject::from_path(args.project_path.clone()).await?;
         let binary_path = project.build().await?;
 
         spinner.finish_and_clear();
