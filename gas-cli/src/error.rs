@@ -1,3 +1,4 @@
+use crate::manifest::GasManifestError;
 use std::path::PathBuf;
 
 pub type GasCliResult<T> = Result<T, GasCliError>;
@@ -33,6 +34,9 @@ pub enum GasCliError {
 
     #[error("failed to (de)serialize: {0}")]
     SerdeError(#[from] serde_json::Error),
+
+    #[error("manifest error: {0}")]
+    ManifestError(#[from] GasManifestError),
 
     #[error("general failure")]
     GeneralFailure,
