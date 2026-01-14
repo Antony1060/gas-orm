@@ -1,7 +1,7 @@
 use crate::error::{GasCliError, GasCliResult};
 use gas_shared::link::PortableFieldMeta;
 use object::{Object, ObjectSection};
-use std::collections::HashMap;
+use std::collections::BTreeMap;
 use std::mem::MaybeUninit;
 use std::path::PathBuf;
 use tokio::fs;
@@ -9,7 +9,7 @@ use tokio::fs;
 // TODO: move to shared
 const LINK_SECTION_PREFIX: &str = ".__gas_internals";
 
-pub type BinaryFields = HashMap<String, Vec<PortableFieldMeta>>;
+pub type BinaryFields = BTreeMap<String, Vec<PortableFieldMeta>>;
 
 pub struct ProjectModelState {
     pub fields: BinaryFields,

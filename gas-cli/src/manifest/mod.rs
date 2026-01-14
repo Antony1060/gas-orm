@@ -1,10 +1,15 @@
 use crate::binary::BinaryFields;
+use crate::diff::DiffScript;
 use crate::error::{GasCliError, GasCliResult};
 use std::path::PathBuf;
+use std::time::SystemTime;
 use tokio::fs;
+use tokio::io::AsyncWriteExt;
 use tokio::runtime::Handle;
 
 const MANIFEST_FILE_NAME: &str = "manifest.json";
+#[allow(dead_code)]
+const SCRIPT_SEPARATOR: &str = "-- GAS_ORM(forward_backward_separator)";
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub enum ManifestVersion {
@@ -55,8 +60,13 @@ impl GasManifestController {
         }
 
         fs::create_dir_all(&self.dir).await?;
+        // fill with initial script
         fs::create_dir_all(self.dir.join("scripts")).await?;
 
+        self.save_fields(fields).await
+    }
+
+    pub async fn save_fields(&self, fields: BinaryFields) -> GasCliResult<GasManifest> {
         let manifest_path = self.dir.join(MANIFEST_FILE_NAME);
 
         let manifest = Handle::current()
@@ -76,6 +86,22 @@ impl GasManifestController {
     }
 
     #[allow(dead_code)]
+    pub async fn save_script(&self, script: DiffScript) -> GasCliResult<()> {
+        // TODO: prompt for names, etc
+        let name = SystemTime::now()
+            .duration_since(SystemTime::UNIX_EPOCH)?
+            .as_secs();
+
+        let mut file = fs::File::create(format!("{name}.sql")).await?;
+        file.write_all(script.forward.as_bytes()).await?;
+        file.write_u8(b'\n').await?;
+        file.write_all(SCRIPT_SEPARATOR.as_bytes()).await?;
+        file.write_u8(b'\n').await?;
+        file.write_all(script.backward.as_bytes()).await?;
+
+        Ok(())
+    }
+
     pub async fn load(&self) -> GasCliResult<GasManifest> {
         if !self.is_present() {
             return Err(GasManifestError::NotInitialized.into());

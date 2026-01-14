@@ -25,7 +25,7 @@ pub struct MigrationArgs {
         default_value = "./migrations",
         help = "relative to project_path"
     )]
-    pub migrations_dir_path: PathBuf,
+    _migrations_dir_path: PathBuf,
     #[command(subcommand)]
     pub operation: MigrationOperation,
 }
@@ -37,5 +37,11 @@ impl CommandImplProvider for MigrationArgs {
             MigrationOperation::Init => Box::from(MigrationInitCommand { args: self }),
             MigrationOperation::Sync => Box::from(MigrationSyncCommand { args: self }),
         }
+    }
+}
+
+impl MigrationArgs {
+    pub fn migrations_dir_path(&self) -> PathBuf {
+        self.project_path.join(&self._migrations_dir_path)
     }
 }

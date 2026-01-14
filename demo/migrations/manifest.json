@@ -94,39 +94,6 @@
         "index": 3
       }
     ],
-    "posts": [
-      {
-        "table_name": "posts",
-        "name": "id",
-        "pg_type": {
-          "Raw": "BIGINT"
-        },
-        "flags": 18,
-        "index": 0
-      },
-      {
-        "table_name": "posts",
-        "name": "title",
-        "pg_type": {
-          "Raw": "TEXT"
-        },
-        "flags": 0,
-        "index": 1
-      },
-      {
-        "table_name": "posts",
-        "name": "user_fk",
-        "pg_type": {
-          "ForeignKey": {
-            "key_sql_type": "BIGINT",
-            "target_table_name": "users",
-            "target_column_name": "id"
-          }
-        },
-        "flags": 32,
-        "index": 2
-      }
-    ],
     "persons": [
       {
         "table_name": "persons",
@@ -183,9 +150,9 @@
         "index": 5
       }
     ],
-    "users": [
+    "posts": [
       {
-        "table_name": "users",
+        "table_name": "posts",
         "name": "id",
         "pg_type": {
           "Raw": "BIGINT"
@@ -194,13 +161,26 @@
         "index": 0
       },
       {
-        "table_name": "users",
-        "name": "name",
+        "table_name": "posts",
+        "name": "title",
         "pg_type": {
           "Raw": "TEXT"
         },
         "flags": 0,
         "index": 1
+      },
+      {
+        "table_name": "posts",
+        "name": "user_fk",
+        "pg_type": {
+          "ForeignKey": {
+            "key_sql_type": "BIGINT",
+            "target_table_name": "users",
+            "target_column_name": "id"
+          }
+        },
+        "flags": 32,
+        "index": 2
       }
     ],
     "products": [
@@ -215,6 +195,26 @@
       },
       {
         "table_name": "products",
+        "name": "name",
+        "pg_type": {
+          "Raw": "TEXT"
+        },
+        "flags": 0,
+        "index": 1
+      }
+    ],
+    "users": [
+      {
+        "table_name": "users",
+        "name": "id",
+        "pg_type": {
+          "Raw": "BIGINT"
+        },
+        "flags": 18,
+        "index": 0
+      },
+      {
+        "table_name": "users",
         "name": "name",
         "pg_type": {
           "Raw": "TEXT"

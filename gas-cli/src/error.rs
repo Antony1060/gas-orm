@@ -11,6 +11,9 @@ pub enum GasCliError {
     #[error("I/O error: {0}")]
     IoError(#[from] std::io::Error),
 
+    #[error("system time error: {0}")]
+    TimeError(#[from] std::time::SystemTimeError),
+
     #[error("Cargo.toml not found in project path, expected at: {0}")]
     CargoTomlNotFound(PathBuf),
 

@@ -14,7 +14,7 @@ pub enum FieldFlag {
     Virtual = 1 << 6,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Eq, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct FieldFlags(pub u8);
 
@@ -26,11 +26,11 @@ impl FieldFlags {
 
 impl Debug for FieldFlags {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{:b}", self.0)
+        write!(f, "0b{:b}", self.0)
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Eq, PartialEq)]
 pub struct FieldMeta {
     // a lot of names
     pub table_name: &'static str,  // table

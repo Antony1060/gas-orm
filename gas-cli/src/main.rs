@@ -1,5 +1,6 @@
 mod binary;
 mod commands;
+mod diff;
 mod error;
 mod manifest;
 mod project;

@@ -1,7 +1,7 @@
 use crate::field::FieldMeta;
 use std::borrow::Cow;
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Eq, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum PgType {
     TEXT,
