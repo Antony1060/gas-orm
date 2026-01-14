@@ -21,7 +21,7 @@ impl Command for MigrationInitCommand {
         match manifest_controller.init_with(state.fields).await {
             Err(GasCliError::ManifestError(GasManifestError::AlreadyInitialized)) => {
                 println!(
-                    "\n{}: {}",
+                    "{}: {}",
                     STYLE_ERR.apply_to(style("Target directory is already occupied")),
                     migrations_dir.canonicalize()?.display()
                 );
@@ -31,7 +31,7 @@ impl Command for MigrationInitCommand {
             Err(e) => Err(e),
             Ok(_) => {
                 println!(
-                    "\n{}: {}",
+                    "{}: {}",
                     STYLE_OK.apply_to("Migrations successfully initialized"),
                     migrations_dir.canonicalize()?.display()
                 );

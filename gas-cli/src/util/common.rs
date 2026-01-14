@@ -41,5 +41,7 @@ pub async fn migrations_cli_common_program_state(
         println!("  - {} ({})", style(model).green(), joined_fields);
     }
 
+    println!();
+
     Ok(state)
 }

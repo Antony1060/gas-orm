@@ -47,6 +47,9 @@ pub fn sync_states(
 
         println!("{}", STYLE_OK.apply_to("SAME"));
     }
+
+    println!();
+
     Ok(None)
 }
 
@@ -62,7 +65,7 @@ impl Command for MigrationSyncCommand {
         match manifest_controller.load().await {
             Err(GasCliError::ManifestError(GasManifestError::NotInitialized)) => {
                 println!(
-                    "\n{}",
+                    "{}",
                     STYLE_ERR.apply_to("Migrations don't seem to be initalized"),
                 );
 
@@ -76,7 +79,7 @@ impl Command for MigrationSyncCommand {
                     Some(_) => unimplemented!(),
                     None => {
                         println!(
-                            "\n{}",
+                            "{}",
                             STYLE_OK.apply_to("Nothing to do, migrations are at the latest state")
                         );
                     }
