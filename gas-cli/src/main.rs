@@ -1,9 +1,9 @@
 mod binary;
 mod commands;
-mod diff;
 mod error;
 mod manifest;
 mod project;
+mod sync;
 mod util;
 
 use crate::commands::{CommandDef, CommandImplProvider};

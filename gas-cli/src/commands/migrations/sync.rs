@@ -1,22 +1,32 @@
 use crate::binary::ProjectModelState;
 use crate::commands::migrations::MigrationArgs;
 use crate::commands::Command;
-use crate::diff::DiffScript;
 use crate::error::{GasCliError, GasCliResult};
 use crate::manifest::{GasManifest, GasManifestController, GasManifestError};
+use crate::sync::diff::{ModelChangeActor, SampleModelActor};
+use crate::sync::MigrationScript;
+use crate::util;
 use crate::util::common::migrations_cli_common_program_state;
 use crate::util::styles::{STYLE_ERR, STYLE_OK};
-use console::style;
+use console::{style, Term};
+use dialoguer::Input;
 
 pub struct MigrationSyncCommand {
     #[allow(unused)]
     pub(super) args: MigrationArgs,
 }
 
-pub fn sync_states(
-    project_state: &ProjectModelState,
-    manifest: &GasManifest,
-) -> GasCliResult<Option<DiffScript>> {
+pub struct SyncContext {
+    controller: GasManifestController,
+    state: ProjectModelState,
+    manifest: GasManifest,
+}
+
+// TODO: implement actual "diffing"
+pub fn find_diffs<'a>(
+    project_state: &'a ProjectModelState,
+    manifest: &'a GasManifest,
+) -> GasCliResult<Box<[Box<dyn ModelChangeActor>]>> {
     // TODO: very crude now, just logs if any change
     for (table, fields) in &project_state.fields {
         print!("Checking: {} ", style(table).green());
@@ -50,7 +60,53 @@ pub fn sync_states(
 
     println!();
 
-    Ok(None)
+    Ok(Box::from([
+        Box::from(SampleModelActor {}) as Box<dyn ModelChangeActor>
+    ]))
+}
+
+pub async fn handle_sync(
+    SyncContext {
+        controller,
+        state,
+        manifest,
+    }: SyncContext,
+) -> GasCliResult<()> {
+    let diffs = find_diffs(&state, &manifest)?;
+
+    if diffs.is_empty() {
+        println!(
+            "{}",
+            STYLE_OK.apply_to("Nothing to do, migrations are synced with the codebase")
+        );
+    }
+
+    let mut script = MigrationScript {
+        forward: String::new(),
+        backward: String::new(),
+    };
+
+    for diff in diffs {
+        script.forward.push_str(&diff.forward_sql());
+        script.forward.push('\n');
+
+        script.backward.push_str(&diff.backward_sql());
+        script.backward.push('\n');
+    }
+
+    let name: String = Input::new()
+        .with_prompt("Migrations script name")
+        .interact_text_on(&Term::stdout())?;
+
+    let script_path = controller.save_script(&name, &script).await?;
+
+    println!(
+        "{}: {}",
+        STYLE_OK.apply_to("Migration saved"),
+        util::path::canonicalize_relative_pwd(script_path)?.display()
+    );
+
+    Ok(())
 }
 
 #[async_trait::async_trait]
@@ -73,19 +129,12 @@ impl Command for MigrationSyncCommand {
             }
             Err(e) => Err(e),
             Ok(manifest) => {
-                let script = sync_states(&state, &manifest)?;
-
-                match script {
-                    Some(_) => unimplemented!(),
-                    None => {
-                        println!(
-                            "{}",
-                            STYLE_OK.apply_to("Nothing to do, migrations are at the latest state")
-                        );
-                    }
-                }
-
-                Ok(())
+                handle_sync(SyncContext {
+                    controller: manifest_controller,
+                    state,
+                    manifest,
+                })
+                .await
             }
         }
     }

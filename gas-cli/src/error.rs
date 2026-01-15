@@ -41,6 +41,9 @@ pub enum GasCliError {
     #[error("manifest error: {0}")]
     ManifestError(#[from] GasManifestError),
 
+    #[error("interaction error: {0}")]
+    DialoguerError(#[from] dialoguer::Error),
+
     #[error("general failure")]
     GeneralFailure,
 }

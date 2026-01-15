@@ -2,6 +2,7 @@ use crate::commands::migrations::MigrationArgs;
 use crate::commands::Command;
 use crate::error::{GasCliError, GasCliResult};
 use crate::manifest::{GasManifestController, GasManifestError};
+use crate::util;
 use crate::util::common::migrations_cli_common_program_state;
 use crate::util::styles::{STYLE_ERR, STYLE_OK};
 use console::style;
@@ -23,7 +24,7 @@ impl Command for MigrationInitCommand {
                 println!(
                     "{}: {}",
                     STYLE_ERR.apply_to(style("Target directory is already occupied")),
-                    migrations_dir.canonicalize()?.display()
+                    util::path::canonicalize_relative_pwd(migrations_dir)?.display()
                 );
 
                 Err(GasCliError::GeneralFailure)
@@ -33,7 +34,7 @@ impl Command for MigrationInitCommand {
                 println!(
                     "{}: {}",
                     STYLE_OK.apply_to("Migrations successfully initialized"),
-                    migrations_dir.canonicalize()?.display()
+                    util::path::canonicalize_relative_pwd(migrations_dir)?.display()
                 );
 
                 Ok(())
