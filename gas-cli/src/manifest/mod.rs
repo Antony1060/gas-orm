@@ -146,7 +146,11 @@ impl GasManifestController {
         // append sequence number to migrations made the same day
         let script_start = 'seq_loop: {
             let mut seq = 0usize;
-            loop {
+
+            // loop statement will think the code block is unreachable
+            //  this is a weird bypass that does the same thing
+            #[allow(while_true)]
+            while true {
                 let script_start = format!("{}_{:02}", time_formatted, seq);
 
                 seq += 1;
@@ -161,6 +165,8 @@ impl GasManifestController {
                     break 'seq_loop script_start;
                 }
             }
+
+            unreachable!()
         };
 
         let name = format!(
