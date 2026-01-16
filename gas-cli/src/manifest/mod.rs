@@ -1,6 +1,7 @@
 use crate::binary::BinaryFields;
 use crate::error::{GasCliError, GasCliResult};
 use crate::sync::MigrationScript;
+use crate::util;
 use chrono::Utc;
 use lazy_static::lazy_static;
 use regex::Regex;
@@ -97,13 +98,7 @@ impl GasManifestController {
         pretty_name: &str,
         script: &MigrationScript,
     ) -> GasCliResult<PathBuf> {
-        let time_formatted = Utc::now().format("%Y-%m-%d");
-        let name = format!(
-            "{}_{}",
-            time_formatted,
-            NON_ALPHANUMERIC_REGEX.replace_all(pretty_name, "_")
-        );
-        let script_path = self.finish_script_path(&name).await;
+        let script_path = self.process_script_name(pretty_name).await?;
 
         let mut file = fs::File::create(&script_path).await?;
         file.write_all(script.forward.as_bytes()).await?;
@@ -129,26 +124,51 @@ impl GasManifestController {
 
     // checks for name conflicting files and adds a suffix
     // will return the first path that is available
-    async fn finish_script_path(&self, name: &str) -> PathBuf {
+    async fn process_script_name(&self, name: &str) -> GasCliResult<PathBuf> {
+        let time_formatted = Utc::now().format("%Y-%m-%d");
+
         let scripts_dir = self.dir.join(SCRIPTS_DIR);
+        let current_scripts: Vec<_> = {
+            let dir_files = util::file::list_dir(&scripts_dir).await?;
+            let mut scripts = Vec::with_capacity(dir_files.len());
 
-        let mut count = 0usize;
-        loop {
-            let script_name = if count == 0 {
-                format!("{}.sql", name)
-            } else {
-                format!("{}_{}.sql", name, count)
-            };
+            for dir_file in dir_files {
+                if !dir_file.file_type().await?.is_file() {
+                    continue;
+                }
 
-            count += 1;
-
-            let script_path = scripts_dir.join(script_name);
-            if !fs::try_exists(&script_path)
-                .await
-                .expect("try_exist should have worked")
-            {
-                return script_path;
+                scripts.push(dir_file);
             }
-        }
+
+            scripts
+        };
+
+        // append sequence number to migrations made the same day
+        let script_start = 'seq_loop: {
+            let mut seq = 0usize;
+            loop {
+                let script_start = format!("{}_{:02}", time_formatted, seq);
+
+                seq += 1;
+
+                // linear search here should be fine
+                if !current_scripts.iter().any(|entry| {
+                    entry
+                        .file_name()
+                        .to_string_lossy()
+                        .starts_with(&script_start)
+                }) {
+                    break 'seq_loop script_start;
+                }
+            }
+        };
+
+        let name = format!(
+            "{}_{}.sql",
+            script_start,
+            NON_ALPHANUMERIC_REGEX.replace_all(name, "_")
+        );
+
+        Ok(scripts_dir.join(name))
     }
 }

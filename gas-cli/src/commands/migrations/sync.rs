@@ -81,7 +81,7 @@ impl Display for ChangeDirection {
     }
 }
 
-pub fn handle_change_actor(
+fn handle_change_actor(
     direction: ChangeDirection,
     change_result: GasCliResult<SqlQuery>,
 ) -> GasCliResult<SqlQuery> {
