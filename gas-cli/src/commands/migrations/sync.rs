@@ -7,9 +7,11 @@ use crate::sync::diff::{ModelChangeActor, SampleModelActor};
 use crate::sync::MigrationScript;
 use crate::util;
 use crate::util::common::migrations_cli_common_program_state;
+use crate::util::sql_query::SqlQuery;
 use crate::util::styles::{STYLE_ERR, STYLE_OK};
 use console::{style, Term};
 use dialoguer::Input;
+use std::fmt::{Display, Formatter};
 
 pub struct MigrationSyncCommand {
     #[allow(unused)]
@@ -65,6 +67,38 @@ pub fn find_diffs<'a>(
     ]))
 }
 
+enum ChangeDirection {
+    Forward,
+    Backward,
+}
+
+impl Display for ChangeDirection {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        match self {
+            ChangeDirection::Forward => write!(f, "forward"),
+            ChangeDirection::Backward => write!(f, "backward"),
+        }
+    }
+}
+
+pub fn handle_change_actor(
+    direction: ChangeDirection,
+    change_result: GasCliResult<SqlQuery>,
+) -> GasCliResult<SqlQuery> {
+    change_result.map_err(|err| match err {
+        GasCliError::MigrationsGenerationError { reason } => {
+            println!(
+                "{}: {}",
+                STYLE_ERR.apply_to(format!("Failed to determine changes ({direction})")),
+                reason
+            );
+
+            GasCliError::GeneralFailure
+        }
+        err => err,
+    })
+}
+
 pub async fn handle_sync(
     SyncContext {
         controller,
@@ -87,10 +121,16 @@ pub async fn handle_sync(
     };
 
     for diff in diffs {
-        script.forward.push_str(&diff.forward_sql());
+        script.forward.push_str(&handle_change_actor(
+            ChangeDirection::Forward,
+            diff.forward_sql(),
+        )?);
         script.forward.push('\n');
 
-        script.backward.push_str(&diff.backward_sql());
+        script.backward.push_str(&handle_change_actor(
+            ChangeDirection::Backward,
+            diff.backward_sql(),
+        )?);
         script.backward.push('\n');
     }
 

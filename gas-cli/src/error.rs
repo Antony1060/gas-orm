@@ -1,4 +1,5 @@
 use crate::manifest::GasManifestError;
+use std::borrow::Cow;
 use std::path::PathBuf;
 
 pub type GasCliResult<T> = Result<T, GasCliError>;
@@ -43,6 +44,9 @@ pub enum GasCliError {
 
     #[error("interaction error: {0}")]
     DialoguerError(#[from] dialoguer::Error),
+
+    #[error("failed to generate a migration: {reason}")]
+    MigrationsGenerationError { reason: Cow<'static, str> },
 
     #[error("general failure")]
     GeneralFailure,

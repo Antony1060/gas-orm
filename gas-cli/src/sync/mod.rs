@@ -1,4 +1,5 @@
 pub mod diff;
+pub mod variants;
 
 #[allow(dead_code)]
 pub struct MigrationScript {

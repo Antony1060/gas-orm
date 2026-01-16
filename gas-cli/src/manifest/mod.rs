@@ -67,7 +67,7 @@ impl GasManifestController {
         }
 
         fs::create_dir_all(&self.dir).await?;
-        // fill with initial script
+        // TODO: fill with initial script
         fs::create_dir_all(self.dir.join(SCRIPTS_DIR)).await?;
 
         self.save_fields(fields).await
