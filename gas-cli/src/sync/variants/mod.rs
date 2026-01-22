@@ -7,7 +7,6 @@ pub mod create_table;
 pub mod drop_column;
 pub mod drop_foreign_key_constraint;
 pub mod drop_primary_key_constraint;
-pub mod drop_table;
 pub mod drop_unique_constraint;
 pub mod remove_nullable;
 pub mod rename_column;

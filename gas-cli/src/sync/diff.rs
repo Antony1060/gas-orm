@@ -1,8 +1,8 @@
 use crate::binary::{BinaryFields, FieldEntry};
 use crate::error::{GasCliError, GasCliResult};
 use crate::manifest::GasManifest;
+use crate::sync;
 use crate::sync::variants::create_table::CreateTableModelActor;
-use crate::sync::variants::drop_table::DropTableModelActor;
 use crate::sync::MigrationScript;
 use crate::util::sql_query::SqlQuery;
 use crate::util::styles::STYLE_ERR;
@@ -37,7 +37,12 @@ pub fn find_diffs<'a>(
 
     let mut result: Vec<Box<dyn ModelChangeActor>> = Vec::new();
     result.extend(new_tables.into_iter().map(CreateTableModelActor::new_boxed));
-    result.extend(old_tables.into_iter().map(DropTableModelActor::new_boxed));
+    result.extend(
+        old_tables
+            .into_iter()
+            .map(CreateTableModelActor::new_boxed)
+            .map(sync::helpers::diff::invert),
+    );
 
     for common_table in common_tables {
         dbg!(common_table.table);

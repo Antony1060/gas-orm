@@ -1,4 +1,4 @@
-use crate::models::{audit_logs, no_primary_key, order, person, post, product, user};
+use crate::models::{audit_logs, order, person, post, product, user};
 use crate::tracing_util::setup_tracing;
 use gas::connection::PgConnection;
 use gas::eq::{PgEq, PgEqNone, PgEqTime};
@@ -22,7 +22,6 @@ async fn main() -> GasResult<()> {
         PgConnection::new_connection_pool("postgres://postgres:strong_password@localhost/postgres")
             .await?;
 
-    no_primary_key::Model::create_table(&conn, true).await?;
     person::Model::create_table(&conn, true).await?;
     audit_logs::Model::create_table(&conn, true).await?;
     user::Model::create_table(&conn, true).await?;
