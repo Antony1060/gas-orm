@@ -48,6 +48,17 @@
         "index": 4
       }
     ],
+    "no_primary_key": [
+      {
+        "table_name": "no_primary_key",
+        "name": "count",
+        "pg_type": {
+          "Raw": "BIGINT"
+        },
+        "flags": 0,
+        "index": 0
+      }
+    ],
     "orders": [
       {
         "table_name": "orders",

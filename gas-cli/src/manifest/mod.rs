@@ -1,7 +1,7 @@
 use crate::binary::BinaryFields;
 use crate::error::{GasCliError, GasCliResult};
 use crate::sync::MigrationScript;
-use crate::util;
+use crate::{sync, util};
 use chrono::Utc;
 use lazy_static::lazy_static;
 use regex::Regex;
@@ -68,10 +68,18 @@ impl GasManifestController {
         }
 
         fs::create_dir_all(&self.dir).await?;
-        // TODO: fill with initial script
         fs::create_dir_all(self.dir.join(SCRIPTS_DIR)).await?;
 
-        self.save_fields(fields).await
+        let script =
+            sync::diff::find_and_collect_diffs(&fields, &GasManifest::new(BinaryFields::new()))?;
+
+        if let Some(script) = script {
+            self.save_script("initial_create", &script).await?;
+        }
+
+        let manifest = self.save_fields(fields).await?;
+
+        Ok(manifest)
     }
 
     pub async fn save_fields(&self, fields: BinaryFields) -> GasCliResult<GasManifest> {

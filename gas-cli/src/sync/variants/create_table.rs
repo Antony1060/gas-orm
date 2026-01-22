@@ -34,7 +34,7 @@ impl<'a> ModelChangeActor for CreateTableModelActor<'a> {
 
         let mut primary_keys: Vec<String> = Vec::new();
 
-        for field in self.fields {
+        for (index, field) in self.fields.iter().enumerate() {
             if field.flags.has_flag(FieldFlag::PrimaryKey) {
                 primary_keys.push(String::from(&field.name))
             }
@@ -60,10 +60,14 @@ impl<'a> ModelChangeActor for CreateTableModelActor<'a> {
                 sql.push_str(" UNIQUE");
             }
 
-            sql.push_str(", ");
+            if index < self.fields.len() - 1 {
+                sql.push_str(", ");
+            }
         }
 
         if !primary_keys.is_empty() {
+            sql.push_str(", ");
+
             sql.push_str("PRIMARY KEY (");
             sql.push_str(
                 &primary_keys
@@ -80,6 +84,6 @@ impl<'a> ModelChangeActor for CreateTableModelActor<'a> {
     }
 
     fn backward_sql(&self) -> GasCliResult<SqlQuery> {
-        Ok(format!("DROP TABLE {};", self.entry.table))
+        Ok(format!("DROP TABLE {}", self.entry.table))
     }
 }

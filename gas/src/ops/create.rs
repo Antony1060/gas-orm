@@ -51,7 +51,7 @@ impl<T: ModelMeta> CreateOp<T> {
                 sql.append_str(" UNIQUE");
             }
 
-            if index != T::FIELDS.len() - 1 {
+            if index < T::FIELDS.len() - 1 {
                 sql.append_str(", ");
             }
         }

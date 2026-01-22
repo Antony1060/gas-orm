@@ -3,14 +3,11 @@ use crate::commands::migrations::MigrationArgs;
 use crate::commands::Command;
 use crate::error::{GasCliError, GasCliResult};
 use crate::manifest::{GasManifest, GasManifestController, GasManifestError};
-use crate::sync::MigrationScript;
 use crate::util::common::migrations_cli_common_program_state;
-use crate::util::sql_query::SqlQuery;
 use crate::util::styles::{STYLE_ERR, STYLE_OK};
 use crate::{sync, util};
 use console::Term;
 use dialoguer::Input;
-use std::fmt::{Display, Formatter};
 
 pub struct MigrationSyncCommand {
     #[allow(unused)]
@@ -23,38 +20,6 @@ pub struct SyncContext {
     manifest: GasManifest,
 }
 
-enum ChangeDirection {
-    Forward,
-    Backward,
-}
-
-impl Display for ChangeDirection {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        match self {
-            ChangeDirection::Forward => write!(f, "forward"),
-            ChangeDirection::Backward => write!(f, "backward"),
-        }
-    }
-}
-
-fn handle_change_actor(
-    direction: ChangeDirection,
-    change_result: GasCliResult<SqlQuery>,
-) -> GasCliResult<SqlQuery> {
-    change_result.map_err(|err| match err {
-        GasCliError::MigrationsGenerationError { reason } => {
-            println!(
-                "{}: {}",
-                STYLE_ERR.apply_to(format!("Failed to determine changes ({direction})")),
-                reason
-            );
-
-            GasCliError::GeneralFailure
-        }
-        err => err,
-    })
-}
-
 pub async fn handle_sync(
     SyncContext {
         controller,
@@ -62,33 +27,16 @@ pub async fn handle_sync(
         manifest,
     }: SyncContext,
 ) -> GasCliResult<()> {
-    let diffs = sync::diff::find_diffs(&state, &manifest)?;
+    let script = sync::diff::find_and_collect_diffs(&state.fields, &manifest)?;
 
-    if diffs.is_empty() {
+    let Some(script) = script else {
         println!(
             "{}",
             STYLE_OK.apply_to("Nothing to do, migrations are synced with the codebase")
         );
-    }
 
-    let mut script = MigrationScript {
-        forward: String::new(),
-        backward: String::new(),
+        return Ok(());
     };
-
-    for diff in diffs {
-        script.forward.push_str(&handle_change_actor(
-            ChangeDirection::Forward,
-            diff.forward_sql(),
-        )?);
-        script.forward.push('\n');
-
-        script.backward.push_str(&handle_change_actor(
-            ChangeDirection::Backward,
-            diff.backward_sql(),
-        )?);
-        script.backward.push('\n');
-    }
 
     let name: String = Input::new()
         .with_prompt("Migrations script name")
