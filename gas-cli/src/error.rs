@@ -45,6 +45,7 @@ pub enum GasCliError {
     #[error("interaction error: {0}")]
     DialoguerError(#[from] dialoguer::Error),
 
+    #[allow(dead_code)]
     #[error("failed to generate a migration: {reason}")]
     MigrationsGenerationError { reason: Cow<'static, str> },
 

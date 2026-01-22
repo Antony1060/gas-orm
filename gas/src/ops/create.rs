@@ -23,7 +23,7 @@ impl<T: ModelMeta> CreateOp<T> {
         let mut sql = SqlQuery::from("CREATE TABLE ");
 
         if self.ignore_existing {
-            sql.append_str(" IF NOT EXISTS ");
+            sql.append_str("IF NOT EXISTS ");
         }
 
         sql.append_str(T::TABLE_NAME);
@@ -31,7 +31,7 @@ impl<T: ModelMeta> CreateOp<T> {
 
         let mut primary_keys: Vec<String> = Vec::new();
 
-        for field in T::FIELDS {
+        for (index, field) in T::FIELDS.iter().enumerate() {
             if field.flags.has_flag(FieldFlag::PrimaryKey) {
                 primary_keys.push(field.name.to_string())
             }
@@ -51,10 +51,14 @@ impl<T: ModelMeta> CreateOp<T> {
                 sql.append_str(" UNIQUE");
             }
 
-            sql.append_str(", ");
+            if index != T::FIELDS.len() - 1 {
+                sql.append_str(", ");
+            }
         }
 
         if !primary_keys.is_empty() {
+            sql.append_str(", ");
+
             sql.append_str("PRIMARY KEY (");
             sql.append_str(
                 &primary_keys

@@ -1,5 +1,10 @@
-use gas::types::{DateTime, Decimal, NaiveDate, NaiveDateTime, NaiveTime, Utc};
 use gas::Relation;
+use gas::types::{DateTime, Decimal, NaiveDate, NaiveDateTime, NaiveTime, Utc};
+
+#[gas::model(table_name = "no_primary_key")]
+pub struct NoPrimaryKey {
+    pub count: i64,
+}
 
 #[gas::model(table_name = "persons")]
 #[derive(Debug)]

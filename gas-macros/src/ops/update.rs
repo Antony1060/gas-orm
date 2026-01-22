@@ -18,6 +18,8 @@ pub(crate) fn gen_update_sql_fn_tokens(
         .map(|(_, FieldNames { column_name, .. })| format!("{}=?", column_name))
         .reduce(|acc, curr| format!("{} AND {}", acc, curr));
 
+    let where_statement: String = where_statement.unwrap_or_else(|| "1=1".to_string());
+
     let set_statement: Option<String> = normal_fields
         .iter()
         .map(|(_, FieldNames { column_name, .. })| format!("{}=?", column_name))

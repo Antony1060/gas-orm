@@ -15,6 +15,11 @@ pub struct ProjectModelState {
     pub fields: BinaryFields,
 }
 
+pub struct FieldEntry<'a> {
+    pub table: &'a str,
+    pub fields: &'a [PortableFieldMeta],
+}
+
 impl ProjectModelState {
     pub async fn from_binary(path: &PathBuf) -> GasCliResult<ProjectModelState> {
         let binary_contents = fs::read(path).await?;
@@ -82,5 +87,14 @@ impl ProjectModelState {
         }
 
         Ok(fields.into_boxed_slice())
+    }
+}
+
+impl<'a> From<(&'a String, &'a Vec<PortableFieldMeta>)> for FieldEntry<'a> {
+    fn from(value: (&'a String, &'a Vec<PortableFieldMeta>)) -> Self {
+        FieldEntry {
+            table: value.0,
+            fields: value.1,
+        }
     }
 }

@@ -789,6 +789,7 @@ dependencies = [
  "futures",
  "gas-shared",
  "indicatif",
+ "itertools",
  "lazy_static",
  "object",
  "regex",

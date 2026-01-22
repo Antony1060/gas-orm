@@ -245,6 +245,23 @@ fn gen_key_tokens(ctx: &ModelCtx, fields: &[Field]) -> proc_macro2::TokenStream 
         )
     };
 
+    let filter_with_key = if pk_count == 0 {
+        quote! {
+            fn filter_with_key(key: Self::Key) -> gas::condition::EqExpression {
+                panic!("no primary key defined");
+            }
+        }
+    } else {
+        quote! {
+
+            fn filter_with_key(key: Self::Key) -> gas::condition::EqExpression {
+                use gas::eq::PgEq;
+
+                #condition_fn
+            }
+        }
+    };
+
     quote! {
         type Key = (#(#primary_key_field_types),*);
 
@@ -252,11 +269,7 @@ fn gen_key_tokens(ctx: &ModelCtx, fields: &[Field]) -> proc_macro2::TokenStream 
             #apply_fn
         }
 
-        fn filter_with_key(key: Self::Key) -> gas::condition::EqExpression {
-            use gas::eq::PgEq;
-
-            #condition_fn
-        }
+        #filter_with_key
     }
 }
 

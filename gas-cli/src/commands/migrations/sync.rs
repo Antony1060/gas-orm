@@ -3,13 +3,12 @@ use crate::commands::migrations::MigrationArgs;
 use crate::commands::Command;
 use crate::error::{GasCliError, GasCliResult};
 use crate::manifest::{GasManifest, GasManifestController, GasManifestError};
-use crate::sync::diff::{ModelChangeActor, SampleModelActor};
 use crate::sync::MigrationScript;
-use crate::util;
 use crate::util::common::migrations_cli_common_program_state;
 use crate::util::sql_query::SqlQuery;
 use crate::util::styles::{STYLE_ERR, STYLE_OK};
-use console::{style, Term};
+use crate::{sync, util};
+use console::Term;
 use dialoguer::Input;
 use std::fmt::{Display, Formatter};
 
@@ -22,49 +21,6 @@ pub struct SyncContext {
     controller: GasManifestController,
     state: ProjectModelState,
     manifest: GasManifest,
-}
-
-// TODO: implement actual "diffing"
-pub fn find_diffs<'a>(
-    project_state: &'a ProjectModelState,
-    manifest: &'a GasManifest,
-) -> GasCliResult<Box<[Box<dyn ModelChangeActor>]>> {
-    // TODO: very crude now, just logs if any change
-    for (table, fields) in &project_state.fields {
-        print!("Checking: {} ", style(table).green());
-        let manifest_fields = manifest.state.get(table);
-
-        let Some(manifest_fields) = manifest_fields else {
-            println!("{}", STYLE_ERR.apply_to("DIFFER"));
-            continue;
-        };
-
-        if fields.len() != manifest_fields.len() {
-            println!("{}", STYLE_ERR.apply_to("DIFFER"));
-            continue;
-        };
-
-        let mut fields = fields.clone();
-        fields.sort_by_cached_key(|it| it.name.clone());
-
-        let mut manifest_fields = manifest_fields.clone();
-        manifest_fields.sort_by_cached_key(|it| it.name.clone());
-
-        for (field, manifest_field) in fields.into_iter().zip(manifest_fields) {
-            if field != manifest_field {
-                println!("{}", STYLE_ERR.apply_to("DIFFER"));
-                continue;
-            }
-        }
-
-        println!("{}", STYLE_OK.apply_to("SAME"));
-    }
-
-    println!();
-
-    Ok(Box::from([
-        Box::from(SampleModelActor {}) as Box<dyn ModelChangeActor>
-    ]))
 }
 
 enum ChangeDirection {
@@ -106,7 +62,7 @@ pub async fn handle_sync(
         manifest,
     }: SyncContext,
 ) -> GasCliResult<()> {
-    let diffs = find_diffs(&state, &manifest)?;
+    let diffs = sync::diff::find_diffs(&state, &manifest)?;
 
     if diffs.is_empty() {
         println!(
