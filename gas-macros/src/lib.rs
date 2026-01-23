@@ -1,5 +1,6 @@
 mod attribute;
 mod derive;
+mod load_migrations;
 mod ops;
 mod text_util;
 
@@ -52,4 +53,9 @@ pub fn model(args: TokenStream, input: TokenStream) -> TokenStream {
 )]
 pub fn derive_model(input: TokenStream) -> TokenStream {
     derive::model_impl(input).unwrap_or_else(|err| err.to_compile_error().into())
+}
+
+#[proc_macro]
+pub fn load_migrations(input: TokenStream) -> TokenStream {
+    load_migrations::load_migrations_impl(input).unwrap_or_else(|err| err.to_compile_error().into())
 }

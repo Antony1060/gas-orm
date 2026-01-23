@@ -9,6 +9,7 @@ pub mod field;
 pub mod group;
 pub mod helpers;
 pub mod internals;
+pub mod migrations;
 pub mod model;
 mod ops;
 pub mod relation;
