@@ -33,8 +33,8 @@ pub enum GasError {
     #[error("{0}")]
     SharedError(GasSharedError),
 
-    #[error("{0}")]
-    GeneralError(Cow<'static, str>),
+    #[error("could not load migrations scripts, might not have been initialized yet")]
+    MigrationsNotDefined,
 }
 
 impl From<GasSharedError> for GasError {

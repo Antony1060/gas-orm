@@ -4,7 +4,7 @@ use proc_macro::TokenStream;
 use proc_macro2::{Ident, Span};
 use quote::quote;
 use syn::spanned::Spanned;
-use syn::{parse_quote, Field, Fields, PathSegment};
+use syn::{Field, Fields, PathSegment, parse_quote};
 
 // both derive and attribute macro arguments can't be derived from the same struct (I think)
 #[derive(Debug, FromMeta)]
@@ -28,7 +28,10 @@ struct RelationArgs {
 }
 
 #[inline(always)]
-pub(crate) fn model_impl(args: TokenStream, input: TokenStream) -> Result<TokenStream, syn::Error> {
+pub(crate) fn model_impl(
+    args: TokenStream,
+    input: TokenStream,
+) -> Result<proc_macro2::TokenStream, syn::Error> {
     let args_tokens: proc_macro2::TokenStream = args.clone().into();
     let input = syn::parse::<syn::ItemStruct>(input)?;
 
@@ -77,8 +80,7 @@ pub(crate) fn model_impl(args: TokenStream, input: TokenStream) -> Result<TokenS
 
             pub(crate) use Def;
         }
-    }
-    .into())
+    })
 }
 
 fn apply_forward_relation(field: &mut Field, path: syn::Path) -> Result<(), syn::Error> {

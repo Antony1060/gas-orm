@@ -1,8 +1,3 @@
-use crate::error::GasError;
-use crate::GasResult;
-
-const SCRIPT_SEPARATOR: &str = "-- GAS_ORM(forward_backward_separator)";
-
 #[allow(dead_code)]
 #[derive(Debug)]
 pub struct MigrationScript {
@@ -10,31 +5,23 @@ pub struct MigrationScript {
     backwards: &'static str,
 }
 
-#[allow(dead_code)]
-#[derive(Debug)]
-pub struct Migrator {
-    scripts: Box<[MigrationScript]>,
+impl MigrationScript {
+    pub fn new(forwards: &'static str, backwards: &'static str) -> Self {
+        Self {
+            forwards,
+            backwards,
+        }
+    }
 }
 
-impl Migrator {
-    pub fn from_raw(scripts: &[&'static str]) -> GasResult<Self> {
-        let mut parsed_scripts: Vec<MigrationScript> = Vec::with_capacity(scripts.len());
-        for script in scripts {
-            let (forward, backward) =
-                script
-                    .split_once(SCRIPT_SEPARATOR)
-                    .ok_or(GasError::GeneralError(
-                        "failed to parse migration script".into(),
-                    ))?;
+#[allow(dead_code)]
+#[derive(Debug)]
+pub struct Migrator<const N: usize> {
+    scripts: [MigrationScript; N],
+}
 
-            parsed_scripts.push(MigrationScript {
-                forwards: forward,
-                backwards: backward,
-            })
-        }
-
-        Ok(Migrator {
-            scripts: parsed_scripts.into_boxed_slice(),
-        })
+impl<const N: usize> Migrator<N> {
+    pub fn from(scripts: [MigrationScript; N]) -> Self {
+        Migrator { scripts }
     }
 }

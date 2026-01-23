@@ -31,7 +31,9 @@ struct ModelCtx<'a> {
 
 #[proc_macro_attribute]
 pub fn model(args: TokenStream, input: TokenStream) -> TokenStream {
-    attribute::model_impl(args, input).unwrap_or_else(|err| err.to_compile_error().into())
+    attribute::model_impl(args, input)
+        .unwrap_or_else(|err| err.to_compile_error())
+        .into()
 }
 
 // attributes prefixed with __gas should never be used on their own, instead they are inserted by other macros
@@ -52,10 +54,14 @@ pub fn model(args: TokenStream, input: TokenStream) -> TokenStream {
     )
 )]
 pub fn derive_model(input: TokenStream) -> TokenStream {
-    derive::model_impl(input).unwrap_or_else(|err| err.to_compile_error().into())
+    derive::model_impl(input)
+        .unwrap_or_else(|err| err.to_compile_error())
+        .into()
 }
 
 #[proc_macro]
 pub fn load_migrations(input: TokenStream) -> TokenStream {
-    load_migrations::load_migrations_impl(input).unwrap_or_else(|err| err.to_compile_error().into())
+    load_migrations::load_migrations_impl(input)
+        .unwrap_or_else(|err| err.to_compile_error())
+        .into()
 }

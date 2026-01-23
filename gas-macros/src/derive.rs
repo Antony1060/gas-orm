@@ -26,7 +26,7 @@ struct ColumnArgs {
 }
 
 #[inline(always)]
-pub fn model_impl(_input: TokenStream) -> Result<TokenStream, syn::Error> {
+pub fn model_impl(_input: TokenStream) -> Result<proc_macro2::TokenStream, syn::Error> {
     let derive_input = syn::parse::<syn::DeriveInput>(_input.clone())?;
     let input = syn::parse::<syn::ItemStruct>(_input)?;
 
@@ -154,8 +154,7 @@ pub fn model_impl(_input: TokenStream) -> Result<TokenStream, syn::Error> {
         };
 
         #from_row_impl
-    }
-        .into())
+    })
 }
 
 fn find_fields_with_attr(fields: &[Field], target_attr: &'static str) -> Vec<Ident> {
