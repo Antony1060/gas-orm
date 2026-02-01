@@ -44,6 +44,8 @@ pub async fn handle_sync(
 
     let script_path = controller.save_script(&name, &script).await?;
 
+    let _ = controller.save_fields(state.fields).await?;
+
     println!(
         "{}: {}",
         STYLE_OK.apply_to("Migration saved"),

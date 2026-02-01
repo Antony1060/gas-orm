@@ -6,9 +6,6 @@ CREATE TABLE IF NOT EXISTS audit_logs(
 	random_time TIME NOT NULL, 
 	PRIMARY KEY (id)
 );
-CREATE TABLE IF NOT EXISTS no_primary_key(
-	id BIGINT NOT NULL
-);
 CREATE TABLE IF NOT EXISTS orders(
 	id BIGSERIAL NOT NULL,
 	quantity INTEGER NOT NULL,
@@ -43,7 +40,6 @@ CREATE TABLE IF NOT EXISTS users(
 );
 -- GAS_ORM(forward_backward_separator)
 DROP TABLE audit_logs;
-DROP TABLE no_primary_key;
 DROP TABLE orders;
 DROP TABLE persons;
 DROP TABLE posts;

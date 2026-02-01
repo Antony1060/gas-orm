@@ -30,11 +30,20 @@ impl<'a> ModelChangeActor for InverseChangeActor<'a> {
         self.source.forward_sql()
     }
 
-    fn depends_on(&self) -> Box<[FieldUniqueDescriptor<'_>]> {
-        self.required_by()
+    // a "creative" operation's opposite for should be destructive
+    fn provides(&self) -> Box<[FieldUniqueDescriptor<'_>]> {
+        self.deprives_of()
     }
 
-    fn required_by(&self) -> Box<[FieldUniqueDescriptor<'_>]> {
+    fn deprives_of(&self) -> Box<[FieldUniqueDescriptor<'_>]> {
+        self.provides()
+    }
+
+    fn depends_on(&self) -> Box<[FieldUniqueDescriptor<'_>]> {
+        self.depends_on_deprived()
+    }
+
+    fn depends_on_deprived(&self) -> Box<[FieldUniqueDescriptor<'_>]> {
         self.depends_on()
     }
 }

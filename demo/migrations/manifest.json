@@ -1,6 +1,26 @@
 {
   "version": "V1_0_0",
   "state": {
+    "aaa": [
+      {
+        "table_name": "aaa",
+        "name": "id",
+        "pg_type": {
+          "Raw": "BIGINT"
+        },
+        "flags": 18,
+        "index": 0
+      },
+      {
+        "table_name": "aaa",
+        "name": "first_name",
+        "pg_type": {
+          "Raw": "TEXT"
+        },
+        "flags": 0,
+        "index": 1
+      }
+    ],
     "audit_logs": [
       {
         "table_name": "audit_logs",
@@ -46,17 +66,6 @@
         },
         "flags": 0,
         "index": 4
-      }
-    ],
-    "no_primary_key": [
-      {
-        "table_name": "no_primary_key",
-        "name": "id",
-        "pg_type": {
-          "Raw": "BIGINT"
-        },
-        "flags": 0,
-        "index": 0
       }
     ],
     "orders": [

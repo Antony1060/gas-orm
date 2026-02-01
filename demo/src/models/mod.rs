@@ -17,6 +17,14 @@ pub struct Person {
     pub bank_account_balance: Decimal,
 }
 
+#[gas::model(table_name = "aaa")]
+pub struct aa {
+    #[primary_key]
+    #[serial]
+    pub id: i64,
+    pub first_name: String,
+}
+
 #[gas::model(table_name = "audit_logs", mod_name = "audit_logs")]
 #[derive(Debug)]
 pub struct AuditLog {

@@ -91,6 +91,16 @@ impl<'a> ModelChangeActor for CreateTableModelActor<'a> {
         Ok(format!("DROP TABLE {}", self.entry.table))
     }
 
+    fn provides(&self) -> Box<[FieldUniqueDescriptor<'_>]> {
+        self.fields
+            .iter()
+            .map(|field| FieldUniqueDescriptor {
+                table_name: field.table_name.as_ref(),
+                name: field.name.as_ref(),
+            })
+            .collect()
+    }
+
     fn depends_on(&self) -> Box<[FieldUniqueDescriptor<'_>]> {
         let mut dependencies = Vec::new();
 
