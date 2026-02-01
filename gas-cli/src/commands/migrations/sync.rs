@@ -66,7 +66,7 @@ impl Command for MigrationSyncCommand {
             Err(GasCliError::ManifestError(GasManifestError::NotInitialized)) => {
                 println!(
                     "{}",
-                    STYLE_ERR.apply_to("Migrations don't seem to be initalized"),
+                    STYLE_ERR.apply_to("Migrations don't seem to be initialized"),
                 );
 
                 Err(GasCliError::GeneralFailure)

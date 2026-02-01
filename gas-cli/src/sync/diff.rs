@@ -2,20 +2,39 @@ use crate::binary::{BinaryFields, FieldEntry};
 use crate::error::{GasCliError, GasCliResult};
 use crate::manifest::GasManifest;
 use crate::sync;
-use crate::sync::variants::create_table::CreateTableModelActor;
 use crate::sync::MigrationScript;
+use crate::sync::variants::create_table::CreateTableModelActor;
 use crate::util::sql_query::SqlQuery;
 use crate::util::styles::STYLE_ERR;
 use itertools::{Either, Itertools};
 use std::fmt::{Display, Formatter};
 
+pub struct FieldUniqueDescriptor<'a> {
+    pub table_name: &'a str,
+    pub name: &'a str,
+}
+
 pub trait ModelChangeActor {
     fn forward_sql(&self) -> GasCliResult<SqlQuery>;
 
     fn backward_sql(&self) -> GasCliResult<SqlQuery>;
+
+    // fields that this operation's `forward_sql` depends on
+    //  e.g. create table with a foreign key should require that the related table
+    //      be created before this one
+    fn depends_on(&self) -> Box<[FieldUniqueDescriptor<'_>]> {
+        Box::from([])
+    }
+
+    // fields that this operation's `backward_sql` depends on
+    //  e.g. drop table of some model that has a foreign key on this table
+    //      means that this table should be dropped first, i.e. that operation
+    //      depends on this one
+    fn required_by(&self) -> Box<[FieldUniqueDescriptor<'_>]> {
+        Box::from([])
+    }
 }
 
-// TODO: implement actual "diffing"
 pub fn find_diffs<'a>(
     state_fields: &'a BinaryFields,
     manifest: &'a GasManifest,

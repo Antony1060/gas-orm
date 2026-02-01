@@ -6,6 +6,8 @@ use std::path::PathBuf;
 
 mod info;
 mod init;
+#[cfg(debug_assertions)]
+mod reset;
 mod sync;
 
 #[derive(Debug, clap::Subcommand)]
@@ -13,6 +15,8 @@ pub enum MigrationOperation {
     Info,
     Init,
     Sync,
+    #[cfg(debug_assertions)]
+    Reset,
 }
 
 #[derive(Debug, clap::Parser)]
@@ -36,6 +40,8 @@ impl CommandImplProvider for MigrationArgs {
             MigrationOperation::Info => Box::from(MigrationInfoCommand { args: self }),
             MigrationOperation::Init => Box::from(MigrationInitCommand { args: self }),
             MigrationOperation::Sync => Box::from(MigrationSyncCommand { args: self }),
+            #[cfg(debug_assertions)]
+            MigrationOperation::Reset => Box::from(reset::MigrationResetCommand { args: self }),
         }
     }
 }

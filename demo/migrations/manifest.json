@@ -51,7 +51,7 @@
     "no_primary_key": [
       {
         "table_name": "no_primary_key",
-        "name": "count",
+        "name": "id",
         "pg_type": {
           "Raw": "BIGINT"
         },

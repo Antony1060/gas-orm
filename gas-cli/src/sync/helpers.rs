@@ -1,5 +1,5 @@
 use crate::error::GasCliResult;
-use crate::sync::diff::ModelChangeActor;
+use crate::sync::diff::{FieldUniqueDescriptor, ModelChangeActor};
 use crate::util::sql_query::SqlQuery;
 
 pub mod diff {
@@ -28,5 +28,13 @@ impl<'a> ModelChangeActor for InverseChangeActor<'a> {
 
     fn backward_sql(&self) -> GasCliResult<SqlQuery> {
         self.source.forward_sql()
+    }
+
+    fn depends_on(&self) -> Box<[FieldUniqueDescriptor<'_>]> {
+        self.required_by()
+    }
+
+    fn required_by(&self) -> Box<[FieldUniqueDescriptor<'_>]> {
+        self.depends_on()
     }
 }

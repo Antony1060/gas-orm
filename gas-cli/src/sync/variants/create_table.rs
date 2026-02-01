@@ -1,12 +1,13 @@
 use crate::binary::FieldEntry;
 use crate::error::GasCliResult;
-use crate::sync::diff::ModelChangeActor;
+use crate::sync::diff::{FieldUniqueDescriptor, ModelChangeActor};
 use crate::util::sql_query::SqlQuery;
 use gas_shared::link::PortablePgType;
 use gas_shared::FieldFlag;
 use std::borrow::Cow;
 use std::ops::Deref;
 
+// drop table is inverse of this
 pub struct CreateTableModelActor<'a> {
     pub entry: FieldEntry<'a>,
 }
@@ -30,7 +31,7 @@ impl<'a> ModelChangeActor for CreateTableModelActor<'a> {
         let mut sql = SqlQuery::from("CREATE TABLE IF NOT EXISTS ");
 
         sql.push_str(self.table);
-        sql.push('(');
+        sql.push_str("(\n\t");
 
         let mut primary_keys: Vec<String> = Vec::new();
 
@@ -61,12 +62,12 @@ impl<'a> ModelChangeActor for CreateTableModelActor<'a> {
             }
 
             if index < self.fields.len() - 1 {
-                sql.push_str(", ");
+                sql.push_str(",\n\t");
             }
         }
 
         if !primary_keys.is_empty() {
-            sql.push_str(", ");
+            sql.push_str(", \n\t");
 
             sql.push_str("PRIMARY KEY (");
             sql.push_str(
@@ -76,6 +77,9 @@ impl<'a> ModelChangeActor for CreateTableModelActor<'a> {
                     .unwrap_or(String::new()),
             );
             sql.push(')');
+            sql.push('\n');
+        } else {
+            sql.push('\n');
         }
 
         sql.push(')');
@@ -85,5 +89,31 @@ impl<'a> ModelChangeActor for CreateTableModelActor<'a> {
 
     fn backward_sql(&self) -> GasCliResult<SqlQuery> {
         Ok(format!("DROP TABLE {}", self.entry.table))
+    }
+
+    fn depends_on(&self) -> Box<[FieldUniqueDescriptor<'_>]> {
+        let mut dependencies = Vec::new();
+
+        for field in self.fields.iter() {
+            if !field.flags.has_flag(FieldFlag::ForeignKey) {
+                continue;
+            }
+
+            let PortablePgType::ForeignKey {
+                ref target_table_name,
+                ref target_column_name,
+                ..
+            } = field.pg_type
+            else {
+                unreachable!("unexpected field state, hee hee :/")
+            };
+
+            dependencies.push(FieldUniqueDescriptor {
+                table_name: target_table_name.as_ref(),
+                name: target_column_name.as_ref(),
+            })
+        }
+
+        dependencies.into_boxed_slice()
     }
 }
