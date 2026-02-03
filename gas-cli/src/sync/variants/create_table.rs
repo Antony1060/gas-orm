@@ -1,6 +1,6 @@
 use crate::binary::FieldEntry;
 use crate::error::GasCliResult;
-use crate::sync::diff::{FieldUniqueDescriptor, ModelChangeActor};
+use crate::sync::{FieldDependency, FieldState, ModelChangeActor};
 use crate::util::sql_query::SqlQuery;
 use gas_shared::link::PortablePgType;
 use gas_shared::FieldFlag;
@@ -45,8 +45,16 @@ impl<'a> ModelChangeActor for CreateTableModelActor<'a> {
                     pg_type.as_sql_type(field.flags.has_flag(FieldFlag::Serial))
                 }
                 PortablePgType::ForeignKey {
-                    ref key_sql_type, ..
-                } => Cow::from(key_sql_type.as_ref()),
+                    ref key_sql_type,
+                    ref target_table_name,
+                    ref target_column_name,
+                } => format!(
+                    "{} REFERENCES {}({})",
+                    key_sql_type.as_ref(),
+                    target_table_name.as_ref(),
+                    target_column_name.as_ref()
+                )
+                .into(),
             };
 
             sql.push_str(field.name.as_ref());
@@ -91,17 +99,18 @@ impl<'a> ModelChangeActor for CreateTableModelActor<'a> {
         Ok(format!("DROP TABLE {}", self.entry.table))
     }
 
-    fn provides(&self) -> Box<[FieldUniqueDescriptor<'_>]> {
+    fn provides(&self) -> Box<[FieldDependency<'_>]> {
         self.fields
             .iter()
-            .map(|field| FieldUniqueDescriptor {
+            .map(|field| FieldDependency {
                 table_name: field.table_name.as_ref(),
                 name: field.name.as_ref(),
+                state: FieldState::Existing,
             })
             .collect()
     }
 
-    fn depends_on(&self) -> Box<[FieldUniqueDescriptor<'_>]> {
+    fn depends_on(&self) -> Box<[FieldDependency<'_>]> {
         let mut dependencies = Vec::new();
 
         for field in self.fields.iter() {
@@ -118,9 +127,10 @@ impl<'a> ModelChangeActor for CreateTableModelActor<'a> {
                 unreachable!("unexpected field state, hee hee :/")
             };
 
-            dependencies.push(FieldUniqueDescriptor {
+            dependencies.push(FieldDependency {
                 table_name: target_table_name.as_ref(),
                 name: target_column_name.as_ref(),
+                state: FieldState::Existing,
             })
         }
 

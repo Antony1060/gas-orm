@@ -3,49 +3,11 @@ use crate::error::{GasCliError, GasCliResult};
 use crate::manifest::GasManifest;
 use crate::sync;
 use crate::sync::variants::create_table::CreateTableModelActor;
-use crate::sync::MigrationScript;
+use crate::sync::{MigrationScript, ModelChangeActor};
 use crate::util::sql_query::SqlQuery;
 use crate::util::styles::STYLE_ERR;
 use itertools::{Either, Itertools};
 use std::fmt::{Display, Formatter};
-
-#[derive(Debug)]
-pub struct FieldUniqueDescriptor<'a> {
-    pub table_name: &'a str,
-    pub name: &'a str,
-}
-
-pub trait ModelChangeActor {
-    fn forward_sql(&self) -> GasCliResult<SqlQuery>;
-
-    fn backward_sql(&self) -> GasCliResult<SqlQuery>;
-
-    fn provides(&self) -> Box<[FieldUniqueDescriptor<'_>]> {
-        Box::from([])
-    }
-
-    // gpt cooked
-    fn deprives_of(&self) -> Box<[FieldUniqueDescriptor<'_>]> {
-        Box::from([])
-    }
-
-    // fields that this operation's `forward_sql` depends on
-    // operations that provide those fields will be executed before this one
-    //  e.g. create table with a foreign key should require that the related table
-    //      be created before this one
-    fn depends_on(&self) -> Box<[FieldUniqueDescriptor<'_>]> {
-        Box::from([])
-    }
-
-    // fields that this operation's `backward_sql` depends on
-    // operations that deprive of these fields will be executed before this one
-    //  e.g. drop table of some model that has a foreign key on this table
-    //      means that this table should be dropped first, i.e. that operation
-    //      depends on this one
-    fn depends_on_deprived(&self) -> Box<[FieldUniqueDescriptor<'_>]> {
-        Box::from([])
-    }
-}
 
 pub fn find_diffs<'a>(
     state_fields: &'a BinaryFields,
@@ -150,9 +112,9 @@ pub fn find_and_collect_diffs(
 
     for diff in diffs.iter() {
         dbg!(diff.provides());
-        dbg!(diff.deprives_of());
+        dbg!(diff.provides_backwards());
         dbg!(diff.depends_on());
-        dbg!(diff.depends_on_deprived());
+        dbg!(diff.depends_on_backwards());
         dbg!("---");
     }
 

@@ -17,12 +17,21 @@ pub struct Person {
     pub bank_account_balance: Decimal,
 }
 
-#[gas::model(table_name = "aaa")]
+#[gas::model(table_name = "aa")]
 pub struct aa {
     #[primary_key]
     #[serial]
     pub id: i64,
     pub first_name: String,
+    #[relation(field = bb::id)]
+    pub foreign: Relation<i64, bb::Model>,
+}
+
+#[gas::model(table_name = "bb")]
+pub struct bb {
+    #[primary_key]
+    pub id: i64,
+    pub created_at: NaiveDate,
 }
 
 #[gas::model(table_name = "audit_logs", mod_name = "audit_logs")]

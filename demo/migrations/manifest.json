@@ -1,9 +1,9 @@
 {
   "version": "V1_0_0",
   "state": {
-    "aaa": [
+    "aa": [
       {
-        "table_name": "aaa",
+        "table_name": "aa",
         "name": "id",
         "pg_type": {
           "Raw": "BIGINT"
@@ -12,13 +12,26 @@
         "index": 0
       },
       {
-        "table_name": "aaa",
+        "table_name": "aa",
         "name": "first_name",
         "pg_type": {
           "Raw": "TEXT"
         },
         "flags": 0,
         "index": 1
+      },
+      {
+        "table_name": "aa",
+        "name": "foreign",
+        "pg_type": {
+          "ForeignKey": {
+            "key_sql_type": "BIGINT",
+            "target_table_name": "bb",
+            "target_column_name": "id"
+          }
+        },
+        "flags": 32,
+        "index": 2
       }
     ],
     "audit_logs": [
@@ -66,6 +79,26 @@
         },
         "flags": 0,
         "index": 4
+      }
+    ],
+    "bb": [
+      {
+        "table_name": "bb",
+        "name": "id",
+        "pg_type": {
+          "Raw": "BIGINT"
+        },
+        "flags": 2,
+        "index": 0
+      },
+      {
+        "table_name": "bb",
+        "name": "created_at",
+        "pg_type": {
+          "Raw": "DATE"
+        },
+        "flags": 0,
+        "index": 1
       }
     ],
     "orders": [

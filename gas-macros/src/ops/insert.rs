@@ -2,6 +2,8 @@ use crate::ops::{make_all_returning, make_params};
 use crate::{FieldNames, ModelCtx};
 use quote::quote;
 
+// NOTE: structs with only serial fields will error here
+//  might as well pull a DHH and say it's opinionated
 pub(crate) fn gen_insert_sql_fn_tokens(
     ctx: &ModelCtx,
 ) -> Result<proc_macro2::TokenStream, syn::Error> {

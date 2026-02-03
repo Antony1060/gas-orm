@@ -1,0 +1,20 @@
+CREATE TABLE IF NOT EXISTS aa(
+	id BIGSERIAL NOT NULL,
+	first_name TEXT NOT NULL,
+	foreign BIGINT NOT NULL, 
+	PRIMARY KEY (id)
+);
+CREATE TABLE IF NOT EXISTS bb(
+	id BIGINT NOT NULL,
+	created_at DATE NOT NULL, 
+	PRIMARY KEY (id)
+);
+DROP TABLE aaa;
+-- GAS_ORM(forward_backward_separator)
+DROP TABLE aa;
+DROP TABLE bb;
+CREATE TABLE IF NOT EXISTS aaa(
+	id BIGSERIAL NOT NULL,
+	first_name TEXT NOT NULL, 
+	PRIMARY KEY (id)
+);

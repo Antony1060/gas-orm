@@ -19,11 +19,11 @@ async fn main() -> GasResult<()> {
     setup_tracing(env::var("TRACE_ORM").map(|_| true).unwrap_or(false));
 
     let migrator = gas::load_migrations!("./migrations")?;
-    dbg!(migrator);
-
-    if true {
-        unreachable!();
-    }
+    // dbg!(migrator);
+    //
+    // if true {
+    //     unreachable!();
+    // }
 
     let conn =
         PgConnection::new_connection_pool("postgres://postgres:strong_password@localhost/postgres")

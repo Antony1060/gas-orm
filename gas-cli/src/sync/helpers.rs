@@ -1,10 +1,9 @@
 use crate::error::GasCliResult;
-use crate::sync::diff::{FieldUniqueDescriptor, ModelChangeActor};
+use crate::sync::{FieldDependency, ModelChangeActor};
 use crate::util::sql_query::SqlQuery;
 
 pub mod diff {
-    use crate::sync::diff::ModelChangeActor;
-    use crate::sync::helpers::InverseChangeActor;
+    use super::*;
 
     pub fn invert<'a>(other: Box<dyn ModelChangeActor + 'a>) -> Box<dyn ModelChangeActor + 'a> {
         InverseChangeActor::new_boxed(other)
@@ -31,19 +30,19 @@ impl<'a> ModelChangeActor for InverseChangeActor<'a> {
     }
 
     // a "creative" operation's opposite for should be destructive
-    fn provides(&self) -> Box<[FieldUniqueDescriptor<'_>]> {
-        self.deprives_of()
+    fn provides(&self) -> Box<[FieldDependency<'_>]> {
+        self.source.provides_backwards()
     }
 
-    fn deprives_of(&self) -> Box<[FieldUniqueDescriptor<'_>]> {
-        self.provides()
+    fn depends_on(&self) -> Box<[FieldDependency<'_>]> {
+        self.source.depends_on_backwards()
     }
 
-    fn depends_on(&self) -> Box<[FieldUniqueDescriptor<'_>]> {
-        self.depends_on_deprived()
+    fn provides_backwards(&self) -> Box<[FieldDependency<'_>]> {
+        self.source.provides()
     }
 
-    fn depends_on_deprived(&self) -> Box<[FieldUniqueDescriptor<'_>]> {
-        self.depends_on()
+    fn depends_on_backwards(&self) -> Box<[FieldDependency<'_>]> {
+        self.source.depends_on()
     }
 }
