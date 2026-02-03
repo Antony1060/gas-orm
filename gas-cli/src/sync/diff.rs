@@ -2,6 +2,7 @@ use crate::binary::{BinaryFields, FieldEntry};
 use crate::error::{GasCliError, GasCliResult};
 use crate::manifest::GasManifest;
 use crate::sync;
+use crate::sync::graph::order_diffs;
 use crate::sync::variants::create_table::CreateTableModelActor;
 use crate::sync::{MigrationScript, ModelChangeActor};
 use crate::util::sql_query::SqlQuery;
@@ -90,7 +91,9 @@ pub fn collect_diffs<'a>(
             diff.forward_sql(),
         )?);
         script.forward.push_str(";\n");
+    }
 
+    for diff in diffs.iter().rev() {
         script.backward.push_str(&handle_change_actor(
             ChangeDirection::Backward,
             diff.backward_sql(),
@@ -110,13 +113,7 @@ pub fn find_and_collect_diffs(
         return Ok(None);
     }
 
-    for diff in diffs.iter() {
-        dbg!(diff.provides());
-        dbg!(diff.provides_backwards());
-        dbg!(diff.depends_on());
-        dbg!(diff.depends_on_backwards());
-        dbg!("---");
-    }
+    let diffs = order_diffs(&manifest, &diffs);
 
     collect_diffs(&diffs).map(Some)
 }

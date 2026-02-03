@@ -2,6 +2,7 @@ use crate::error::GasCliResult;
 use crate::util::sql_query::SqlQuery;
 
 pub mod diff;
+mod graph;
 mod helpers;
 pub mod variants;
 
@@ -10,7 +11,7 @@ pub struct MigrationScript {
     pub backward: String,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub enum FieldState {
     Existing,
     Dropped,
@@ -25,7 +26,7 @@ impl FieldState {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct FieldDependency<'a> {
     pub table_name: &'a str,
     pub name: &'a str,
