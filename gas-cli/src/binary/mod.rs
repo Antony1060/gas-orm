@@ -16,7 +16,8 @@ pub struct ProjectModelState {
     pub fields: BinaryFields,
 }
 
-pub struct FieldEntry<'a> {
+#[derive(Clone)]
+pub struct TableSpec<'a> {
     pub table: &'a str,
     pub fields: &'a [PortableFieldMeta],
 }
@@ -91,9 +92,9 @@ impl ProjectModelState {
     }
 }
 
-impl<'a> From<(&'a String, &'a Vec<PortableFieldMeta>)> for FieldEntry<'a> {
+impl<'a> From<(&'a String, &'a Vec<PortableFieldMeta>)> for TableSpec<'a> {
     fn from(value: (&'a String, &'a Vec<PortableFieldMeta>)) -> Self {
-        FieldEntry {
+        TableSpec {
             table: value.0,
             fields: value.1,
         }

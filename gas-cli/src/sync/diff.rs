@@ -1,4 +1,4 @@
-use crate::binary::{BinaryFields, FieldEntry};
+use crate::binary::{BinaryFields, TableSpec};
 use crate::error::{GasCliError, GasCliResult};
 use crate::manifest::GasManifest;
 use crate::sync;
@@ -17,13 +17,13 @@ pub fn find_diffs<'a>(
     let new_tables: Vec<_> = state_fields
         .iter()
         .filter(|(table, ..)| !manifest.state.contains_key(*table))
-        .map(FieldEntry::from)
+        .map(TableSpec::from)
         .collect();
 
     let (old_tables, common_tables): (Vec<_>, Vec<_>) = manifest
         .state
         .iter()
-        .map(FieldEntry::from)
+        .map(TableSpec::from)
         .partition_map(|entry| match !state_fields.contains_key(entry.table) {
             true => Either::Left(entry),
             false => Either::Right(entry),

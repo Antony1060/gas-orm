@@ -1,4 +1,4 @@
-use crate::binary::FieldEntry;
+use crate::binary::TableSpec;
 use crate::error::GasCliResult;
 use crate::sync::{FieldDependency, FieldState, ModelChangeActor};
 use crate::util::sql_query::SqlQuery;
@@ -9,19 +9,18 @@ use std::borrow::Cow;
 use std::fmt::{Display, Formatter};
 use std::ops::Deref;
 
-// drop table is inverse of this
 pub struct CreateTableModelActor<'a> {
-    pub entry: FieldEntry<'a>,
+    entry: TableSpec<'a>,
 }
 
 impl<'a> CreateTableModelActor<'a> {
-    pub fn new_boxed(entry: FieldEntry) -> Box<dyn ModelChangeActor + '_> {
+    pub fn new_boxed(entry: TableSpec) -> Box<dyn ModelChangeActor + '_> {
         Box::from(CreateTableModelActor { entry })
     }
 }
 
 impl<'a> Deref for CreateTableModelActor<'a> {
-    type Target = FieldEntry<'a>;
+    type Target = TableSpec<'a>;
 
     fn deref(&self) -> &Self::Target {
         &self.entry
@@ -55,22 +54,9 @@ impl<'a> ModelChangeActor for CreateTableModelActor<'a> {
                 primary_keys.push(String::from(&field.name))
             }
 
-            let sql_type: Cow<'_, str> = match field.pg_type {
-                PortablePgType::Raw(ref pg_type) => {
-                    pg_type.as_sql_type(field.flags.has_flag(FieldFlag::Serial))
-                }
-                PortablePgType::ForeignKey {
-                    ref key_sql_type,
-                    ref target_table_name,
-                    ref target_column_name,
-                } => format!(
-                    "{} REFERENCES {}({})",
-                    key_sql_type.as_ref(),
-                    target_table_name.as_ref(),
-                    target_column_name.as_ref()
-                )
-                .into(),
-            };
+            let sql_type: Cow<'_, str> = field
+                .pg_type
+                .as_sql_type(field.flags.has_flag(FieldFlag::Serial));
 
             sql.push_str(field.name.as_ref());
             sql.push(' ');
@@ -93,12 +79,7 @@ impl<'a> ModelChangeActor for CreateTableModelActor<'a> {
             sql.push_str(", \n\t");
 
             sql.push_str("PRIMARY KEY (");
-            sql.push_str(
-                &primary_keys
-                    .into_iter()
-                    .reduce(|acc, curr| format!("{acc}, {curr}"))
-                    .unwrap_or(String::new()),
-            );
+            sql.push_str(&primary_keys.into_iter().join(", "));
             sql.push(')');
             sql.push('\n');
         } else {

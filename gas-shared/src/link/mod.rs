@@ -1,5 +1,6 @@
 use std::ffi::CStr;
 use std::fmt::{Debug, Formatter};
+use std::ops::Deref;
 
 mod portable_field_meta;
 mod portable_pg_type;

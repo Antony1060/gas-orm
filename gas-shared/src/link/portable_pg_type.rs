@@ -1,6 +1,7 @@
 use crate::error::GasSharedError;
 use crate::internals::PgType;
 use crate::link::FixedStr;
+use std::borrow::Cow;
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
@@ -46,6 +47,23 @@ impl PortablePgType {
                 target_column_name: FixedStr::from_panicking(target_field.name),
             },
             _ => Self::Raw(pg_type),
+        }
+    }
+
+    pub fn as_sql_type(&self, is_serial: bool) -> Cow<'_, str> {
+        match self {
+            PortablePgType::Raw(pg_type) => pg_type.as_sql_type(is_serial),
+            PortablePgType::ForeignKey {
+                key_sql_type,
+                target_table_name,
+                target_column_name,
+            } => format!(
+                "{} REFERENCES {}({})",
+                key_sql_type.as_ref(),
+                target_table_name.as_ref(),
+                target_column_name.as_ref()
+            )
+            .into(),
         }
     }
 }
