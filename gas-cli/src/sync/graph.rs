@@ -5,6 +5,10 @@ use std::borrow::Cow;
 use std::collections::HashMap;
 
 // graph[i] will contain indices of dependencies for the i-th element of the original graph
+// NOTE: this system may have a problem if there's 2 actions that both want a field Existing
+//  but one of them makes it Dropped, they may be ordered wrong and the field may be dropped
+//  and then accessed by the other field; this should not be a problem though by the
+//  nature of migrations, if a field is dropped, there won't be diffs that do something with it
 fn make_graph<'a>(
     manifest: &GasManifest,
     diffs: &[Box<dyn ModelChangeActor + 'a>],
