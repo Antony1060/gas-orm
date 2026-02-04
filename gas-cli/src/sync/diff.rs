@@ -13,7 +13,7 @@ use std::fmt::{Display, Formatter};
 pub fn find_diffs<'a>(
     state_fields: &'a BinaryFields,
     manifest: &'a GasManifest,
-) -> GasCliResult<Box<[Box<dyn ModelChangeActor + 'a>]>> {
+) -> GasCliResult<Vec<Box<dyn ModelChangeActor + 'a>>> {
     let new_tables: Vec<_> = state_fields
         .iter()
         .filter(|(table, ..)| !manifest.state.contains_key(*table))
@@ -42,7 +42,7 @@ pub fn find_diffs<'a>(
         dbg!(common_table.table);
     }
 
-    Ok(result.into_boxed_slice())
+    Ok(result)
 }
 
 enum ChangeDirection {
@@ -113,7 +113,6 @@ pub fn find_and_collect_diffs(
         return Ok(None);
     }
 
-    let diffs = order_diffs(manifest, &diffs)?;
-
+    let diffs = order_diffs(manifest, diffs)?;
     collect_diffs(&diffs).map(Some)
 }

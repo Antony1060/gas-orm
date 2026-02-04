@@ -4,7 +4,9 @@ use crate::sync::{FieldDependency, FieldState, ModelChangeActor};
 use crate::util::sql_query::SqlQuery;
 use gas_shared::link::PortablePgType;
 use gas_shared::FieldFlag;
+use itertools::Itertools;
 use std::borrow::Cow;
+use std::fmt::{Display, Formatter};
 use std::ops::Deref;
 
 // drop table is inverse of this
@@ -23,6 +25,19 @@ impl<'a> Deref for CreateTableModelActor<'a> {
 
     fn deref(&self) -> &Self::Target {
         &self.entry
+    }
+}
+
+impl<'a> Display for CreateTableModelActor<'a> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "CreateTable[{}]",
+            self.fields
+                .iter()
+                .map(|field| format!("{}.{}", field.table_name.as_ref(), field.name.as_ref()))
+                .join(", "),
+        )
     }
 }
 

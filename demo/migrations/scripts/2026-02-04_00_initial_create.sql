@@ -6,11 +6,9 @@ CREATE TABLE IF NOT EXISTS audit_logs(
 	random_time TIME NOT NULL, 
 	PRIMARY KEY (id)
 );
-CREATE TABLE IF NOT EXISTS orders(
-	id BIGSERIAL NOT NULL,
-	quantity INTEGER NOT NULL,
-	user_fk BIGINT NOT NULL,
-	product_fk BIGINT, 
+CREATE TABLE IF NOT EXISTS bb(
+	id BIGINT NOT NULL,
+	created_at DATE NOT NULL, 
 	PRIMARY KEY (id)
 );
 CREATE TABLE IF NOT EXISTS persons(
@@ -20,12 +18,6 @@ CREATE TABLE IF NOT EXISTS persons(
 	email TEXT NOT NULL UNIQUE,
 	phone_number TEXT,
 	bank_balance DECIMAL NOT NULL, 
-	PRIMARY KEY (id)
-);
-CREATE TABLE IF NOT EXISTS posts(
-	id BIGSERIAL NOT NULL,
-	title TEXT NOT NULL,
-	user_fk BIGINT NOT NULL, 
 	PRIMARY KEY (id)
 );
 CREATE TABLE IF NOT EXISTS products(
@@ -38,10 +30,31 @@ CREATE TABLE IF NOT EXISTS users(
 	name TEXT NOT NULL, 
 	PRIMARY KEY (id)
 );
+CREATE TABLE IF NOT EXISTS aa(
+	id BIGSERIAL NOT NULL,
+	first_name TEXT NOT NULL,
+	bb_fk BIGINT REFERENCES bb(id) NOT NULL, 
+	PRIMARY KEY (id)
+);
+CREATE TABLE IF NOT EXISTS orders(
+	id BIGSERIAL NOT NULL,
+	quantity INTEGER NOT NULL,
+	user_fk BIGINT REFERENCES users(id) NOT NULL,
+	product_fk BIGINT REFERENCES products(id), 
+	PRIMARY KEY (id)
+);
+CREATE TABLE IF NOT EXISTS posts(
+	id BIGSERIAL NOT NULL,
+	title TEXT NOT NULL,
+	user_fk BIGINT REFERENCES users(id) NOT NULL, 
+	PRIMARY KEY (id)
+);
 -- GAS_ORM(forward_backward_separator)
-DROP TABLE audit_logs;
-DROP TABLE orders;
-DROP TABLE persons;
 DROP TABLE posts;
-DROP TABLE products;
+DROP TABLE orders;
+DROP TABLE aa;
 DROP TABLE users;
+DROP TABLE products;
+DROP TABLE persons;
+DROP TABLE bb;
+DROP TABLE audit_logs;

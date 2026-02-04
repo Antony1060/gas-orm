@@ -22,7 +22,7 @@
       },
       {
         "table_name": "aa",
-        "name": "foreign",
+        "name": "bb_fk",
         "pg_type": {
           "ForeignKey": {
             "key_sql_type": "BIGINT",

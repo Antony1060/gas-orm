@@ -1,5 +1,6 @@
 use crate::error::GasCliResult;
 use crate::util::sql_query::SqlQuery;
+use std::fmt::Display;
 
 pub mod diff;
 mod graph;
@@ -14,14 +15,14 @@ pub struct MigrationScript {
 #[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub enum FieldState {
     Existing,
-    Dropped,
+    InverseDropped,
 }
 
 impl FieldState {
     pub fn flip(&self) -> Self {
         match self {
-            Self::Existing => Self::Dropped,
-            Self::Dropped => Self::Existing,
+            Self::Existing => Self::InverseDropped,
+            Self::InverseDropped => Self::Existing,
         }
     }
 }
@@ -33,7 +34,7 @@ pub struct FieldDependency<'a> {
     pub state: FieldState,
 }
 
-pub trait ModelChangeActor {
+pub trait ModelChangeActor: Display {
     fn forward_sql(&self) -> GasCliResult<SqlQuery>;
 
     fn backward_sql(&self) -> GasCliResult<SqlQuery>;
@@ -48,25 +49,5 @@ pub trait ModelChangeActor {
     //      be created before this one
     fn depends_on(&self) -> Box<[FieldDependency<'_>]> {
         Box::from([])
-    }
-
-    fn provides_backwards(&self) -> Box<[FieldDependency<'_>]> {
-        self.provides()
-            .into_iter()
-            .map(|mut it| {
-                it.state = it.state.flip();
-                it
-            })
-            .collect()
-    }
-
-    fn depends_on_backwards(&self) -> Box<[FieldDependency<'_>]> {
-        self.depends_on()
-            .into_iter()
-            .map(|mut it| {
-                it.state = it.state.flip();
-                it
-            })
-            .collect()
     }
 }

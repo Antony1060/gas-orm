@@ -23,6 +23,7 @@ pub struct aa {
     #[serial]
     pub id: i64,
     pub first_name: String,
+    #[column(name = "bb_fk")]
     #[relation(field = bb::id)]
     pub foreign: Relation<i64, bb::Model>,
 }

@@ -2,7 +2,14 @@ use crate::error::{GasCliError, GasCliResult};
 use crate::manifest::GasManifest;
 use crate::sync::{FieldDependency, FieldState, ModelChangeActor};
 use std::borrow::Cow;
-use std::collections::HashMap;
+use std::collections::{HashMap, VecDeque};
+
+struct Graph {
+    // incoming[i] has i's dependencies
+    incoming: Vec<Vec<usize>>,
+    // outgoing[i] has nodes that depend on i
+    outgoing: Vec<Option<Vec<usize>>>,
+}
 
 // graph[i] will contain indices of dependencies for the i-th element of the original graph
 // NOTE: this system may have a problem if there's 2 actions that both want a field Existing
@@ -12,15 +19,18 @@ use std::collections::HashMap;
 fn make_graph<'a>(
     manifest: &GasManifest,
     diffs: &[Box<dyn ModelChangeActor + 'a>],
-) -> GasCliResult<Vec<Vec<usize>>> {
-    let mut graph = vec![vec![]; diffs.len()];
+) -> GasCliResult<Graph> {
+    let mut graph = Graph {
+        incoming: vec![vec![]; diffs.len()],
+        outgoing: vec![Some(vec![]); diffs.len()],
+    };
 
-    let mut map: HashMap<FieldDependency, Vec<usize>> = HashMap::new();
+    let mut provides_map: HashMap<FieldDependency, Vec<usize>> = HashMap::new();
 
     // make sure all previous fields are here
     for (table_name, fields) in &manifest.state {
         for field in fields {
-            map.insert(
+            provides_map.insert(
                 FieldDependency {
                     table_name,
                     name: field.name.as_ref(),
@@ -33,26 +43,46 @@ fn make_graph<'a>(
 
     for (index, diff) in diffs.iter().enumerate() {
         for field in diff.provides() {
-            match map.get_mut(&field) {
-                None => {
-                    map.insert(field, vec![index]);
-                }
-                Some(val) => {
-                    val.push(index);
-                }
-            };
+            provides_map.entry(field).or_default().push(index);
         }
     }
 
     for (index, diff) in diffs.iter().enumerate() {
         for field in diff.depends_on() {
-            let Some(val) = map.get(&field) else {
+            let Some(val) = provides_map.get(&field) else {
                 return Err(GasCliError::MigrationsGenerationError {
                     reason: Cow::from("failed to change graph: required dependency missing"),
                 });
             };
 
-            graph[index].extend(val)
+            match field.state {
+                FieldState::Existing => {
+                    // current node depends on all nodes that provide this field
+                    graph.incoming[index].extend(val);
+
+                    // all nodes that provide this field are depended on by current node
+                    for it in val {
+                        if let Some(vec) = graph.outgoing[*it].as_mut() {
+                            vec.push(index)
+                        }
+                    }
+                }
+                // NOTE: heavy tight coupling
+                //  diffs that depend on a field being Existing will have an inverse of it's action
+                //  where all fields that they depend on Existing will now need to be Dropped
+                //  which doesn't make much sense because the field that drops the field should
+                //  depend on the current diff, so we swap
+                // i.e. all providers depend on current index
+                FieldState::InverseDropped => {
+                    if let Some(it) = graph.outgoing[index].as_mut() {
+                        it.extend(val)
+                    }
+
+                    for it in val {
+                        graph.incoming[*it].push(index)
+                    }
+                }
+            }
         }
     }
 
@@ -60,17 +90,60 @@ fn make_graph<'a>(
 }
 
 fn topological_sort<'a>(
-    diffs: &[Box<dyn ModelChangeActor + 'a>],
-    graph: &[Vec<usize>],
-) -> Box<[Box<dyn ModelChangeActor + 'a>]> {
-    todo!()
+    diffs: Vec<Box<dyn ModelChangeActor + 'a>>,
+    mut graph: Graph,
+) -> GasCliResult<Box<[Box<dyn ModelChangeActor + 'a>]>> {
+    let mut diffs: Vec<_> = diffs.into_iter().map(Some).collect();
+
+    let mut sorted: Vec<Box<dyn ModelChangeActor + 'a>> = Vec::new();
+    let mut edgeless: VecDeque<usize> = graph
+        .incoming
+        .iter()
+        .enumerate()
+        .filter_map(|(idx, it)| it.is_empty().then_some(idx))
+        .collect();
+
+    // go through everything without a dependency
+    while let Some(diff_idx) = edgeless.pop_front() {
+        // add to sorted and remove from original diffs vector
+        let curr = diffs[diff_idx].take().expect("diffs[idx] == Some");
+        sorted.push(curr);
+
+        // go through everything that depends on idx
+        let outgoing = graph.outgoing[diff_idx]
+            .take()
+            .expect("graph.outgoing[idx] == Some");
+        for edge in outgoing {
+            // remove edge as a dependency of idx
+            let incoming_idx = graph.incoming[edge]
+                .iter()
+                .position(|it| *it == diff_idx)
+                .unwrap();
+            graph.incoming[edge].swap_remove(incoming_idx);
+
+            // if idx was the only dependency
+            if graph.incoming[edge].is_empty() {
+                edgeless.push_back(edge);
+            }
+        }
+    }
+
+    if !graph.outgoing.iter().all(|it| it.is_none()) {
+        return Err(GasCliError::MigrationsGenerationError {
+            reason: Cow::from("failed to sort diff graph"),
+        });
+    }
+
+    Ok(sorted.into_boxed_slice())
 }
 
 pub fn order_diffs<'a>(
     manifest: &GasManifest,
-    diffs: &[Box<dyn ModelChangeActor + 'a>],
+    diffs: Vec<Box<dyn ModelChangeActor + 'a>>,
 ) -> GasCliResult<Box<[Box<dyn ModelChangeActor + 'a>]>> {
-    let graph = make_graph(manifest, diffs)?;
+    let graph = make_graph(manifest, &diffs)?;
 
-    Ok(topological_sort(diffs, &graph))
+    let sorted = topological_sort(diffs, graph)?;
+
+    Ok(sorted)
 }
