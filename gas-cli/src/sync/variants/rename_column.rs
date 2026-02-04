@@ -43,7 +43,7 @@ impl<'a> ModelChangeActor for RenameColumnModelActor<'a> {
         Ok(format!(
             "ALTER TABLE {} RENAME COLUMN {} TO {}",
             self.field.table_name.as_ref(),
-            self.field.name.as_ref()
+            self.field.name.as_ref(),
             self.old_field.name.as_ref(),
         ))
     }
