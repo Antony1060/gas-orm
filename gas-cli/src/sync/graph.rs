@@ -1,15 +1,31 @@
+use crate::error::{GasCliError, GasCliResult};
 use crate::manifest::GasManifest;
-use crate::sync::{FieldDependency, ModelChangeActor};
+use crate::sync::{FieldDependency, FieldState, ModelChangeActor};
+use std::borrow::Cow;
 use std::collections::HashMap;
 
 // graph[i] will contain indices of dependencies for the i-th element of the original graph
 fn make_graph<'a>(
     manifest: &GasManifest,
     diffs: &[Box<dyn ModelChangeActor + 'a>],
-) -> Vec<Vec<usize>> {
+) -> GasCliResult<Vec<Vec<usize>>> {
     let mut graph = vec![vec![]; diffs.len()];
 
     let mut map: HashMap<FieldDependency, Vec<usize>> = HashMap::new();
+
+    // make sure all previous fields are here
+    for (table_name, fields) in &manifest.state {
+        for field in fields {
+            map.insert(
+                FieldDependency {
+                    table_name,
+                    name: field.name.as_ref(),
+                    state: FieldState::Existing,
+                },
+                vec![],
+            );
+        }
+    }
 
     for (index, diff) in diffs.iter().enumerate() {
         for field in diff.provides() {
@@ -26,13 +42,17 @@ fn make_graph<'a>(
 
     for (index, diff) in diffs.iter().enumerate() {
         for field in diff.depends_on() {
-            if let Some(val) = map.get(&field) {
-                graph[index].extend(val)
-            }
+            let Some(val) = map.get(&field) else {
+                return Err(GasCliError::MigrationsGenerationError {
+                    reason: Cow::from("failed to change graph: required dependency missing"),
+                });
+            };
+
+            graph[index].extend(val)
         }
     }
 
-    graph
+    Ok(graph)
 }
 
 fn topological_sort<'a>(
@@ -45,8 +65,8 @@ fn topological_sort<'a>(
 pub fn order_diffs<'a>(
     manifest: &GasManifest,
     diffs: &[Box<dyn ModelChangeActor + 'a>],
-) -> Box<[Box<dyn ModelChangeActor + 'a>]> {
-    let graph = make_graph(manifest, diffs);
+) -> GasCliResult<Box<[Box<dyn ModelChangeActor + 'a>]>> {
+    let graph = make_graph(manifest, diffs)?;
 
-    topological_sort(diffs, &graph)
+    Ok(topological_sort(diffs, &graph))
 }

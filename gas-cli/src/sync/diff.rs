@@ -113,7 +113,7 @@ pub fn find_and_collect_diffs(
         return Ok(None);
     }
 
-    let diffs = order_diffs(&manifest, &diffs);
+    let diffs = order_diffs(manifest, &diffs)?;
 
     collect_diffs(&diffs).map(Some)
 }

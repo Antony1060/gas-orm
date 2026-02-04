@@ -9,6 +9,7 @@ use tokio::fs;
 // TODO: move to shared
 const LINK_SECTION_PREFIX: &str = ".__gas_internals";
 
+// table -> [fields]
 pub type BinaryFields = BTreeMap<String, Vec<PortableFieldMeta>>;
 
 pub struct ProjectModelState {
