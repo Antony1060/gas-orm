@@ -2,10 +2,10 @@ use crate::binary::TableSpec;
 use crate::error::GasCliResult;
 use crate::sync::variants::add_primary_key_constraint::AddPrimaryKeyModelActor;
 use crate::sync::{FieldDependency, FieldState, ModelChangeActor};
+use crate::util;
 use crate::util::sql_query::SqlQuery;
 use gas_shared::link::{PortableFieldMeta, PortablePgType};
 use gas_shared::FieldFlag;
-use std::borrow::Cow;
 use std::fmt::{Display, Formatter};
 
 pub struct AddColumnModelActor<'a> {
@@ -53,21 +53,7 @@ impl<'a> ModelChangeActor for AddColumnModelActor<'a> {
 
         sql.push_str(" ADD COLUMN ");
 
-        let sql_type: Cow<'_, str> = field
-            .pg_type
-            .as_sql_type(field.flags.has_flag(FieldFlag::Serial));
-
-        sql.push_str(field.name.as_ref());
-        sql.push(' ');
-        sql.push_str(&sql_type);
-
-        if !field.flags.has_flag(FieldFlag::Nullable) {
-            sql.push_str(" NOT NULL");
-        }
-
-        if field.flags.has_flag(FieldFlag::Unique) {
-            sql.push_str(" UNIQUE");
-        }
+        sql.push_str(&util::sql_query::gen_column_descriptor_sql(field));
 
         if field.flags.has_flag(FieldFlag::PrimaryKey) {
             sql.push(';');

@@ -1,6 +1,6 @@
 CREATE TABLE IF NOT EXISTS audit_logs(
 	id BIGSERIAL NOT NULL,
-	created_at TIMESTAMP WITH TIME ZONE NOT NULL,
+	created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT (NOW() at time zone 'utc'),
 	updated_at TIMESTAMP NOT NULL,
 	random_date DATE NOT NULL,
 	random_time TIME NOT NULL, 
@@ -32,7 +32,7 @@ CREATE TABLE IF NOT EXISTS users(
 );
 CREATE TABLE IF NOT EXISTS aa(
 	id BIGSERIAL NOT NULL,
-	first_name TEXT NOT NULL,
+	first_name TEXT NOT NULL DEFAULT ('unknown'),
 	bb_fk BIGINT REFERENCES bb(id) NOT NULL, 
 	PRIMARY KEY (id)
 );

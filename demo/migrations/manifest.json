@@ -8,6 +8,7 @@
         "pg_type": {
           "Raw": "BIGINT"
         },
+        "default_sql": null,
         "flags": 18,
         "index": 0
       },
@@ -17,6 +18,7 @@
         "pg_type": {
           "Raw": "TEXT"
         },
+        "default_sql": "'unknown'",
         "flags": 0,
         "index": 1
       },
@@ -30,6 +32,7 @@
             "target_column_name": "id"
           }
         },
+        "default_sql": null,
         "flags": 32,
         "index": 2
       }
@@ -41,6 +44,7 @@
         "pg_type": {
           "Raw": "BIGINT"
         },
+        "default_sql": null,
         "flags": 18,
         "index": 0
       },
@@ -50,6 +54,7 @@
         "pg_type": {
           "Raw": "TIMESTAMP_TZ"
         },
+        "default_sql": "NOW() at time zone 'utc'",
         "flags": 0,
         "index": 1
       },
@@ -59,6 +64,7 @@
         "pg_type": {
           "Raw": "TIMESTAMP"
         },
+        "default_sql": null,
         "flags": 0,
         "index": 2
       },
@@ -68,6 +74,7 @@
         "pg_type": {
           "Raw": "DATE"
         },
+        "default_sql": null,
         "flags": 0,
         "index": 3
       },
@@ -77,6 +84,7 @@
         "pg_type": {
           "Raw": "TIME"
         },
+        "default_sql": null,
         "flags": 0,
         "index": 4
       }
@@ -88,6 +96,7 @@
         "pg_type": {
           "Raw": "BIGINT"
         },
+        "default_sql": null,
         "flags": 2,
         "index": 0
       },
@@ -97,6 +106,7 @@
         "pg_type": {
           "Raw": "DATE"
         },
+        "default_sql": null,
         "flags": 0,
         "index": 1
       }
@@ -108,6 +118,7 @@
         "pg_type": {
           "Raw": "BIGINT"
         },
+        "default_sql": null,
         "flags": 18,
         "index": 0
       },
@@ -117,6 +128,7 @@
         "pg_type": {
           "Raw": "INTEGER"
         },
+        "default_sql": null,
         "flags": 0,
         "index": 1
       },
@@ -130,6 +142,7 @@
             "target_column_name": "id"
           }
         },
+        "default_sql": null,
         "flags": 32,
         "index": 2
       },
@@ -143,6 +156,7 @@
             "target_column_name": "id"
           }
         },
+        "default_sql": null,
         "flags": 33,
         "index": 3
       }
@@ -154,6 +168,7 @@
         "pg_type": {
           "Raw": "BIGINT"
         },
+        "default_sql": null,
         "flags": 18,
         "index": 0
       },
@@ -163,6 +178,7 @@
         "pg_type": {
           "Raw": "TEXT"
         },
+        "default_sql": null,
         "flags": 0,
         "index": 1
       },
@@ -172,6 +188,7 @@
         "pg_type": {
           "Raw": "TEXT"
         },
+        "default_sql": null,
         "flags": 0,
         "index": 2
       },
@@ -181,6 +198,7 @@
         "pg_type": {
           "Raw": "TEXT"
         },
+        "default_sql": null,
         "flags": 8,
         "index": 3
       },
@@ -190,6 +208,7 @@
         "pg_type": {
           "Raw": "TEXT"
         },
+        "default_sql": null,
         "flags": 1,
         "index": 4
       },
@@ -199,6 +218,7 @@
         "pg_type": {
           "Raw": "DECIMAL"
         },
+        "default_sql": null,
         "flags": 0,
         "index": 5
       }
@@ -210,6 +230,7 @@
         "pg_type": {
           "Raw": "BIGINT"
         },
+        "default_sql": null,
         "flags": 18,
         "index": 0
       },
@@ -219,6 +240,7 @@
         "pg_type": {
           "Raw": "TEXT"
         },
+        "default_sql": null,
         "flags": 0,
         "index": 1
       },
@@ -232,6 +254,7 @@
             "target_column_name": "id"
           }
         },
+        "default_sql": null,
         "flags": 32,
         "index": 2
       }
@@ -243,6 +266,7 @@
         "pg_type": {
           "Raw": "BIGINT"
         },
+        "default_sql": null,
         "flags": 18,
         "index": 0
       },
@@ -252,6 +276,7 @@
         "pg_type": {
           "Raw": "TEXT"
         },
+        "default_sql": null,
         "flags": 0,
         "index": 1
       }
@@ -263,6 +288,7 @@
         "pg_type": {
           "Raw": "BIGINT"
         },
+        "default_sql": null,
         "flags": 18,
         "index": 0
       },
@@ -272,6 +298,7 @@
         "pg_type": {
           "Raw": "TEXT"
         },
+        "default_sql": null,
         "flags": 0,
         "index": 1
       }

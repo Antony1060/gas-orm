@@ -1,11 +1,11 @@
 use crate::binary::TableSpec;
 use crate::error::GasCliResult;
 use crate::sync::{FieldDependency, FieldState, ModelChangeActor};
+use crate::util;
 use crate::util::sql_query::SqlQuery;
 use gas_shared::link::PortablePgType;
 use gas_shared::FieldFlag;
 use itertools::Itertools;
-use std::borrow::Cow;
 use std::fmt::{Display, Formatter};
 use std::ops::Deref;
 
@@ -54,21 +54,7 @@ impl<'a> ModelChangeActor for CreateTableModelActor<'a> {
                 primary_keys.push(String::from(&field.name))
             }
 
-            let sql_type: Cow<'_, str> = field
-                .pg_type
-                .as_sql_type(field.flags.has_flag(FieldFlag::Serial));
-
-            sql.push_str(field.name.as_ref());
-            sql.push(' ');
-            sql.push_str(&sql_type);
-
-            if !field.flags.has_flag(FieldFlag::Nullable) {
-                sql.push_str(" NOT NULL");
-            }
-
-            if field.flags.has_flag(FieldFlag::Unique) {
-                sql.push_str(" UNIQUE");
-            }
+            sql.push_str(&util::sql_query::gen_column_descriptor_sql(field));
 
             if index < self.fields.len() - 1 {
                 sql.push_str(",\n\t");
