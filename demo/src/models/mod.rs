@@ -22,6 +22,7 @@ pub struct aa {
     #[primary_key]
     #[serial]
     pub id: i64,
+    #[default(fn = String::from("unknown"), sql = r#"'unknown'"#)]
     pub first_name: String,
     #[column(name = "bb_fk")]
     #[relation(field = bb::id)]
@@ -41,7 +42,7 @@ pub struct AuditLog {
     #[primary_key]
     #[serial]
     pub id: i64,
-    #[default(fn = Utc::now())]
+    #[default(fn = Utc::now(), sql = r#"NOW() at time zone 'utc'"#)]
     pub created_at: DateTime<Utc>,
     pub updated_at: NaiveDateTime,
     pub random_date: NaiveDate,

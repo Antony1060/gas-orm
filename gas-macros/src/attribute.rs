@@ -4,7 +4,7 @@ use proc_macro::TokenStream;
 use proc_macro2::{Ident, Span};
 use quote::quote;
 use syn::spanned::Spanned;
-use syn::{Field, Fields, PathSegment, parse_quote};
+use syn::{parse_quote, Field, Fields, PathSegment};
 
 // both derive and attribute macro arguments can't be derived from the same struct (I think)
 #[derive(Debug, FromMeta)]
@@ -16,9 +16,11 @@ struct ModelArgs {
 }
 
 #[derive(Debug, FromMeta)]
-struct DefaultArgs {
+pub struct DefaultArgs {
     #[darling(rename = "fn")]
     expression: syn::Expr,
+
+    pub(crate) sql: Option<syn::LitStr>,
 }
 
 #[derive(Debug, FromMeta)]
@@ -234,7 +236,7 @@ fn gen_default_impl(fields: &Fields) -> Result<proc_macro2::TokenStream, syn::Er
             };
 
             let expr = match attribute {
-                Ok(DefaultArgs { expression }) => expression,
+                Ok(DefaultArgs { expression, .. }) => expression,
                 Err(err) => return Some(Err(err.into())),
             };
 

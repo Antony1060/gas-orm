@@ -1,4 +1,4 @@
-use crate::models::{audit_logs, order, person, post, product, user};
+use crate::models::{aa, audit_logs, order, person, post, product, user};
 use crate::tracing_util::setup_tracing;
 use gas::connection::PgConnection;
 use gas::eq::{PgEq, PgEqNone, PgEqTime};
@@ -35,6 +35,9 @@ async fn main() -> GasResult<()> {
     post::Model::create_table(&conn, true).await?;
     product::Model::create_table(&conn, true).await?;
     order::Model::create_table(&conn, true).await?;
+    aa::Model::create_table(&conn, true).await?;
+
+    unreachable!();
 
     normal_ops(&conn).await?;
     tracing::info!("----------------");

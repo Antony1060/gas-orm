@@ -39,6 +39,7 @@ pub struct FieldMeta {
     pub alias_name: &'static str,  // table_column
     pub struct_name: &'static str, // table_column
     pub pg_type: PgType,
+    pub default_sql: Option<&'static str>,
     pub flags: FieldFlags,
     pub index: usize,
 }

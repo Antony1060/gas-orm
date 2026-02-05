@@ -51,6 +51,12 @@ impl<T: ModelMeta> CreateOp<T> {
                 sql.append_str(" UNIQUE");
             }
 
+            if let Some(default_sql) = field.default_sql {
+                sql.append_str(" DEFAULT (");
+                sql.append_str(default_sql);
+                sql.append_str(")");
+            }
+
             if index < T::FIELDS.len() - 1 {
                 sql.append_str(", ");
             }

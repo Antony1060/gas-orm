@@ -1,3 +1,4 @@
+use crate::attribute::DefaultArgs;
 use crate::ops::delete::gen_delete_sql_fn_tokens;
 use crate::ops::insert::gen_insert_sql_fn_tokens;
 use crate::ops::update::gen_update_sql_fn_tokens;
@@ -425,6 +426,23 @@ fn process_field(
     let ident_fk_type_alias = Ident::new(&format!("{}_fk_type", ident), ident.span());
     let ident_fk_remote_index = Ident::new(&format!("{}_fk_remote_index", ident), ident.span());
 
+    let default_sql = 'default_sql: {
+        let attribute = field
+            .attrs
+            .iter()
+            .find(|attr| attr.path().is_ident("default"))
+            .map(|attr| DefaultArgs::from_meta(&attr.meta));
+
+        let Some(attribute) = attribute else {
+            break 'default_sql quote! { Option::None };
+        };
+
+        match attribute {
+            Ok(DefaultArgs { sql: Some(sql), .. }) => quote! { Option::Some(#sql) },
+            _ => quote! { Option::None },
+        }
+    };
+
     let fk_extra_vars = if let Some((_, fk_type)) = maybe_foreign_key {
         quote! {
             #[allow(non_camel_case_types)]
@@ -457,6 +475,7 @@ fn process_field(
                 alias_name: #alias_name,
                 struct_name: stringify!(#ident),
                 pg_type: #pg_type_tokens,
+                default_sql: #default_sql,
                 flags: #ident_flags,
                 index: #ident_index,
             };
