@@ -54,7 +54,7 @@ pub fn diff_summary_visitor_fn<'a>((index, diff): (usize, &(dyn ModelChangeActor
 
     // uhly
     println!(
-        " {} {}",
+        "  {} {}",
         Style::new().white().dim().apply_to("-"),
         Style::new().bold().apply_to(diff)
     )
