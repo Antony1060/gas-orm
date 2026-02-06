@@ -1,6 +1,4 @@
-use crate::binary::TableSpec;
 use crate::error::GasCliResult;
-use crate::sync::variants::add_primary_key_constraint::AddPrimaryKeyModelActor;
 use crate::sync::{FieldDependency, FieldState, ModelChangeActor};
 use crate::util;
 use crate::util::sql_query::SqlQuery;
@@ -9,19 +7,12 @@ use gas_shared::FieldFlag;
 use std::fmt::{Display, Formatter};
 
 pub struct AddColumnModelActor<'a> {
-    old_table: TableSpec<'a>,
     field: &'a PortableFieldMeta,
 }
 
 impl<'a> AddColumnModelActor<'a> {
-    pub fn new_boxed(
-        table: TableSpec<'a>,
-        field: &'a PortableFieldMeta,
-    ) -> Box<dyn ModelChangeActor + 'a> {
-        Box::new(AddColumnModelActor {
-            old_table: table,
-            field,
-        })
+    pub fn new_boxed(field: &'a PortableFieldMeta) -> Box<dyn ModelChangeActor + 'a> {
+        Box::new(AddColumnModelActor { field })
     }
 }
 
@@ -36,12 +27,6 @@ impl<'a> Display for AddColumnModelActor<'a> {
     }
 }
 
-impl<'a> AddColumnModelActor<'a> {
-    fn get_add_primary_key_actor(&self) -> Box<dyn ModelChangeActor + '_> {
-        AddPrimaryKeyModelActor::new_boxed(self.old_table.clone(), Box::from([self.field]))
-    }
-}
-
 impl<'a> ModelChangeActor for AddColumnModelActor<'a> {
     fn forward_sql(&self) -> GasCliResult<SqlQuery> {
         let mut sql = SqlQuery::from("ALTER TABLE ");
@@ -53,23 +38,11 @@ impl<'a> ModelChangeActor for AddColumnModelActor<'a> {
 
         sql.push_str(&util::sql_query::gen_column_descriptor_sql(field));
 
-        if field.flags.has_flag(FieldFlag::PrimaryKey) {
-            sql.push(';');
-
-            sql.push_str(&self.get_add_primary_key_actor().forward_sql()?)
-        };
-
         Ok(sql)
     }
 
     fn backward_sql(&self) -> GasCliResult<SqlQuery> {
         let mut sql = SqlQuery::default();
-
-        if self.field.flags.has_flag(FieldFlag::PrimaryKey) {
-            sql.push_str(&self.get_add_primary_key_actor().backward_sql()?);
-
-            sql.push(';');
-        }
 
         sql.push_str(&format!(
             "ALTER TABLE {} DROP COLUMN {}",

@@ -62,7 +62,7 @@ impl<'a> ModelChangeActor for CreateTableModelActor<'a> {
         }
 
         if !primary_keys.is_empty() {
-            sql.push_str(", \n\t");
+            sql.push_str(",\n\t");
 
             sql.push_str("PRIMARY KEY (");
             sql.push_str(&primary_keys.into_iter().join(", "));

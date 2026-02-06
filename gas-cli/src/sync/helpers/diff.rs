@@ -73,45 +73,40 @@ pub fn collect_diffs<'a>(
 }
 
 // yes it's a function pointer
-type DiffVisitorFn = fn((usize, &Box<dyn ModelChangeActor + '_>));
+pub type DiffVisitorFn = fn((usize, &(dyn ModelChangeActor + '_)));
 
 // very weird function
 //  basically I want to sometimes iterate through all diffs
 //  returning them causes lifetime headache
 //  it's fiiiiinneeee
 // and yes it's a function pointer
-fn find_visit_collect_diffs(
+pub fn find_and_collect_diffs(
     state_fields: &BinaryFields,
     manifest: &GasManifest,
-    visitor: Option<DiffVisitorFn>,
+    visitor: DiffVisitorFn,
 ) -> GasCliResult<Option<MigrationScript>> {
-    let diffs = find_diffs(state_fields, manifest)?;
+    let diffs = find_diffs(state_fields, manifest).map_err(|err| match err {
+        GasCliError::MigrationsGenerationError { reason } => {
+            println!(
+                "{}: {}",
+                STYLE_ERR.apply_to("Failed to determine changes".to_string()),
+                reason
+            );
+
+            GasCliError::GeneralFailure
+        }
+        err => err,
+    })?;
+
     if diffs.is_empty() {
         return Ok(None);
     }
 
     let diffs = order_diffs(manifest, diffs)?;
 
-    if let Some(visitor) = visitor {
-        for (index, diff) in diffs.iter().enumerate() {
-            visitor((index, diff));
-        }
+    for (index, diff) in diffs.iter().enumerate() {
+        visitor((index, diff.as_ref()));
     }
 
     collect_diffs(&diffs).map(Some)
-}
-
-pub fn find_and_collect_diffs(
-    state_fields: &BinaryFields,
-    manifest: &GasManifest,
-) -> GasCliResult<Option<MigrationScript>> {
-    find_visit_collect_diffs(state_fields, manifest, None)
-}
-
-pub fn find_visit_and_collect_diffs(
-    state_fields: &BinaryFields,
-    manifest: &GasManifest,
-    visitor: DiffVisitorFn,
-) -> GasCliResult<Option<MigrationScript>> {
-    find_visit_collect_diffs(state_fields, manifest, Some(visitor))
 }

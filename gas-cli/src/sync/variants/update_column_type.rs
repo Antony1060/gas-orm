@@ -1,4 +1,3 @@
-use crate::binary::TableSpec;
 use crate::error::GasCliResult;
 use crate::sync::variants::add_column::AddColumnModelActor;
 use crate::sync::{helpers, FieldDependency, ModelChangeActor};
@@ -13,15 +12,12 @@ pub struct UpdateColumnTypeModelActor<'a> {
 
 impl<'a> UpdateColumnTypeModelActor<'a> {
     pub fn new_boxed(
-        old_table: TableSpec<'a>,
         old_field: &'a PortableFieldMeta,
         field: &'a PortableFieldMeta,
     ) -> Box<dyn ModelChangeActor + 'a> {
         Box::new(UpdateColumnTypeModelActor {
-            add_column_actor: AddColumnModelActor::new_boxed(old_table.clone(), field),
-            drop_column_actor: helpers::diff::invert(AddColumnModelActor::new_boxed(
-                old_table, old_field,
-            )),
+            add_column_actor: AddColumnModelActor::new_boxed(field),
+            drop_column_actor: helpers::diff::invert(AddColumnModelActor::new_boxed(old_field)),
         })
     }
 }
@@ -58,18 +54,10 @@ impl<'a> ModelChangeActor for UpdateColumnTypeModelActor<'a> {
     }
 
     fn provides(&self) -> Box<[FieldDependency<'_>]> {
-        self.add_column_actor
-            .provides()
-            .into_iter()
-            .chain(self.drop_column_actor.provides())
-            .collect()
+        self.add_column_actor.provides()
     }
 
     fn depends_on(&self) -> Box<[FieldDependency<'_>]> {
-        self.add_column_actor
-            .depends_on()
-            .into_iter()
-            .chain(self.drop_column_actor.depends_on())
-            .collect()
+        self.add_column_actor.depends_on()
     }
 }

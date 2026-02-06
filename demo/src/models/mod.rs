@@ -19,13 +19,14 @@ pub struct Person {
 
 #[gas::model(table_name = "ddcc")]
 pub struct ddcc {
-    pub id: i64,
     #[primary_key]
+    pub id: i64,
     pub var1: String,
     #[unique]
     #[default(fn = String::new(), sql = r#"''"#)]
     pub var2: String,
-    pub var3: i64,
+    #[relation(field = ccdd::id)]
+    pub var3: Relation<i64, ccdd::Model>,
     pub var4: i32,
     pub var5: i64,
 }

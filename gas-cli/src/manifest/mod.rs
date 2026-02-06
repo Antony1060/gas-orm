@@ -1,5 +1,6 @@
 use crate::binary::BinaryFields;
 use crate::error::{GasCliError, GasCliResult};
+use crate::sync::helpers::diff::DiffVisitorFn;
 use crate::sync::MigrationScript;
 use crate::{sync, util};
 use chrono::Utc;
@@ -62,7 +63,11 @@ impl GasManifestController {
         self.dir.exists()
     }
 
-    pub async fn init_with(&self, fields: BinaryFields) -> GasCliResult<GasManifest> {
+    pub async fn init_with(
+        &self,
+        fields: BinaryFields,
+        diff_visitor: DiffVisitorFn,
+    ) -> GasCliResult<GasManifest> {
         if self.is_present() {
             return Err(GasManifestError::AlreadyInitialized.into());
         }
@@ -73,6 +78,7 @@ impl GasManifestController {
         let script = sync::helpers::diff::find_and_collect_diffs(
             &fields,
             &GasManifest::new(BinaryFields::new()),
+            diff_visitor,
         )?;
 
         if let Some(script) = script {

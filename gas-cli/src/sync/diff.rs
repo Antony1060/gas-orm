@@ -13,6 +13,7 @@ use crate::sync::variants::rename_column::RenameColumnModelActor;
 use crate::sync::variants::rename_table::RenameTableModelActor;
 use crate::sync::variants::update_column_type::UpdateColumnTypeModelActor;
 use crate::sync::{helpers, ModelChangeActor};
+use crate::util::styles::{STYLE_WARN, STYLE_WARN_SOFT};
 use crate::{sync, util};
 use gas_shared::link::{FixedStr, PortableFieldMeta, PortablePgType};
 use gas_shared::FieldFlag;
@@ -29,7 +30,6 @@ struct ColumnSplit<'a> {
 
 fn try_type<'a>(
     diffs: &mut Vec<Box<dyn ModelChangeActor + 'a>>,
-    old_table: TableSpec<'a>,
     old: &'a PortableFieldMeta,
     new: &'a PortableFieldMeta,
 ) {
@@ -55,7 +55,19 @@ fn try_type<'a>(
         return;
     }
 
-    diffs.push(UpdateColumnTypeModelActor::new_boxed(old_table, old, new))
+    if new.flags.has_flag(FieldFlag::PrimaryKey) || old.flags.has_flag(FieldFlag::PrimaryKey) {
+        println!(
+            "{} {}: Changing the type of a primary key field is unsupported, check the migration manually to verify everything was migrated correctly",
+            STYLE_WARN.apply_to("WARNING"),
+            STYLE_WARN_SOFT.apply_to(format!(
+                "({}.{})",
+                new.table_name.as_ref(),
+                new.name.as_ref()
+            ))
+        )
+    }
+
+    diffs.push(UpdateColumnTypeModelActor::new_boxed(old, new))
 }
 
 fn try_default<'a>(
@@ -147,6 +159,7 @@ fn try_primary_key<'a>(
         diffs.push(AddPrimaryKeyModelActor::new_boxed(
             old_table,
             new_primary_keys.into_boxed_slice(),
+            true,
         ));
 
         return Ok(());
@@ -155,7 +168,8 @@ fn try_primary_key<'a>(
     if new_primary_keys.is_empty() && !old_primary_keys.is_empty() {
         diffs.push(helpers::diff::invert(AddPrimaryKeyModelActor::new_boxed(
             old_table,
-            new_primary_keys.into_boxed_slice(),
+            old_primary_keys.into_boxed_slice(),
+            true,
         )));
 
         return Ok(());
@@ -180,13 +194,12 @@ fn try_primary_key<'a>(
 
 fn handle_common_column<'a>(
     diffs: &mut Vec<Box<dyn ModelChangeActor + 'a>>,
-    old_table: TableSpec<'a>,
     old_column: &'a PortableFieldMeta,
     new_column: &'a PortableFieldMeta,
 ) {
     assert_eq!(old_column.name, new_column.name);
 
-    try_type(diffs, old_table, old_column, new_column);
+    try_type(diffs, old_column, new_column);
     try_default(diffs, old_column, new_column);
     try_nullable(diffs, old_column, new_column);
     try_serial(diffs, old_column, new_column);
@@ -275,21 +288,21 @@ fn handle_common_table<'a>(
         column_split
             .new
             .into_iter()
-            .map(|field| AddColumnModelActor::new_boxed(old_table.clone(), field)),
+            .map(AddColumnModelActor::new_boxed),
     );
 
     diffs.extend(
         column_split
             .old
             .into_iter()
-            .map(|field| AddColumnModelActor::new_boxed(old_table.clone(), field))
+            .map(AddColumnModelActor::new_boxed)
             .map(helpers::diff::invert),
     );
 
     try_primary_key(diffs, old_table.clone(), new_table)?;
 
     for (old, new) in column_split.common {
-        handle_common_column(diffs, old_table.clone(), old, new);
+        handle_common_column(diffs, old, new);
     }
 
     Ok(())

@@ -4,10 +4,10 @@ use crate::commands::Command;
 use crate::error::{GasCliError, GasCliResult};
 use crate::manifest::{GasManifest, GasManifestController, GasManifestError};
 use crate::sync::MigrationScript;
-use crate::util::common::migrations_cli_common_program_state;
+use crate::util::common::{diff_summary_visitor_fn, migrations_cli_common_program_state};
 use crate::util::styles::{STYLE_ERR, STYLE_OK, STYLE_WARN};
 use crate::{sync, util};
-use console::{Style, Term};
+use console::Term;
 use dialoguer::Input;
 
 pub struct MigrationSyncCommand {
@@ -36,21 +36,10 @@ pub async fn handle_sync(
         })
     } else {
         // bad aah code
-        sync::helpers::diff::find_visit_and_collect_diffs(
+        sync::helpers::diff::find_and_collect_diffs(
             &state.fields,
             &manifest,
-            |(index, diff)| {
-                if index == 0 {
-                    println!("Summary:")
-                }
-
-                // uhly
-                println!(
-                    " {} {}",
-                    Style::new().white().dim().apply_to("-"),
-                    Style::new().bold().apply_to(diff)
-                )
-            },
+            diff_summary_visitor_fn,
         )?
     };
 

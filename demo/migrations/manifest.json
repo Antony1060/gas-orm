@@ -168,10 +168,14 @@
         "table_name": "ddcc",
         "name": "var3",
         "pg_type": {
-          "Raw": "BIGINT"
+          "ForeignKey": {
+            "key_sql_type": "BIGINT",
+            "target_table_name": "ccdd",
+            "target_column_name": "id"
+          }
         },
         "default_sql": null,
-        "flags": 0,
+        "flags": 32,
         "index": 3
       },
       {

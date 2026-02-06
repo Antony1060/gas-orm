@@ -3,7 +3,7 @@ use crate::commands::Command;
 use crate::error::{GasCliError, GasCliResult};
 use crate::manifest::{GasManifestController, GasManifestError};
 use crate::util;
-use crate::util::common::migrations_cli_common_program_state;
+use crate::util::common::{diff_summary_visitor_fn, migrations_cli_common_program_state};
 use crate::util::styles::{STYLE_ERR, STYLE_OK};
 use console::style;
 
@@ -19,7 +19,10 @@ impl Command for MigrationInitCommand {
         let migrations_dir = self.args.migrations_dir_path();
         let manifest_controller = GasManifestController::new(migrations_dir.clone());
 
-        match manifest_controller.init_with(state.fields).await {
+        match manifest_controller
+            .init_with(state.fields, diff_summary_visitor_fn)
+            .await
+        {
             Err(GasCliError::ManifestError(GasManifestError::AlreadyInitialized)) => {
                 println!(
                     "{}: {}",
@@ -31,6 +34,7 @@ impl Command for MigrationInitCommand {
             }
             Err(e) => Err(e),
             Ok(_) => {
+                println!();
                 println!(
                     "{}: {}",
                     STYLE_OK.apply_to("Migrations successfully initialized"),

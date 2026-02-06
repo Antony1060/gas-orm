@@ -2,8 +2,9 @@ use crate::binary::ProjectModelState;
 use crate::commands::migrations::MigrationArgs;
 use crate::error::GasCliResult;
 use crate::project::CargoProject;
+use crate::sync::ModelChangeActor;
 use crate::util;
-use console::style;
+use console::{style, Style};
 use std::time::Duration;
 
 // compiles the binary and gets the current state of the binary while logging,
@@ -44,4 +45,17 @@ pub async fn migrations_cli_common_program_state(
     println!();
 
     Ok(state)
+}
+
+pub fn diff_summary_visitor_fn<'a>((index, diff): (usize, &(dyn ModelChangeActor + 'a))) {
+    if index == 0 {
+        println!("Summary:")
+    }
+
+    // uhly
+    println!(
+        " {} {}",
+        Style::new().white().dim().apply_to("-"),
+        Style::new().bold().apply_to(diff)
+    )
 }

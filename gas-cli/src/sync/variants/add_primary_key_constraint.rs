@@ -11,16 +11,20 @@ use std::fmt::{Display, Formatter};
 pub struct AddPrimaryKeyModelActor<'a> {
     old_table: TableSpec<'a>,
     fields: Box<[&'a PortableFieldMeta]>,
+
+    ignore_field_check: bool,
 }
 
 impl<'a> AddPrimaryKeyModelActor<'a> {
     pub fn new_boxed(
         entry: TableSpec<'a>,
         fields: Box<[&'a PortableFieldMeta]>,
+        ignore_field_check: bool,
     ) -> Box<dyn ModelChangeActor + 'a> {
         Box::new(AddPrimaryKeyModelActor {
             old_table: entry,
             fields,
+            ignore_field_check,
         })
     }
 }
@@ -40,11 +44,15 @@ impl<'a> Display for AddPrimaryKeyModelActor<'a> {
 
 impl<'a> ModelChangeActor for AddPrimaryKeyModelActor<'a> {
     fn forward_sql(&self) -> GasCliResult<SqlQuery> {
-        if self
-            .old_table
-            .fields
-            .iter()
-            .any(|field| field.flags.has_flag(FieldFlag::PrimaryKey))
+        // don't handle this check on inverted diffs
+        //  an inverted diff drops the constraint, then this function is called as a
+        //  backwards action
+        if !self.ignore_field_check
+            && self
+                .old_table
+                .fields
+                .iter()
+                .any(|field| field.flags.has_flag(FieldFlag::PrimaryKey))
         {
             return Err(GasCliError::MigrationsGenerationError {
                 reason: Cow::from(
@@ -83,9 +91,5 @@ impl<'a> ModelChangeActor for AddPrimaryKeyModelActor<'a> {
                 state: FieldState::Existing,
             })
             .collect()
-    }
-
-    fn depends_on_inverted(&self) -> Box<[FieldDependency<'_>]> {
-        Box::from([])
     }
 }

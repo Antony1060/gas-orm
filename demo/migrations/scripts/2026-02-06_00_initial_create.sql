@@ -3,12 +3,17 @@ CREATE TABLE IF NOT EXISTS audit_logs(
 	created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT (NOW() at time zone 'utc'),
 	updated_at TIMESTAMP NOT NULL,
 	random_date DATE NOT NULL,
-	random_time TIME NOT NULL, 
+	random_time TIME NOT NULL,
 	PRIMARY KEY (id)
 );
 CREATE TABLE IF NOT EXISTS bb(
 	id BIGINT NOT NULL,
-	created_at DATE NOT NULL, 
+	created_at DATE NOT NULL,
+	PRIMARY KEY (id)
+);
+CREATE TABLE IF NOT EXISTS ccdd(
+	id BIGINT NOT NULL,
+	var TEXT NOT NULL,
 	PRIMARY KEY (id)
 );
 CREATE TABLE IF NOT EXISTS persons(
@@ -17,44 +22,55 @@ CREATE TABLE IF NOT EXISTS persons(
 	last_name TEXT NOT NULL,
 	email TEXT NOT NULL UNIQUE,
 	phone_number TEXT,
-	bank_balance DECIMAL NOT NULL, 
+	bank_balance DECIMAL NOT NULL,
 	PRIMARY KEY (id)
 );
 CREATE TABLE IF NOT EXISTS products(
 	id BIGSERIAL NOT NULL,
-	name TEXT NOT NULL, 
+	name TEXT NOT NULL,
 	PRIMARY KEY (id)
 );
 CREATE TABLE IF NOT EXISTS users(
 	id BIGSERIAL NOT NULL,
-	name TEXT NOT NULL, 
+	name TEXT NOT NULL,
 	PRIMARY KEY (id)
 );
 CREATE TABLE IF NOT EXISTS aa(
 	id BIGSERIAL NOT NULL,
 	first_name TEXT NOT NULL DEFAULT ('unknown'),
-	bb_fk BIGINT REFERENCES bb(id) NOT NULL, 
+	bb_fk BIGINT REFERENCES bb(id) NOT NULL,
+	PRIMARY KEY (id)
+);
+CREATE TABLE IF NOT EXISTS ddcc(
+	id BIGINT NOT NULL,
+	var1 TEXT NOT NULL,
+	var2 TEXT NOT NULL UNIQUE DEFAULT (''),
+	var3 BIGINT REFERENCES ccdd(id) NOT NULL,
+	var4 INTEGER NOT NULL,
+	var5 BIGINT NOT NULL,
 	PRIMARY KEY (id)
 );
 CREATE TABLE IF NOT EXISTS orders(
 	id BIGSERIAL NOT NULL,
 	quantity INTEGER NOT NULL,
 	user_fk BIGINT REFERENCES users(id) NOT NULL,
-	product_fk BIGINT REFERENCES products(id), 
+	product_fk BIGINT REFERENCES products(id),
 	PRIMARY KEY (id)
 );
 CREATE TABLE IF NOT EXISTS posts(
 	id BIGSERIAL NOT NULL,
 	title TEXT NOT NULL,
-	user_fk BIGINT REFERENCES users(id) NOT NULL, 
+	user_fk BIGINT REFERENCES users(id) NOT NULL,
 	PRIMARY KEY (id)
 );
 -- GAS_ORM(forward_backward_separator)
 DROP TABLE posts;
 DROP TABLE orders;
+DROP TABLE ddcc;
 DROP TABLE aa;
 DROP TABLE users;
 DROP TABLE products;
 DROP TABLE persons;
+DROP TABLE ccdd;
 DROP TABLE bb;
 DROP TABLE audit_logs;
