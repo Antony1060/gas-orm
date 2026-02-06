@@ -22,6 +22,7 @@ pub struct TableSpec<'a> {
     pub name: &'a str,
     pub fields: &'a [PortableFieldMeta],
 }
+
 impl<'a> Debug for TableSpec<'a> {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "[{}; {} fields]", self.name, self.fields.len())

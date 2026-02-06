@@ -70,8 +70,10 @@ impl GasManifestController {
         fs::create_dir_all(&self.dir).await?;
         fs::create_dir_all(self.dir.join(SCRIPTS_DIR)).await?;
 
-        let script =
-            sync::diff::find_and_collect_diffs(&fields, &GasManifest::new(BinaryFields::new()))?;
+        let script = sync::helpers::diff::find_and_collect_diffs(
+            &fields,
+            &GasManifest::new(BinaryFields::new()),
+        )?;
 
         if let Some(script) = script {
             self.save_script("initial_create", &script).await?;

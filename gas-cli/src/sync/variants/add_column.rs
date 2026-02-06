@@ -1,4 +1,3 @@
-#![allow(unused)]
 use crate::binary::TableSpec;
 use crate::error::GasCliResult;
 use crate::sync::variants::add_primary_key_constraint::AddPrimaryKeyModelActor;

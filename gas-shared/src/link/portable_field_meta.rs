@@ -2,6 +2,7 @@ use crate::error::GasSharedError;
 use crate::link::portable_pg_type::PortablePgType;
 use crate::link::FixedStr;
 use crate::{FieldFlags, FieldMeta};
+use std::fmt::{Display, Formatter};
 
 #[derive(Debug, Clone, Hash, Eq, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
@@ -45,5 +46,16 @@ impl PortableFieldMeta {
             flags: meta.flags,
             index: meta.index,
         }
+    }
+}
+
+impl Display for PortableFieldMeta {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "Field[{}.{}]",
+            self.table_name.as_ref(),
+            self.name.as_ref()
+        )
     }
 }

@@ -4,7 +4,7 @@ use std::fmt::Display;
 
 pub mod diff;
 mod graph;
-mod helpers;
+pub mod helpers;
 pub mod variants;
 
 pub struct MigrationScript {

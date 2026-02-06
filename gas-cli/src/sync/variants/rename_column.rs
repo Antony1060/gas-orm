@@ -1,4 +1,3 @@
-#![allow(unused)]
 use crate::error::GasCliResult;
 use crate::sync::{FieldDependency, FieldState, ModelChangeActor};
 use crate::util::sql_query::SqlQuery;
@@ -23,9 +22,11 @@ impl<'a> Display for RenameColumnModelActor<'a> {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(
             f,
-            "RenameColumn[{}.{}]",
+            "RenameColumn[{}.{}->{}.{}]",
+            self.old_field.table_name.as_ref(),
+            self.old_field.name.as_ref(),
             self.field.table_name.as_ref(),
-            self.field.name.as_ref()
+            self.field.name.as_ref(),
         )
     }
 }
@@ -50,13 +51,24 @@ impl<'a> ModelChangeActor for RenameColumnModelActor<'a> {
     }
 
     fn provides(&self) -> Box<[FieldDependency<'_>]> {
-        Box::from([])
+        Box::from([
+            FieldDependency {
+                table_name: self.old_field.table_name.as_ref(),
+                name: self.old_field.name.as_ref(),
+                state: FieldState::InverseDropped,
+            },
+            FieldDependency {
+                table_name: self.field.table_name.as_ref(),
+                name: self.field.name.as_ref(),
+                state: FieldState::Existing,
+            },
+        ])
     }
 
     fn depends_on(&self) -> Box<[FieldDependency<'_>]> {
         Box::from([FieldDependency {
-            table_name: self.field.table_name.as_ref(),
-            name: self.field.name.as_ref(),
+            table_name: self.old_field.table_name.as_ref(),
+            name: self.old_field.name.as_ref(),
             state: FieldState::Existing,
         }])
     }

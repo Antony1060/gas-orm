@@ -44,7 +44,19 @@ impl<'a> ModelChangeActor for RenameTableModelActor<'a> {
     }
 
     fn provides(&self) -> Box<[FieldDependency<'_>]> {
-        Box::from([])
+        let old_columns = self.old_table.fields.iter().map(|field| FieldDependency {
+            table_name: field.table_name.as_ref(),
+            name: field.name.as_ref(),
+            state: FieldState::InverseDropped,
+        });
+
+        let new_columns = self.table.fields.iter().map(|field| FieldDependency {
+            table_name: field.table_name.as_ref(),
+            name: field.name.as_ref(),
+            state: FieldState::Existing,
+        });
+
+        old_columns.chain(new_columns).collect()
     }
 
     fn depends_on(&self) -> Box<[FieldDependency<'_>]> {

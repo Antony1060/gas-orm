@@ -6,3 +6,4 @@ pub mod add_unique_constraint;
 pub mod create_table;
 pub mod rename_column;
 pub mod rename_table;
+mod update_column_type;

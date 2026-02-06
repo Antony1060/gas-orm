@@ -37,18 +37,22 @@ pub async fn handle_sync(
         })
     } else {
         // bad aah code
-        sync::diff::find_visit_and_collect_diffs(&state.fields, &manifest, |(index, diff)| {
-            if index == 0 {
-                println!("Summary:")
-            }
+        sync::helpers::diff::find_visit_and_collect_diffs(
+            &state.fields,
+            &manifest,
+            |(index, diff)| {
+                if index == 0 {
+                    println!("Summary:")
+                }
 
-            // uhly
-            println!(
-                " {} {}",
-                Style::new().white().dim().apply_to("-"),
-                Style::new().bold().apply_to(diff)
-            )
-        })?
+                // uhly
+                println!(
+                    " {} {}",
+                    Style::new().white().dim().apply_to("-"),
+                    Style::new().bold().apply_to(diff)
+                )
+            },
+        )?
     };
 
     let Some(script) = script else {

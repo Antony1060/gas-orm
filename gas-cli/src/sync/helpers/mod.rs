@@ -1,15 +1,9 @@
+pub mod diff;
+
 use crate::error::GasCliResult;
 use crate::sync::{FieldDependency, ModelChangeActor};
 use crate::util::sql_query::SqlQuery;
 use std::fmt::{Display, Formatter};
-
-pub mod diff {
-    use super::*;
-
-    pub fn invert<'a>(other: Box<dyn ModelChangeActor + 'a>) -> Box<dyn ModelChangeActor + 'a> {
-        InverseChangeActor::new_boxed(other)
-    }
-}
 
 pub struct InverseChangeActor<'a> {
     source: Box<dyn ModelChangeActor + 'a>,
