@@ -40,8 +40,6 @@ fn handle_column_rename<'a>(
                 col
             };
 
-            println!("{:?} - {:?}", new_column, old_column);
-
             if **new_column != old_column {
                 continue;
             }
@@ -146,8 +144,6 @@ fn handle_table_rename<'a>(
             if new_table.fields.len() != old_table.fields.len() {
                 continue;
             }
-
-            println!("{:?} - {:?}", new_table, old_table);
 
             let mut all_fields = HashSet::new();
             all_fields.extend(new_table.fields.iter().cloned());
