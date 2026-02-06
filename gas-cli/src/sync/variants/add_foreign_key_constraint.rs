@@ -1,3 +1,4 @@
+#![allow(unused)]
 use crate::error::GasCliResult;
 use crate::sync::{FieldDependency, FieldState, ModelChangeActor};
 use crate::util::sql_query::SqlQuery;

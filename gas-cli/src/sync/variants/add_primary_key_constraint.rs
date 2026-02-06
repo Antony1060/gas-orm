@@ -55,7 +55,7 @@ impl<'a> ModelChangeActor for AddPrimaryKeyModelActor<'a> {
 
         Ok(format!(
             "ALTER TABLE {} ADD PRIMARY KEY({})",
-            self.old_table.table,
+            self.old_table.name,
             self.fields
                 .iter()
                 .map(|field| field.name.as_ref())
@@ -66,7 +66,7 @@ impl<'a> ModelChangeActor for AddPrimaryKeyModelActor<'a> {
     fn backward_sql(&self) -> GasCliResult<SqlQuery> {
         Ok(format!(
             "ALTER TABLE {} DROP CONSTRAINT {}_pkey",
-            self.old_table.table, self.old_table.table
+            self.old_table.name, self.old_table.name
         ))
     }
 

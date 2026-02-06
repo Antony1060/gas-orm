@@ -2,6 +2,7 @@ use crate::error::{GasCliError, GasCliResult};
 use gas_shared::link::PortableFieldMeta;
 use object::{Object, ObjectSection};
 use std::collections::BTreeMap;
+use std::fmt::{Debug, Formatter};
 use std::mem::MaybeUninit;
 use std::path::PathBuf;
 use tokio::fs;
@@ -16,10 +17,15 @@ pub struct ProjectModelState {
     pub fields: BinaryFields,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Hash, PartialEq, Eq)]
 pub struct TableSpec<'a> {
-    pub table: &'a str,
+    pub name: &'a str,
     pub fields: &'a [PortableFieldMeta],
+}
+impl<'a> Debug for TableSpec<'a> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "[{}; {} fields]", self.name, self.fields.len())
+    }
 }
 
 impl ProjectModelState {
@@ -95,7 +101,7 @@ impl ProjectModelState {
 impl<'a> From<(&'a String, &'a Vec<PortableFieldMeta>)> for TableSpec<'a> {
     fn from(value: (&'a String, &'a Vec<PortableFieldMeta>)) -> Self {
         TableSpec {
-            table: value.0,
+            name: value.0,
             fields: value.1,
         }
     }

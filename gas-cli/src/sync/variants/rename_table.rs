@@ -23,7 +23,7 @@ impl<'a> Display for RenameTableModelActor<'a> {
         write!(
             f,
             "RenameTable[{}->{}]",
-            self.old_table.table, self.table.table
+            self.old_table.name, self.table.name
         )
     }
 }
@@ -32,14 +32,14 @@ impl<'a> ModelChangeActor for RenameTableModelActor<'a> {
     fn forward_sql(&self) -> GasCliResult<SqlQuery> {
         Ok(format!(
             "ALTER TABLE {} RENAME TO {}",
-            self.old_table.table, self.table.table,
+            self.old_table.name, self.table.name,
         ))
     }
 
     fn backward_sql(&self) -> GasCliResult<SqlQuery> {
         Ok(format!(
             "ALTER TABLE {} RENAME TO {}",
-            self.table.table, self.old_table.table,
+            self.table.name, self.old_table.name,
         ))
     }
 
@@ -48,7 +48,7 @@ impl<'a> ModelChangeActor for RenameTableModelActor<'a> {
     }
 
     fn depends_on(&self) -> Box<[FieldDependency<'_>]> {
-        self.table
+        self.old_table
             .fields
             .iter()
             .map(|field| FieldDependency {

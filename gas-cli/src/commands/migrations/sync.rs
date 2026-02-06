@@ -6,7 +6,7 @@ use crate::manifest::{GasManifest, GasManifestController, GasManifestError};
 use crate::util::common::migrations_cli_common_program_state;
 use crate::util::styles::{STYLE_ERR, STYLE_OK};
 use crate::{sync, util};
-use console::Term;
+use console::{Style, Term};
 use dialoguer::Input;
 
 pub struct MigrationSyncCommand {
@@ -27,7 +27,20 @@ pub async fn handle_sync(
         manifest,
     }: SyncContext,
 ) -> GasCliResult<()> {
-    let script = sync::diff::find_and_collect_diffs(&state.fields, &manifest)?;
+    // bad aah code
+    let script =
+        sync::diff::find_visit_and_collect_diffs(&state.fields, &manifest, |(index, diff)| {
+            if index == 0 {
+                println!("Summary:")
+            }
+
+            // uhly
+            println!(
+                " {} {}",
+                Style::new().white().dim().apply_to("-"),
+                Style::new().bold().apply_to(diff)
+            )
+        })?;
 
     let Some(script) = script else {
         println!(
@@ -38,8 +51,9 @@ pub async fn handle_sync(
         return Ok(());
     };
 
+    println!();
     let name: String = Input::new()
-        .with_prompt("Migrations script name")
+        .with_prompt("Migration script name")
         .interact_text_on(&Term::stdout())?;
 
     let script_path = controller.save_script(&name, &script).await?;

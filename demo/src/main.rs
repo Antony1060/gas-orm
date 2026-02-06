@@ -1,4 +1,4 @@
-use crate::models::{aa, audit_logs, order, person, post, product, user};
+use crate::models::{audit_logs, order, person, post, product, user};
 use crate::tracing_util::setup_tracing;
 use gas::connection::PgConnection;
 use gas::eq::{PgEq, PgEqNone, PgEqTime};
@@ -18,12 +18,12 @@ mod tracing_util;
 async fn main() -> GasResult<()> {
     setup_tracing(env::var("TRACE_ORM").map(|_| true).unwrap_or(false));
 
-    let migrator = gas::load_migrations!("./migrations")?;
-    // dbg!(migrator);
-    //
-    // if true {
-    //     unreachable!();
-    // }
+    let _migrator = gas::load_migrations!("./migrations")?;
+    dbg!(_migrator);
+
+    if true {
+        unreachable!();
+    }
 
     let conn =
         PgConnection::new_connection_pool("postgres://postgres:strong_password@localhost/postgres")
@@ -35,9 +35,6 @@ async fn main() -> GasResult<()> {
     post::Model::create_table(&conn, true).await?;
     product::Model::create_table(&conn, true).await?;
     order::Model::create_table(&conn, true).await?;
-    aa::Model::create_table(&conn, true).await?;
-
-    unreachable!();
 
     normal_ops(&conn).await?;
     tracing::info!("----------------");

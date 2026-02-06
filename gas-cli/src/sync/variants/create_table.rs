@@ -10,12 +10,12 @@ use std::fmt::{Display, Formatter};
 use std::ops::Deref;
 
 pub struct CreateTableModelActor<'a> {
-    entry: TableSpec<'a>,
+    table: TableSpec<'a>,
 }
 
 impl<'a> CreateTableModelActor<'a> {
-    pub fn new_boxed(entry: TableSpec) -> Box<dyn ModelChangeActor + '_> {
-        Box::from(CreateTableModelActor { entry })
+    pub fn new_boxed(table: TableSpec) -> Box<dyn ModelChangeActor + '_> {
+        Box::from(CreateTableModelActor { table })
     }
 }
 
@@ -23,7 +23,7 @@ impl<'a> Deref for CreateTableModelActor<'a> {
     type Target = TableSpec<'a>;
 
     fn deref(&self) -> &Self::Target {
-        &self.entry
+        &self.table
     }
 }
 
@@ -44,7 +44,7 @@ impl<'a> ModelChangeActor for CreateTableModelActor<'a> {
     fn forward_sql(&self) -> GasCliResult<SqlQuery> {
         let mut sql = SqlQuery::from("CREATE TABLE IF NOT EXISTS ");
 
-        sql.push_str(self.table);
+        sql.push_str(self.name);
         sql.push_str("(\n\t");
 
         let mut primary_keys: Vec<String> = Vec::new();
@@ -78,7 +78,7 @@ impl<'a> ModelChangeActor for CreateTableModelActor<'a> {
     }
 
     fn backward_sql(&self) -> GasCliResult<SqlQuery> {
-        Ok(format!("DROP TABLE {}", self.entry.table))
+        Ok(format!("DROP TABLE {}", self.table.name))
     }
 
     fn provides(&self) -> Box<[FieldDependency<'_>]> {

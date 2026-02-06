@@ -3,7 +3,7 @@ use crate::internals::PgType;
 use crate::link::FixedStr;
 use std::borrow::Cow;
 
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, Hash, Eq, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum PortablePgType {
     Raw(PgType),

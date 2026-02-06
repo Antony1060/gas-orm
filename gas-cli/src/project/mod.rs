@@ -58,7 +58,7 @@ impl CargoProject {
     }
 
     pub async fn build(&self) -> Result<PathBuf, GasCliError> {
-        // TODO: /bin/bash enforces unix-like systems that have bash, probably won't work on windows
+        // TODO: /bin/bash enforces unix-like systems that have bash, probably won't work on Windows
         let cargo_build_status = Command::new("/bin/bash")
             .arg("-c")
             .arg(format!("cargo build --bin {}", self.bin_name))

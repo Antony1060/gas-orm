@@ -14,7 +14,7 @@ pub enum FieldFlag {
     Virtual = 1 << 6,
 }
 
-#[derive(Clone, Eq, PartialEq)]
+#[derive(Clone, Hash, Eq, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct FieldFlags(pub u8);
 
@@ -30,7 +30,7 @@ impl Debug for FieldFlags {
     }
 }
 
-#[derive(Debug, Eq, PartialEq)]
+#[derive(Debug, Hash, Eq, PartialEq)]
 pub struct FieldMeta {
     // a lot of names
     pub table_name: &'static str,  // table
