@@ -10,11 +10,17 @@ mod init;
 mod reset;
 mod sync;
 
+#[derive(Debug, Clone, clap::Parser)]
+pub struct SyncOptions {
+    #[arg(long, default_value = "false", help = "generate a manual migration")]
+    manual: bool,
+}
+
 #[derive(Debug, clap::Subcommand)]
 pub enum MigrationOperation {
     Info,
     Init,
-    Sync,
+    Sync(SyncOptions),
     #[cfg(debug_assertions)]
     Reset,
 }
@@ -36,10 +42,13 @@ pub struct MigrationArgs {
 
 impl CommandImplProvider for MigrationArgs {
     fn get_command(self) -> Box<dyn Command> {
-        match &self.operation {
+        match self.operation {
             MigrationOperation::Info => Box::from(MigrationInfoCommand { args: self }),
             MigrationOperation::Init => Box::from(MigrationInitCommand { args: self }),
-            MigrationOperation::Sync => Box::from(MigrationSyncCommand { args: self }),
+            MigrationOperation::Sync(ref options) => Box::from(MigrationSyncCommand {
+                sync_options: options.clone(),
+                args: self,
+            }),
             #[cfg(debug_assertions)]
             MigrationOperation::Reset => Box::from(reset::MigrationResetCommand { args: self }),
         }

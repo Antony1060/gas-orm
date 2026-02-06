@@ -1,10 +1,11 @@
 use crate::binary::ProjectModelState;
-use crate::commands::migrations::MigrationArgs;
+use crate::commands::migrations::{MigrationArgs, SyncOptions};
 use crate::commands::Command;
 use crate::error::{GasCliError, GasCliResult};
 use crate::manifest::{GasManifest, GasManifestController, GasManifestError};
+use crate::sync::MigrationScript;
 use crate::util::common::migrations_cli_common_program_state;
-use crate::util::styles::{STYLE_ERR, STYLE_OK};
+use crate::util::styles::{STYLE_ERR, STYLE_OK, STYLE_WARN};
 use crate::{sync, util};
 use console::{Style, Term};
 use dialoguer::Input;
@@ -12,6 +13,7 @@ use dialoguer::Input;
 pub struct MigrationSyncCommand {
     #[allow(unused)]
     pub(super) args: MigrationArgs,
+    pub(super) sync_options: SyncOptions,
 }
 
 pub struct SyncContext {
@@ -21,14 +23,20 @@ pub struct SyncContext {
 }
 
 pub async fn handle_sync(
+    options: &SyncOptions,
     SyncContext {
         controller,
         state,
         manifest,
     }: SyncContext,
 ) -> GasCliResult<()> {
-    // bad aah code
-    let script =
+    let script = if options.manual {
+        Some(MigrationScript {
+            forward: String::from("-- put your forward migration here\n\n"),
+            backward: String::from("\n-- put your backward migration here"),
+        })
+    } else {
+        // bad aah code
         sync::diff::find_visit_and_collect_diffs(&state.fields, &manifest, |(index, diff)| {
             if index == 0 {
                 println!("Summary:")
@@ -40,7 +48,8 @@ pub async fn handle_sync(
                 Style::new().white().dim().apply_to("-"),
                 Style::new().bold().apply_to(diff)
             )
-        })?;
+        })?
+    };
 
     let Some(script) = script else {
         println!(
@@ -51,7 +60,14 @@ pub async fn handle_sync(
         return Ok(());
     };
 
+    if options.manual {
+        println!(
+            "{}: You are responsible for bringing the state of the database to the current state of your project",
+            STYLE_WARN.apply_to("WARNING")
+        )
+    }
     println!();
+
     let name: String = Input::new()
         .with_prompt("Migration script name")
         .interact_text_on(&Term::stdout())?;
@@ -77,7 +93,6 @@ impl Command for MigrationSyncCommand {
         let migrations_dir = self.args.migrations_dir_path();
         let manifest_controller = GasManifestController::new(migrations_dir.clone());
 
-        // eh, I don't like the double match
         match manifest_controller.load().await {
             Err(GasCliError::ManifestError(GasManifestError::NotInitialized)) => {
                 println!(
@@ -87,13 +102,16 @@ impl Command for MigrationSyncCommand {
 
                 Err(GasCliError::GeneralFailure)
             }
-            Err(e) => Err(e),
+            Err(err) => Err(err),
             Ok(manifest) => {
-                handle_sync(SyncContext {
-                    controller: manifest_controller,
-                    state,
-                    manifest,
-                })
+                handle_sync(
+                    &self.sync_options,
+                    SyncContext {
+                        controller: manifest_controller,
+                        state,
+                        manifest,
+                    },
+                )
                 .await
             }
         }
