@@ -1,8 +1,8 @@
-use crate::ModelSidecar;
 use crate::condition::{Condition, EqExpression};
 use crate::field::Field;
 use crate::internals::{AsPgType, PgParam};
 use crate::types::Decimal;
+use crate::ModelSidecar;
 use chrono::{DateTime, FixedOffset, Local, NaiveDate, NaiveDateTime, NaiveTime, Utc};
 
 pub trait PgEq<T> {
@@ -124,6 +124,63 @@ macro_rules! pg_eq_impl {
 
 // text
 pg_eq_impl!(String as &str, PgParam::TEXT);
+impl<M: ModelSidecar> PgEq<String> for Field<String, M> {
+    fn eq(&self, other: String) -> EqExpression {
+        EqExpression::new(
+            Condition::Basic(format!("{}=?", self.full_name)),
+            vec![PgParam::TEXT(Some(other))],
+        )
+    }
+
+    fn neq(&self, other: String) -> EqExpression {
+        EqExpression::new(
+            Condition::Basic(format!("{}!=?", self.full_name)),
+            vec![PgParam::TEXT(Some(other))],
+        )
+    }
+
+    fn lt(&self, other: String) -> EqExpression {
+        EqExpression::new(
+            Condition::Basic(format!("{}<?", self.full_name)),
+            vec![PgParam::TEXT(Some(other))],
+        )
+    }
+
+    fn lte(&self, other: String) -> EqExpression {
+        EqExpression::new(
+            Condition::Basic(format!("{}<=?", self.full_name)),
+            vec![PgParam::TEXT(Some(other))],
+        )
+    }
+
+    fn gt(&self, other: String) -> EqExpression {
+        EqExpression::new(
+            Condition::Basic(format!("{}>?", self.full_name)),
+            vec![PgParam::TEXT(Some(other))],
+        )
+    }
+
+    fn gte(&self, other: String) -> EqExpression {
+        EqExpression::new(
+            Condition::Basic(format!("{}>=?", self.full_name)),
+            vec![PgParam::TEXT(Some(other))],
+        )
+    }
+
+    fn one_of(&self, other: &[String]) -> EqExpression {
+        let condition = make_in_expression(self.full_name, other.len());
+
+        EqExpression::new(
+            Condition::Basic(condition),
+            other
+                .iter()
+                .map(|it| it.into())
+                .map(|it| PgParam::TEXT(Some(it)))
+                .collect(),
+        )
+    }
+}
+
 pg_eq_impl!(Option<String> as &str, PgParam::TEXT);
 
 // smallint

@@ -19,8 +19,8 @@ pub struct Person {
 
 #[gas::model(table_name = "ddcc")]
 pub struct ddcc {
-    #[primary_key]
     pub id: i64,
+    #[primary_key]
     pub var1: String,
     #[unique]
     #[default(fn = String::new(), sql = r#"''"#)]
