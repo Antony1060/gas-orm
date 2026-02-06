@@ -1,0 +1,10 @@
+CREATE TABLE IF NOT EXISTS ddcc(
+	id BIGINT NOT NULL,
+	var1 TEXT NOT NULL,
+	var2 TEXT,
+	var3 BIGINT NOT NULL,
+	var4 BIGINT NOT NULL,
+	var5 BIGINT NOT NULL
+);
+-- GAS_ORM(forward_backward_separator)
+DROP TABLE ddcc;

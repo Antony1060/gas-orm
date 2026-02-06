@@ -10,13 +10,13 @@ use std::fmt::{Display, Formatter};
 
 pub struct AddPrimaryKeyModelActor<'a> {
     old_table: TableSpec<'a>,
-    fields: &'a [PortableFieldMeta],
+    fields: Box<[&'a PortableFieldMeta]>,
 }
 
 impl<'a> AddPrimaryKeyModelActor<'a> {
     pub fn new_boxed(
         entry: TableSpec<'a>,
-        fields: &'a [PortableFieldMeta],
+        fields: Box<[&'a PortableFieldMeta]>,
     ) -> Box<dyn ModelChangeActor + 'a> {
         Box::new(AddPrimaryKeyModelActor {
             old_table: entry,
@@ -83,5 +83,9 @@ impl<'a> ModelChangeActor for AddPrimaryKeyModelActor<'a> {
                 state: FieldState::Existing,
             })
             .collect()
+    }
+
+    fn depends_on_inverted(&self) -> Box<[FieldDependency<'_>]> {
+        Box::from([])
     }
 }

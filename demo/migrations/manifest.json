@@ -111,6 +111,90 @@
         "index": 1
       }
     ],
+    "ccdd": [
+      {
+        "table_name": "ccdd",
+        "name": "id",
+        "pg_type": {
+          "Raw": "BIGINT"
+        },
+        "default_sql": null,
+        "flags": 2,
+        "index": 0
+      },
+      {
+        "table_name": "ccdd",
+        "name": "var",
+        "pg_type": {
+          "Raw": "TEXT"
+        },
+        "default_sql": null,
+        "flags": 0,
+        "index": 1
+      }
+    ],
+    "ddcc": [
+      {
+        "table_name": "ddcc",
+        "name": "id",
+        "pg_type": {
+          "Raw": "BIGINT"
+        },
+        "default_sql": null,
+        "flags": 2,
+        "index": 0
+      },
+      {
+        "table_name": "ddcc",
+        "name": "var1",
+        "pg_type": {
+          "Raw": "TEXT"
+        },
+        "default_sql": null,
+        "flags": 0,
+        "index": 1
+      },
+      {
+        "table_name": "ddcc",
+        "name": "var2",
+        "pg_type": {
+          "Raw": "TEXT"
+        },
+        "default_sql": "''",
+        "flags": 8,
+        "index": 2
+      },
+      {
+        "table_name": "ddcc",
+        "name": "var3",
+        "pg_type": {
+          "Raw": "BIGINT"
+        },
+        "default_sql": null,
+        "flags": 0,
+        "index": 3
+      },
+      {
+        "table_name": "ddcc",
+        "name": "var4",
+        "pg_type": {
+          "Raw": "INTEGER"
+        },
+        "default_sql": null,
+        "flags": 0,
+        "index": 4
+      },
+      {
+        "table_name": "ddcc",
+        "name": "var5",
+        "pg_type": {
+          "Raw": "BIGINT"
+        },
+        "default_sql": null,
+        "flags": 0,
+        "index": 5
+      }
+    ],
     "orders": [
       {
         "table_name": "orders",

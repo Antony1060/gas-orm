@@ -11,7 +11,6 @@ use console::{Style, Term};
 use dialoguer::Input;
 
 pub struct MigrationSyncCommand {
-    #[allow(unused)]
     pub(super) args: MigrationArgs,
     pub(super) sync_options: SyncOptions,
 }

@@ -50,4 +50,24 @@ pub trait ModelChangeActor: Display {
     fn depends_on(&self) -> Box<[FieldDependency<'_>]> {
         Box::from([])
     }
+
+    fn provides_inverted(&self) -> Box<[FieldDependency<'_>]> {
+        self.provides()
+            .into_iter()
+            .map(|mut it| {
+                it.state = it.state.flip();
+                it
+            })
+            .collect()
+    }
+
+    fn depends_on_inverted(&self) -> Box<[FieldDependency<'_>]> {
+        self.depends_on()
+            .into_iter()
+            .map(|mut it| {
+                it.state = it.state.flip();
+                it
+            })
+            .collect()
+    }
 }

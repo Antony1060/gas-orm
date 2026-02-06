@@ -1,14 +1,23 @@
 use crate::binary::{BinaryFields, TableSpec};
-use crate::error::GasCliResult;
+use crate::error::{GasCliError, GasCliResult};
 use crate::manifest::GasManifest;
 use crate::sync::variants::add_column::AddColumnModelActor;
+use crate::sync::variants::add_default::AddDefaultModelActor;
+use crate::sync::variants::add_foreign_key_constraint::AddForeignKeyModelActor;
+use crate::sync::variants::add_nullable::AddNullableModelActor;
+use crate::sync::variants::add_primary_key_constraint::AddPrimaryKeyModelActor;
+use crate::sync::variants::add_serial::AddSerialModelActor;
+use crate::sync::variants::add_unique_constraint::AddUniqueModelActor;
 use crate::sync::variants::create_table::CreateTableModelActor;
 use crate::sync::variants::rename_column::RenameColumnModelActor;
 use crate::sync::variants::rename_table::RenameTableModelActor;
-use crate::sync::ModelChangeActor;
+use crate::sync::variants::update_column_type::UpdateColumnTypeModelActor;
+use crate::sync::{helpers, ModelChangeActor};
 use crate::{sync, util};
-use gas_shared::link::{FixedStr, PortableFieldMeta};
+use gas_shared::link::{FixedStr, PortableFieldMeta, PortablePgType};
+use gas_shared::FieldFlag;
 use itertools::{Either, Itertools};
+use std::borrow::Cow;
 use std::collections::HashSet;
 
 #[derive(Debug)]
@@ -18,15 +27,173 @@ struct ColumnSplit<'a> {
     old: Vec<&'a PortableFieldMeta>,
 }
 
-fn handle_common_column<'a>(
-    _diffs: &mut Vec<Box<dyn ModelChangeActor + 'a>>,
-    old_column: &PortableFieldMeta,
-    new_column: &PortableFieldMeta,
+fn try_type<'a>(
+    diffs: &mut Vec<Box<dyn ModelChangeActor + 'a>>,
+    old_table: TableSpec<'a>,
+    old: &'a PortableFieldMeta,
+    new: &'a PortableFieldMeta,
 ) {
-    println!("common column: {} -> {}", old_column, new_column);
+    if old.pg_type == new.pg_type {
+        return;
+    }
+
+    // promotion to a foreign key
+    if let PortablePgType::ForeignKey { key_sql_type, .. } = &new.pg_type
+        && key_sql_type.as_ref() == old.pg_type.as_sql_type(false)
+    {
+        diffs.push(AddForeignKeyModelActor::new_boxed(new));
+        return;
+    }
+
+    // demotion from foreign key
+    if let PortablePgType::ForeignKey { key_sql_type, .. } = &old.pg_type
+        && key_sql_type.as_ref() == new.pg_type.as_sql_type(false)
+    {
+        diffs.push(helpers::diff::invert(AddForeignKeyModelActor::new_boxed(
+            old,
+        )));
+        return;
+    }
+
+    diffs.push(UpdateColumnTypeModelActor::new_boxed(old_table, old, new))
 }
 
-fn handle_column_rename<'a>(
+fn try_default<'a>(
+    diffs: &mut Vec<Box<dyn ModelChangeActor + 'a>>,
+    old: &'a PortableFieldMeta,
+    new: &'a PortableFieldMeta,
+) {
+    if old.default_sql == new.default_sql {
+        return;
+    }
+
+    if new.default_sql.is_some() {
+        diffs.push(AddDefaultModelActor::new_boxed(new));
+        return;
+    }
+
+    diffs.push(helpers::diff::invert(AddDefaultModelActor::new_boxed(new)));
+}
+
+fn try_nullable<'a>(
+    diffs: &mut Vec<Box<dyn ModelChangeActor + 'a>>,
+    old: &'a PortableFieldMeta,
+    new: &'a PortableFieldMeta,
+) {
+    if old.flags.has_flag(FieldFlag::Nullable) == new.flags.has_flag(FieldFlag::Nullable) {
+        return;
+    }
+
+    let mut action = AddNullableModelActor::new_boxed(new);
+    if !new.flags.has_flag(FieldFlag::Nullable) {
+        action = helpers::diff::invert(action);
+    }
+
+    diffs.push(action);
+}
+
+fn try_serial<'a>(
+    diffs: &mut Vec<Box<dyn ModelChangeActor + 'a>>,
+    old: &'a PortableFieldMeta,
+    new: &'a PortableFieldMeta,
+) {
+    if old.flags.has_flag(FieldFlag::Serial) == new.flags.has_flag(FieldFlag::Serial) {
+        return;
+    }
+
+    let mut action = AddSerialModelActor::new_boxed(new);
+    if !new.flags.has_flag(FieldFlag::Serial) {
+        action = helpers::diff::invert(action);
+    }
+
+    diffs.push(action);
+}
+
+fn try_unique<'a>(
+    diffs: &mut Vec<Box<dyn ModelChangeActor + 'a>>,
+    old: &'a PortableFieldMeta,
+    new: &'a PortableFieldMeta,
+) {
+    if old.flags.has_flag(FieldFlag::Unique) == new.flags.has_flag(FieldFlag::Unique) {
+        return;
+    }
+
+    let mut action = AddUniqueModelActor::new_boxed(new);
+    if !new.flags.has_flag(FieldFlag::Unique) {
+        action = helpers::diff::invert(action);
+    }
+
+    diffs.push(action);
+}
+
+fn try_primary_key<'a>(
+    diffs: &mut Vec<Box<dyn ModelChangeActor + 'a>>,
+    old_table: TableSpec<'a>,
+    new_table: TableSpec<'a>,
+) -> GasCliResult<()> {
+    let new_primary_keys: Vec<_> = new_table
+        .fields
+        .iter()
+        .filter(|field| field.flags.has_flag(FieldFlag::PrimaryKey))
+        .collect();
+
+    let old_primary_keys: Vec<_> = old_table
+        .fields
+        .iter()
+        .filter(|field| field.flags.has_flag(FieldFlag::PrimaryKey))
+        .collect();
+
+    if old_primary_keys.is_empty() && !new_primary_keys.is_empty() {
+        diffs.push(AddPrimaryKeyModelActor::new_boxed(
+            old_table,
+            new_primary_keys.into_boxed_slice(),
+        ));
+
+        return Ok(());
+    }
+
+    if new_primary_keys.is_empty() && !old_primary_keys.is_empty() {
+        diffs.push(helpers::diff::invert(AddPrimaryKeyModelActor::new_boxed(
+            old_table,
+            new_primary_keys.into_boxed_slice(),
+        )));
+
+        return Ok(());
+    }
+
+    if new_primary_keys.len() != old_primary_keys.len()
+        || new_primary_keys.into_iter().any(|field| {
+            !old_primary_keys
+                .iter()
+                .any(|other| other.name == field.name)
+        })
+    {
+        return Err(GasCliError::MigrationsGenerationError {
+            reason: Cow::from(
+                "can not add a primary key to a table with already existing primary keys",
+            ),
+        });
+    }
+
+    Ok(())
+}
+
+fn handle_common_column<'a>(
+    diffs: &mut Vec<Box<dyn ModelChangeActor + 'a>>,
+    old_table: TableSpec<'a>,
+    old_column: &'a PortableFieldMeta,
+    new_column: &'a PortableFieldMeta,
+) {
+    assert_eq!(old_column.name, new_column.name);
+
+    try_type(diffs, old_table, old_column, new_column);
+    try_default(diffs, old_column, new_column);
+    try_nullable(diffs, old_column, new_column);
+    try_serial(diffs, old_column, new_column);
+    try_unique(diffs, old_column, new_column);
+}
+
+fn try_column_rename<'a>(
     diffs: &mut Vec<Box<dyn ModelChangeActor + 'a>>,
     columns: &mut ColumnSplit<'a>,
 ) {
@@ -70,7 +237,7 @@ fn handle_common_table<'a>(
     diffs: &mut Vec<Box<dyn ModelChangeActor + 'a>>,
     old_table: TableSpec<'a>,
     new_table: TableSpec<'a>,
-) {
+) -> GasCliResult<()> {
     assert_eq!(old_table.name, new_table.name);
 
     let new_columns: Vec<_> = new_table
@@ -102,7 +269,7 @@ fn handle_common_table<'a>(
         old: old_columns,
     };
 
-    handle_column_rename(diffs, &mut column_split);
+    try_column_rename(diffs, &mut column_split);
 
     diffs.extend(
         column_split
@@ -116,12 +283,16 @@ fn handle_common_table<'a>(
             .old
             .into_iter()
             .map(|field| AddColumnModelActor::new_boxed(old_table.clone(), field))
-            .map(sync::helpers::diff::invert),
+            .map(helpers::diff::invert),
     );
 
+    try_primary_key(diffs, old_table.clone(), new_table)?;
+
     for (old, new) in column_split.common {
-        handle_common_column(diffs, old, new);
+        handle_common_column(diffs, old_table.clone(), old, new);
     }
+
+    Ok(())
 }
 
 #[derive(Debug)]
@@ -131,8 +302,7 @@ struct TableSplit<'a> {
     old: Vec<TableSpec<'a>>,
 }
 
-// returns mapping of renamed tables (old, new)
-fn handle_table_rename<'a>(
+fn try_table_rename<'a>(
     diffs: &mut Vec<Box<dyn ModelChangeActor + 'a>>,
     tables: &mut TableSplit<'a>,
 ) {
@@ -206,7 +376,7 @@ fn handle_tables<'a>(
         old: old_tables,
     };
 
-    handle_table_rename(diffs, &mut table_split);
+    try_table_rename(diffs, &mut table_split);
 
     diffs.extend(
         table_split
@@ -249,7 +419,7 @@ pub fn find_diffs<'a>(
     let common_tables = handle_tables(&mut result, state_fields, manifest);
 
     for (old, new) in common_tables {
-        handle_common_table(&mut result, old, new);
+        handle_common_table(&mut result, old, new)?;
     }
 
     Ok(result)

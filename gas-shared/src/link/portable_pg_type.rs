@@ -34,7 +34,6 @@ impl TryFrom<PgType> for PortablePgType {
 }
 
 impl PortablePgType {
-    #[allow(clippy::missing_safety_doc)]
     pub const fn from_unchecked(pg_type: PgType) -> Self {
         match pg_type {
             PgType::FOREIGN_KEY {

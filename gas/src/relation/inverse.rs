@@ -10,7 +10,6 @@ use std::marker::PhantomData;
 use std::ops::Deref;
 use tokio::runtime::Handle;
 
-#[allow(dead_code)]
 #[derive(Debug, Clone, Default)]
 pub struct InverseRelation<
     SelfModel: ModelMeta,

@@ -17,6 +17,26 @@ pub struct Person {
     pub bank_account_balance: Decimal,
 }
 
+#[gas::model(table_name = "ddcc")]
+pub struct ddcc {
+    #[primary_key]
+    pub id: i64,
+    pub var1: String,
+    #[unique]
+    #[default(fn = String::new(), sql = r#"''"#)]
+    pub var2: String,
+    pub var3: i64,
+    pub var4: i32,
+    pub var5: i64,
+}
+
+#[gas::model(table_name = "ccdd")]
+pub struct ccdd {
+    #[primary_key]
+    pub id: i64,
+    pub var: String,
+}
+
 #[gas::model(table_name = "aa")]
 pub struct aa {
     #[primary_key]

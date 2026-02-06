@@ -35,9 +35,10 @@ impl<'a> Display for AddColumnModelActor<'a> {
         )
     }
 }
+
 impl<'a> AddColumnModelActor<'a> {
     fn get_add_primary_key_actor(&self) -> Box<dyn ModelChangeActor + '_> {
-        AddPrimaryKeyModelActor::new_boxed(self.old_table.clone(), std::slice::from_ref(self.field))
+        AddPrimaryKeyModelActor::new_boxed(self.old_table.clone(), Box::from([self.field]))
     }
 }
 

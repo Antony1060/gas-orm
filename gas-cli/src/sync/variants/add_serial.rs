@@ -1,5 +1,3 @@
-#![allow(unused)]
-
 use crate::error::GasCliResult;
 use crate::sync::{FieldDependency, FieldState, ModelChangeActor};
 use crate::util::sql_query::SqlQuery;
@@ -35,10 +33,10 @@ impl<'a> ModelChangeActor for AddSerialModelActor<'a> {
     fn forward_sql(&self) -> GasCliResult<SqlQuery> {
         let mut sql = SqlQuery::new();
 
-        sql.push_str(&format!("CREATE SEQUENCE {};", self._seq_name));
+        sql.push_str(&format!("CREATE SEQUENCE {};\n", self._seq_name));
 
         sql.push_str(&format!(
-            "ALTER TABLE {} ALTER COLUMN {} SET DEFAULT (next_val('{}'));",
+            "ALTER TABLE {} ALTER COLUMN {} SET DEFAULT (next_val('{}'));\n",
             self.field.table_name.as_ref(),
             self.field.name.as_ref(),
             self._seq_name
@@ -58,7 +56,7 @@ impl<'a> ModelChangeActor for AddSerialModelActor<'a> {
         let mut sql = SqlQuery::new();
 
         sql.push_str(&format!(
-            "ALTER TABLE {} ALTER COLUMN {} DROP DEFAULT;",
+            "ALTER TABLE {} ALTER COLUMN {} DROP DEFAULT;\n",
             self.field.table_name.as_ref(),
             self.field.name.as_ref(),
         ));
@@ -78,5 +76,9 @@ impl<'a> ModelChangeActor for AddSerialModelActor<'a> {
             name: self.field.name.as_ref(),
             state: FieldState::Existing,
         }])
+    }
+
+    fn depends_on_inverted(&self) -> Box<[FieldDependency<'_>]> {
+        self.depends_on()
     }
 }

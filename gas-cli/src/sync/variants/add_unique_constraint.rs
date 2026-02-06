@@ -1,4 +1,3 @@
-#![allow(unused)]
 use crate::error::GasCliResult;
 use crate::sync::{FieldDependency, FieldState, ModelChangeActor};
 use crate::util::sql_query::SqlQuery;
@@ -53,5 +52,9 @@ impl<'a> ModelChangeActor for AddUniqueModelActor<'a> {
             name: self.field.name.as_ref(),
             state: FieldState::Existing,
         }])
+    }
+
+    fn depends_on_inverted(&self) -> Box<[FieldDependency<'_>]> {
+        self.depends_on()
     }
 }

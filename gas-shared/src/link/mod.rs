@@ -26,7 +26,6 @@ impl<const SIZE: usize> TryFrom<&str> for FixedStr<SIZE> {
 }
 
 impl<const SIZE: usize> FixedStr<SIZE> {
-    #[allow(clippy::missing_safety_doc)]
     pub const fn from_panicking(value: &str) -> Self {
         let bytes = value.as_bytes();
         assert!(bytes.len() <= SIZE);

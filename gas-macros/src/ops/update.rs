@@ -18,7 +18,7 @@ pub(crate) fn gen_update_sql_fn_tokens(
     if normal_fields.is_empty() {
         return Err(syn::Error::new(
             Span::call_site(),
-            "The struct is only made from ",
+            "The struct is only made from primary keys",
         ));
     }
 

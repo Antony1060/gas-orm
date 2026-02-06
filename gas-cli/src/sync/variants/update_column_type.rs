@@ -1,4 +1,3 @@
-#![allow(unused)]
 use crate::binary::TableSpec;
 use crate::error::GasCliResult;
 use crate::sync::variants::add_column::AddColumnModelActor;
@@ -42,6 +41,7 @@ impl<'a> ModelChangeActor for UpdateColumnTypeModelActor<'a> {
         let mut sql = SqlQuery::new();
 
         sql.push_str(&self.drop_column_actor.forward_sql()?);
+        sql.push_str(";\n");
         sql.push_str(&self.add_column_actor.forward_sql()?);
 
         Ok(sql)
@@ -51,6 +51,7 @@ impl<'a> ModelChangeActor for UpdateColumnTypeModelActor<'a> {
         let mut sql = SqlQuery::new();
 
         sql.push_str(&self.add_column_actor.backward_sql()?);
+        sql.push_str(";\n");
         sql.push_str(&self.drop_column_actor.backward_sql()?);
 
         Ok(sql)

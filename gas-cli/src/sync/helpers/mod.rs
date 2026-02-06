@@ -30,26 +30,11 @@ impl<'a> ModelChangeActor for InverseChangeActor<'a> {
         self.source.forward_sql()
     }
 
-    // a "creative" operation's opposite for should be destructive
     fn provides(&self) -> Box<[FieldDependency<'_>]> {
-        self.source
-            .provides()
-            .into_iter()
-            .map(|mut it| {
-                it.state = it.state.flip();
-                it
-            })
-            .collect()
+        self.source.provides_inverted()
     }
 
     fn depends_on(&self) -> Box<[FieldDependency<'_>]> {
-        self.source
-            .depends_on()
-            .into_iter()
-            .map(|mut it| {
-                it.state = it.state.flip();
-                it
-            })
-            .collect()
+        self.source.depends_on_inverted()
     }
 }
