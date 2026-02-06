@@ -2,6 +2,7 @@ pub mod def_model;
 pub mod numeric;
 pub mod pg_param;
 pub mod pg_type;
+pub mod serial_compatible;
 pub mod sql_query;
 
 use crate::FieldMeta;
@@ -10,6 +11,7 @@ pub use gas_shared::internals::pg_type::*;
 pub(crate) use numeric::*;
 pub use pg_param::*;
 pub use pg_type::*;
+pub use serial_compatible::*;
 pub use sql_query::*;
 use std::any::TypeId;
 

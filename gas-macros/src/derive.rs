@@ -397,7 +397,10 @@ fn process_field(
     }
 
     if ctx.serials.contains(ident) {
-        flags.push(quote! { (gas::FieldFlag::Serial as u8) })
+        flags.push(quote! { {
+            gas::internals::assert_serial::<#ty>();
+            (gas::FieldFlag::Serial as u8)
+        } })
     }
 
     if ctx.uniques.contains(ident) {
