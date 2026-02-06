@@ -40,3 +40,10 @@ async fn main() -> GasResult<()> {
     Ok(())
 }
 ```
+
+### Very short term todo
+
+- [x] Migrations diff ordering
+- [ ] Implement all diffs for migrations
+- [ ] Mirations cli `migrate` command
+- [ ] Migrations on library side
