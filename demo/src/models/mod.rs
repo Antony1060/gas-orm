@@ -22,11 +22,11 @@ pub struct ddcc {
     #[primary_key]
     pub id: i64,
     pub var1: String,
-    #[unique]
     #[default(fn = String::new(), sql = r#"''"#)]
     pub var2: String,
     #[relation(field = ccdd::id)]
     pub var3: Relation<i64, ccdd::Model>,
+    #[unique]
     pub var4: i32,
     pub var5: i64,
 }

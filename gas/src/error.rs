@@ -32,9 +32,6 @@ pub enum GasError {
 
     #[error("{0}")]
     SharedError(GasSharedError),
-
-    #[error("could not load migrations scripts, might not have been initialized yet")]
-    MigrationsNotDefined,
 }
 
 impl From<GasSharedError> for GasError {

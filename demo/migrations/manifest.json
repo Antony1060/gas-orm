@@ -161,7 +161,7 @@
           "Raw": "TEXT"
         },
         "default_sql": "''",
-        "flags": 8,
+        "flags": 0,
         "index": 2
       },
       {
@@ -185,7 +185,7 @@
           "Raw": "INTEGER"
         },
         "default_sql": null,
-        "flags": 0,
+        "flags": 8,
         "index": 4
       },
       {

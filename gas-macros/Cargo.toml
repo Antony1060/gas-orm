@@ -12,3 +12,4 @@ syn = { version = "2.0.109", features = ["full", "extra-traits"] }
 proc-macro2 = "1.0.103"
 darling = "0.21.3"
 itertools = "0.14.0"
+gas-shared = { path = "../gas-shared" }

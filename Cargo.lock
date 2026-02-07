@@ -804,6 +804,7 @@ name = "gas-macros"
 version = "0.1.0"
 dependencies = [
  "darling",
+ "gas-shared",
  "itertools",
  "proc-macro2",
  "quote",
