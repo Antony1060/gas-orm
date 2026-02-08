@@ -5,7 +5,7 @@ pub fn setup_tracing(log_lib: bool) {
     let filter = if log_lib {
         EnvFilter::new(format!("demo={},gas={}", Level::DEBUG, Level::TRACE))
     } else {
-        EnvFilter::new(format!("demo={}", Level::DEBUG))
+        EnvFilter::new(format!("demo={},gas={}", Level::DEBUG, Level::INFO))
     };
 
     let subscriber = FmtSubscriber::builder()

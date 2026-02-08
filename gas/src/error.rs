@@ -1,4 +1,5 @@
 use crate::internals::PgParam;
+use crate::migrations::GasMigratorError;
 pub use gas_shared::error::GasSharedError;
 use std::borrow::Cow;
 
@@ -29,6 +30,9 @@ pub enum GasError {
 
     #[error("entity doesn't exist")]
     EntityNotFound,
+
+    #[error("migrations failed: {0}")]
+    MigratorError(GasMigratorError),
 
     #[error(transparent)]
     SharedError(GasSharedError),

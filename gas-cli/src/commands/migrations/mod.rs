@@ -3,9 +3,7 @@ use crate::commands::migrations::init::MigrationInitCommand;
 use crate::commands::migrations::migrate::MigrationMigrateCommand;
 use crate::commands::migrations::sync::MigrationSyncCommand;
 use crate::commands::{Command, CommandImplProvider};
-use std::num::NonZeroU64;
 use std::path::PathBuf;
-use std::str::FromStr;
 
 mod info;
 mod init;
@@ -20,35 +18,6 @@ pub struct SyncOptions {
     manual: bool,
 }
 
-#[derive(Debug, Clone)]
-pub enum MigrateCount {
-    All,
-    Specific(NonZeroU64),
-}
-
-impl FromStr for MigrateCount {
-    type Err = std::num::ParseIntError;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match s.to_ascii_lowercase().as_str() {
-            "all" => Ok(MigrateCount::All),
-            val => Ok(MigrateCount::Specific(NonZeroU64::from_str(val)?)),
-        }
-    }
-}
-
-impl MigrateCount {
-    pub fn as_signed_count(&self, is_back: bool, max: usize) -> i64 {
-        match self {
-            MigrateCount::All if !is_back => max as i64,
-            MigrateCount::All if is_back => -(max as i64),
-            MigrateCount::Specific(n) if !is_back => n.get().cast_signed(),
-            MigrateCount::Specific(n) if is_back => -n.get().cast_signed(),
-            _ => unreachable!(),
-        }
-    }
-}
-
 #[derive(Debug, Clone, clap::Parser)]
 pub struct MigrateOptions {
     #[arg(
@@ -60,7 +29,7 @@ pub struct MigrateOptions {
     back: bool,
 
     #[arg(long, help = "amount of migrations to execute")]
-    count: Option<MigrateCount>,
+    count: Option<gas::migrations::MigrateCount>,
 }
 
 #[derive(Debug, clap::Subcommand)]

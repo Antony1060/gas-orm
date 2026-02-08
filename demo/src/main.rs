@@ -5,6 +5,7 @@ use gas::eq::{PgEq, PgEqNone, PgEqTime};
 use gas::error::GasError;
 use gas::group::GroupSorting;
 use gas::helpers::OptionHelperOps;
+use gas::migrations::{MigrateCount, MigrationsDirection};
 use gas::types::{Local, NaiveDate, NaiveTime, TimeDelta, Utc};
 use gas::{GasResult, ModelOps, RelationOps};
 use rust_decimal::Decimal;
@@ -18,16 +19,19 @@ mod tracing_util;
 async fn main() -> GasResult<()> {
     setup_tracing(env::var("TRACE_ORM").map(|_| true).unwrap_or(false));
 
-    let _migrator = gas::load_migrations!("./migrations")?;
-    dbg!(_migrator);
+    let conn =
+        PgConnection::new_connection_pool("postgres://postgres:strong_password@localhost/orm_test")
+            .await?;
+
+    let migrator = gas::load_migrations!("./migrations")?;
+
+    migrator
+        .run_migrations(&conn, MigrationsDirection::Forward, MigrateCount::All)
+        .await?;
 
     if true {
         unreachable!();
     }
-
-    let conn =
-        PgConnection::new_connection_pool("postgres://postgres:strong_password@localhost/postgres")
-            .await?;
 
     person::Model::create_table(&conn, true).await?;
     audit_logs::Model::create_table(&conn, true).await?;
