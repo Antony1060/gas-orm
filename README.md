@@ -54,4 +54,4 @@ fn main() {
 - [x] Migrations diff ordering
 - [x] Implement all diffs for migrations
 - [x] Mirations cli `migrate` command
-- [ ] Migrations on library side
+- [x] Migrations on library side
