@@ -41,9 +41,17 @@ async fn main() -> GasResult<()> {
 }
 ```
 
+#### Additionally add this in your build.rs to make compilations more correct sometimes
+
+```rs
+fn main() {
+    println!("cargo:rerun-if-changed=migrations/");
+}
+```
+
 ### Very short term todo
 
 - [x] Migrations diff ordering
 - [x] Implement all diffs for migrations
-- [ ] Mirations cli `migrate` command
+- [x] Mirations cli `migrate` command
 - [ ] Migrations on library side
