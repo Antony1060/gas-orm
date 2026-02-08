@@ -5,7 +5,7 @@ use crate::sync::MigrationScript;
 use crate::util::styles::{STYLE_ERR, STYLE_OK, STYLE_WARN};
 use gas::connection::PgConnection;
 use gas::error::GasError;
-use gas::migrations::{GasMigratorError, MigrateCount, MigrationsDirection, Migrator};
+use gas::migrations::{GasMigratorError, MigrateCount, MigrateDirection, Migrator};
 use gas_shared::migrations::parse_migrations_from_dir;
 use std::borrow::Cow;
 use tracing::instrument::WithSubscriber;
@@ -33,9 +33,9 @@ async fn do_migrate<'a>(
     options: &MigrateOptions,
 ) -> GasCliResult<()> {
     let direction = if options.back {
-        MigrationsDirection::Backward
+        MigrateDirection::Backward
     } else {
-        MigrationsDirection::Forward
+        MigrateDirection::Forward
     };
 
     let migrate_count = options.count.clone().unwrap_or(MigrateCount::All);

@@ -5,7 +5,7 @@ use gas::eq::{PgEq, PgEqNone, PgEqTime};
 use gas::error::GasError;
 use gas::group::GroupSorting;
 use gas::helpers::OptionHelperOps;
-use gas::migrations::{MigrateCount, MigrationsDirection};
+use gas::migrations::{MigrateCount, MigrateDirection};
 use gas::types::{Local, NaiveDate, NaiveTime, TimeDelta, Utc};
 use gas::{GasResult, ModelOps, RelationOps};
 use rust_decimal::Decimal;
@@ -26,7 +26,7 @@ async fn main() -> GasResult<()> {
     let migrator = gas::load_migrations!("./migrations")?;
 
     migrator
-        .run_migrations(&conn, MigrationsDirection::Forward, MigrateCount::All)
+        .run_migrations(&conn, MigrateDirection::Forward, MigrateCount::All)
         .await?;
 
     if true {

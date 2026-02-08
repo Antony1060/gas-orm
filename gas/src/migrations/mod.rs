@@ -31,12 +31,12 @@ impl<'a> MigrationScript<'a> {
 }
 
 #[derive(Clone, Eq, PartialEq)]
-pub enum MigrationsDirection {
+pub enum MigrateDirection {
     Forward,
     Backward,
 }
 
-impl Display for MigrationsDirection {
+impl Display for MigrateDirection {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
             Self::Forward => write!(f, "forward"),
@@ -105,7 +105,7 @@ impl<'a> Migrator<'a> {
     pub async fn run_migrations(
         &self,
         connection: &PgConnection,
-        direction: MigrationsDirection,
+        direction: MigrateDirection,
         count: MigrateCount,
     ) -> GasResult<()> {
         let steps = self
@@ -134,16 +134,13 @@ impl<'a> Migrator<'a> {
     pub async fn plan_migrations(
         &self,
         connection: &PgConnection,
-        direction: MigrationsDirection,
+        direction: MigrateDirection,
         count: MigrateCount,
     ) -> GasResult<Option<Vec<MigrationStep<'a>>>> {
         migrate_database(
             connection,
             &self.scripts,
-            count.as_signed_count(
-                direction == MigrationsDirection::Backward,
-                self.scripts.len(),
-            ),
+            count.as_signed_count(direction == MigrateDirection::Backward, self.scripts.len()),
             direction,
         )
         .await
@@ -153,7 +150,7 @@ impl<'a> Migrator<'a> {
 pub struct MigrationStep<'a> {
     connection: PgConnection,
     migration: MigrationScript<'a>,
-    direction: MigrationsDirection,
+    direction: MigrateDirection,
     pub num: i64,
     update_count: i64,
 }
@@ -179,11 +176,11 @@ impl<'a> MigrationStep<'a> {
 async fn handle_one_migration(
     transaction: &mut PgTransaction,
     migration: MigrationScript<'_>,
-    direction: &MigrationsDirection,
+    direction: &MigrateDirection,
 ) -> GasResult<()> {
     let full_sql = match direction {
-        MigrationsDirection::Forward => migration.forward,
-        MigrationsDirection::Backward => migration.backward,
+        MigrateDirection::Forward => migration.forward,
+        MigrateDirection::Backward => migration.backward,
     };
 
     let statements = full_sql.split(';');
@@ -215,12 +212,12 @@ async fn migrate_database<'a>(
     connection: &PgConnection,
     migrations: &[MigrationScript<'a>],
     count: i64,
-    direction: MigrationsDirection,
+    direction: MigrateDirection,
 ) -> GasResult<Option<Vec<MigrationStep<'a>>>> {
     assert_ne!(count, 0);
     assert!(
-        (count > 0 && direction == MigrationsDirection::Forward)
-            || (count < 0 && direction == MigrationsDirection::Backward)
+        (count > 0 && direction == MigrateDirection::Forward)
+            || (count < 0 && direction == MigrateDirection::Backward)
     );
 
     let current = {
@@ -243,7 +240,7 @@ async fn migrate_database<'a>(
         ));
     }
 
-    if current.count == migrations.len() as i64 && direction == MigrationsDirection::Forward {
+    if current.count == migrations.len() as i64 && direction == MigrateDirection::Forward {
         return Ok(None);
     }
 
@@ -255,7 +252,7 @@ async fn migrate_database<'a>(
         ));
     }
 
-    if current.count == 0 && direction == MigrationsDirection::Backward {
+    if current.count == 0 && direction == MigrateDirection::Backward {
         return Err(GasError::MigratorError(
             GasMigratorError::NoMigrationsToRun {
                 detail: Cow::from("state at 0 while requested direction is backwards"),
@@ -265,11 +262,11 @@ async fn migrate_database<'a>(
 
     let mut start_idx = current.count;
     let mut end_idx = start_idx + count;
-    if direction == MigrationsDirection::Backward {
+    if direction == MigrateDirection::Backward {
         start_idx -= 1;
     }
 
-    if direction == MigrationsDirection::Forward {
+    if direction == MigrateDirection::Forward {
         end_idx -= 1;
     }
 
