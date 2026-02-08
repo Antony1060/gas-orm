@@ -30,7 +30,7 @@ pub enum GasError {
     #[error("entity doesn't exist")]
     EntityNotFound,
 
-    #[error("{0}")]
+    #[error(transparent)]
     SharedError(GasSharedError),
 }
 

@@ -141,7 +141,7 @@
           "Raw": "BIGINT"
         },
         "default_sql": null,
-        "flags": 2,
+        "flags": 18,
         "index": 0
       },
       {
@@ -151,7 +151,7 @@
           "Raw": "TEXT"
         },
         "default_sql": null,
-        "flags": 0,
+        "flags": 8,
         "index": 1
       },
       {
@@ -168,34 +168,34 @@
         "table_name": "ddcc",
         "name": "var3",
         "pg_type": {
-          "ForeignKey": {
-            "key_sql_type": "BIGINT",
-            "target_table_name": "ccdd",
-            "target_column_name": "id"
-          }
+          "Raw": "BIGINT"
         },
-        "default_sql": null,
-        "flags": 32,
+        "default_sql": "0",
+        "flags": 1,
         "index": 3
       },
       {
         "table_name": "ddcc",
-        "name": "var4",
+        "name": "var6",
         "pg_type": {
-          "Raw": "INTEGER"
+          "Raw": "TEXT"
         },
         "default_sql": null,
-        "flags": 8,
+        "flags": 0,
         "index": 4
       },
       {
         "table_name": "ddcc",
         "name": "var5",
         "pg_type": {
-          "Raw": "BIGINT"
+          "ForeignKey": {
+            "key_sql_type": "BIGINT",
+            "target_table_name": "bb",
+            "target_column_name": "id"
+          }
         },
         "default_sql": null,
-        "flags": 0,
+        "flags": 32,
         "index": 5
       }
     ],

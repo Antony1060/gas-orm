@@ -50,7 +50,6 @@ fn make_graph<'a>(
     for (index, diff) in diffs.iter().enumerate() {
         for field in diff.depends_on() {
             let Some(val) = provides_map.get(&field) else {
-                dbg!(field);
                 return Err(GasCliError::MigrationsGenerationError {
                     reason: Cow::from("failed to change graph: required dependency missing"),
                 });

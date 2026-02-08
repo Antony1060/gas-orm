@@ -34,9 +34,12 @@ impl<'a> ModelChangeActor for AddUniqueModelActor<'a> {
         ))
     }
 
+    // NOTE: may have unintended consequences for indexed columns
+    //  but that's currently not supported so oh well
     fn backward_sql(&self) -> GasCliResult<SqlQuery> {
         Ok(format!(
-            "ALTER TABLE {} DROP CONSTRAINT {}_unq",
+            "ALTER TABLE {} DROP CONSTRAINT {}_{}_key",
+            self.field.table_name.as_ref(),
             self.field.table_name.as_ref(),
             self.field.name.as_ref()
         ))

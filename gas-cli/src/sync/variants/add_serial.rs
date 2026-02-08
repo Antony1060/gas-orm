@@ -36,7 +36,7 @@ impl<'a> ModelChangeActor for AddSerialModelActor<'a> {
         sql.push_str(&format!("CREATE SEQUENCE {};\n", self._seq_name));
 
         sql.push_str(&format!(
-            "ALTER TABLE {} ALTER COLUMN {} SET DEFAULT (next_val('{}'));\n",
+            "ALTER TABLE {} ALTER COLUMN {} SET DEFAULT (nextval('{}'));\n",
             self.field.table_name.as_ref(),
             self.field.name.as_ref(),
             self._seq_name

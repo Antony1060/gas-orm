@@ -5,12 +5,12 @@ use crate::{FieldFlag, GasResult};
 use std::marker::PhantomData;
 
 // struct is kinda useless ngl
-pub(crate) struct CreateOp<T: ModelMeta> {
+pub(crate) struct CreateTableOp<T: ModelMeta> {
     ignore_existing: bool,
     _marker: PhantomData<T>,
 }
 
-impl<T: ModelMeta> CreateOp<T> {
+impl<T: ModelMeta> CreateTableOp<T> {
     pub(crate) fn new(if_not_exists: bool) -> Self {
         Self {
             ignore_existing: if_not_exists,

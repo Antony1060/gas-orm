@@ -5,10 +5,9 @@ const SCRIPT_SEPARATOR: &str = "-- GAS_ORM(forward_backward_separator)";
 
 // TODO: safety
 pub fn parse_migrations_from_dir(
-    project_root: &str,
-    dir: &str,
+    migrations_dir: PathBuf,
 ) -> Result<Vec<(String, String)>, GasSharedError> {
-    let scripts_path = PathBuf::from(project_root).join(dir).join("scripts");
+    let scripts_path = migrations_dir.join("scripts");
 
     if !scripts_path.exists() || !scripts_path.is_dir() {
         return Err(GasSharedError::MigrationsNotDefined);

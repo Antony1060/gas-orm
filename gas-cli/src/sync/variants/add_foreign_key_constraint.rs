@@ -47,7 +47,8 @@ impl<'a> ModelChangeActor for AddForeignKeyModelActor<'a> {
 
     fn backward_sql(&self) -> GasCliResult<SqlQuery> {
         Ok(format!(
-            "ALTER TABLE DROP CONSTRAINT {}_{}_fkey",
+            "ALTER TABLE {} DROP CONSTRAINT {}_{}_fkey",
+            self.field.table_name.as_ref(),
             self.field.table_name.as_ref(),
             self.field.name.as_ref()
         ))

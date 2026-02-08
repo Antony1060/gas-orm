@@ -7,6 +7,7 @@ mod graph;
 pub mod helpers;
 pub mod variants;
 
+#[derive(Clone, Debug)]
 pub struct MigrationScript {
     pub forward: String,
     pub backward: String,

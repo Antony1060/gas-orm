@@ -133,3 +133,15 @@ impl PgExecutor for &mut PgTransaction {
         self.connection.clone()
     }
 }
+
+pub trait PgRawExecutor: PgExecutor {
+    fn execute_raw(
+        self,
+        sql: SqlQuery<'_>,
+        params: &[PgParam],
+    ) -> impl Future<Output = GasResult<Vec<Row>>> {
+        self.execute(sql, params)
+    }
+}
+
+impl<T: PgExecutor> PgRawExecutor for T {}

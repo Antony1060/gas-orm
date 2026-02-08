@@ -13,7 +13,8 @@ pub fn invert<'a>(other: Box<dyn ModelChangeActor + 'a>) -> Box<dyn ModelChangeA
     InverseChangeActor::new_boxed(other)
 }
 
-enum ChangeDirection {
+#[derive(Eq, PartialEq)]
+pub enum ChangeDirection {
     Forward,
     Backward,
 }

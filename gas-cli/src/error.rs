@@ -1,4 +1,5 @@
 use crate::manifest::GasManifestError;
+use gas_shared::error::GasSharedError;
 use std::borrow::Cow;
 use std::path::PathBuf;
 
@@ -47,6 +48,16 @@ pub enum GasCliError {
 
     #[error("failed to generate a migration: {reason}")]
     MigrationsGenerationError { reason: Cow<'static, str> },
+
+    #[error("expected environment variable: {0}")]
+    MissingEnvError(Cow<'static, str>),
+
+    // lol
+    #[error("database error: {0}")]
+    OrmError(#[from] gas::error::GasError),
+
+    #[error(transparent)]
+    SharedError(#[from] GasSharedError),
 
     #[error("general failure")]
     GeneralFailure,

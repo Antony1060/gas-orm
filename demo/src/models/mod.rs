@@ -20,15 +20,17 @@ pub struct Person {
 #[gas::model(table_name = "ddcc")]
 pub struct ddcc {
     #[primary_key]
+    #[serial]
     pub id: i64,
+    #[unique]
     pub var1: String,
     #[default(fn = String::new(), sql = r#"''"#)]
     pub var2: String,
-    #[relation(field = ccdd::id)]
-    pub var3: Relation<i64, ccdd::Model>,
-    #[unique]
-    pub var4: i32,
-    pub var5: i64,
+    #[default(fn = Some(0), sql = r#"0"#)]
+    pub var3: Option<i64>,
+    pub var6: String,
+    #[relation(field = bb::id)]
+    pub var5: Relation<i64, bb::Model>,
 }
 
 #[gas::model(table_name = "ccdd")]

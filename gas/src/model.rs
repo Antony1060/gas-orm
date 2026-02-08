@@ -2,7 +2,7 @@ use crate::condition::EqExpression;
 use crate::connection::PgExecutor;
 use crate::field::FieldMeta;
 use crate::internals::{AsPgType, SqlStatement};
-use crate::ops::create::CreateOp;
+use crate::ops::create_table::CreateTableOp;
 use crate::ops::delete::DeleteOp;
 use crate::ops::insert::InsertOp;
 use crate::ops::select::SelectBuilder;
@@ -48,7 +48,7 @@ pub trait ModelOps: ModelMeta {
         ctx: E,
         ignore_existing: bool,
     ) -> impl Future<Output = GasResult<()>> {
-        CreateOp::<Self>::new(ignore_existing).run(ctx)
+        CreateTableOp::<Self>::new(ignore_existing).run(ctx)
     }
 
     // consume self and return an entry that is inserted

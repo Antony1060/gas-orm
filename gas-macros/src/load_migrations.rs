@@ -3,6 +3,7 @@ use gas_shared::migrations::parse_migrations_from_dir;
 use proc_macro::TokenStream;
 use proc_macro2::Span;
 use quote::quote;
+use std::path::PathBuf;
 use syn::LitStr;
 
 pub fn load_migrations_impl(input: TokenStream) -> Result<proc_macro2::TokenStream, syn::Error> {
@@ -11,7 +12,8 @@ pub fn load_migrations_impl(input: TokenStream) -> Result<proc_macro2::TokenStre
 
     let migrations_dir: LitStr = syn::parse(input)?;
 
-    let scripts = parse_migrations_from_dir(&project_root, &migrations_dir.value());
+    let scripts =
+        parse_migrations_from_dir(PathBuf::from(project_root).join(migrations_dir.value()));
 
     match scripts {
         Ok(scripts) => {
