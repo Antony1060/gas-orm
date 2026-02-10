@@ -31,7 +31,6 @@ impl<Fk: AsPgType + 'static, Model: ModelMeta> RelationTypeOps for Option<Relati
 // NOTE: a foreign key must have uniqueness, so it must have a unique constraint or
 //  be a primary key unless it's part of a composite primary key (i.e. there's only one)
 #[derive(Debug, Clone)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum FullRelation<Fk: AsPgType + 'static, Model: ModelMeta, const FIELD_INDEX: usize> {
     // this is cursed
     ForeignKey(Fk),
@@ -228,5 +227,23 @@ where
                 .map(|model| FullRelation::Loaded(model))
                 .unwrap_or_else(|_| FullRelation::ForeignKey(fk))
         }))
+    }
+}
+
+#[cfg(feature = "serde")]
+impl<Fk: AsPgType, Model: ModelMeta, const FIELD_INDEX: usize> serde::Serialize
+    for FullRelation<Fk, Model, FIELD_INDEX>
+where
+    Fk: serde::Serialize,
+    Model: serde::Serialize,
+{
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        match self {
+            FullRelation::ForeignKey(key) => key.serialize(serializer),
+            FullRelation::Loaded(model) => model.serialize(serializer),
+        }
     }
 }

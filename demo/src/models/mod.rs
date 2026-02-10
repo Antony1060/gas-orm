@@ -11,6 +11,9 @@ pub struct Author {
     pub email: String,
     pub bio: String,
 
+    // since this is always eager (and also always O(n) queries for n returned entries),
+    //  consider not including in most structs; here just for demo purposes
+    #[serde(skip_deserializing)]
     #[relation(inverse = book::author)]
     pub books: Vec<book::Model>,
 }
@@ -39,6 +42,7 @@ pub struct Book {
     pub published_year: i32,
     #[default(fn = 0, sql = r#"0"#)]
     pub page_count: i32,
+    #[serde(skip_deserializing)]
     #[column(name = "author_fk")]
     #[relation(field = author::id)]
     pub author: Relation<i64, author::Model>,
@@ -54,8 +58,8 @@ pub struct Review {
     pub reviewer_name: String,
     pub rating: i32,
     pub content: String,
+    #[serde(skip_deserializing)]
     #[column(name = "book_fk")]
     #[relation(field = book::id)]
-    #[serde(skip)]
     pub book: Relation<i64, book::Model>,
 }
