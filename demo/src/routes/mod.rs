@@ -12,3 +12,4 @@ pub fn api() -> Router {
         .merge(categories::router())
         .merge(reviews::router())
 }
+

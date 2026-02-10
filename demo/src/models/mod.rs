@@ -2,6 +2,7 @@ use gas::Relation;
 
 #[gas::model(table_name = "authors")]
 #[derive(Debug, serde::Serialize, serde::Deserialize, utoipa::ToSchema)]
+#[schema(as = Author)]
 pub struct Author {
     #[primary_key]
     #[serial]
@@ -12,6 +13,7 @@ pub struct Author {
 
 #[gas::model(table_name = "categories")]
 #[derive(Debug, serde::Serialize, serde::Deserialize, utoipa::ToSchema)]
+#[schema(as = Category)]
 pub struct Category {
     #[primary_key]
     #[serial]
@@ -23,6 +25,7 @@ pub struct Category {
 
 #[gas::model(table_name = "books")]
 #[derive(Debug, serde::Serialize, serde::Deserialize, utoipa::ToSchema)]
+#[schema(as = Book)]
 pub struct Book {
     #[primary_key]
     #[serial]
@@ -40,6 +43,7 @@ pub struct Book {
 
 #[gas::model(table_name = "reviews")]
 #[derive(Debug, serde::Serialize, serde::Deserialize, utoipa::ToSchema)]
+#[schema(as = Review)]
 pub struct Review {
     #[primary_key]
     #[serial]
