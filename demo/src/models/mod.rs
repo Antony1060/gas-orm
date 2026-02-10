@@ -8,6 +8,8 @@ pub struct Author {
     #[serial]
     pub id: i64,
     pub name: String,
+    #[default(fn = String::new(), sql = r#"''"#)]
+    pub email: String,
     pub bio: String,
 }
 
@@ -34,6 +36,8 @@ pub struct Book {
     #[unique]
     pub isbn: String,
     pub published_year: i32,
+    #[default(fn = 0, sql = r#"0"#)]
+    pub page_count: i32,
     #[column(name = "author_fk")]
     #[relation(field = author::id)]
     // TODO: serde compatibility for relations
@@ -48,6 +52,8 @@ pub struct Review {
     #[primary_key]
     #[serial]
     pub id: i64,
+    #[default(fn = String::new(), sql = r#"''"#)]
+    pub reviewer_name: String,
     pub rating: i32,
     pub content: String,
     #[column(name = "book_fk")]

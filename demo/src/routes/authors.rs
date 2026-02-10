@@ -9,12 +9,14 @@ use gas::ModelOps;
 #[derive(serde::Deserialize, utoipa::ToSchema)]
 pub struct CreateAuthorRequest {
     pub name: String,
+    pub email: String,
     pub bio: String,
 }
 
 #[derive(serde::Deserialize, utoipa::ToSchema)]
 pub struct UpdateAuthorRequest {
     pub name: Option<String>,
+    pub email: Option<String>,
     pub bio: Option<String>,
 }
 
@@ -80,6 +82,7 @@ async fn create(
 ) -> DemoResult<(axum::http::StatusCode, Json<author::Model>)> {
     let mut new_author = author::Def! {
         name: req.name,
+        email: req.email,
         bio: req.bio,
     };
 
@@ -114,6 +117,10 @@ async fn update(
 
     if let Some(name) = req.name {
         model.name = name;
+    }
+
+    if let Some(email) = req.email {
+        model.email = email;
     }
 
     if let Some(bio) = req.bio {

@@ -1,9 +1,10 @@
-use crate::error::GasCliResult;
+use crate::error::{GasCliError, GasCliResult};
 use crate::sync::{FieldDependency, FieldState, ModelChangeActor};
 use crate::util;
 use crate::util::sql_query::SqlQuery;
 use gas_shared::link::{PortableFieldMeta, PortablePgType};
 use gas_shared::FieldFlag;
+use std::borrow::Cow;
 use std::fmt::{Display, Formatter};
 
 pub struct AddColumnModelActor<'a> {
@@ -29,6 +30,14 @@ impl<'a> Display for AddColumnModelActor<'a> {
 
 impl<'a> ModelChangeActor for AddColumnModelActor<'a> {
     fn forward_sql(&self) -> GasCliResult<SqlQuery> {
+        if !self.field.flags.has_flag(FieldFlag::Nullable) && self.field.default_sql.is_none() {
+            return Err(GasCliError::MigrationsGenerationError {
+                reason: Cow::from(
+                    "can not add a not null column without a defined default behaviour",
+                ),
+            });
+        };
+
         let mut sql = SqlQuery::from("ALTER TABLE ");
         let field = &self.field;
 

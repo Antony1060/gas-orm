@@ -9,6 +9,7 @@ use gas::{FullRelation, ModelOps};
 
 #[derive(serde::Deserialize, utoipa::ToSchema)]
 pub struct CreateReviewRequest {
+    pub reviewer_name: String,
     pub rating: i32,
     pub content: String,
     pub book_id: i64,
@@ -16,6 +17,7 @@ pub struct CreateReviewRequest {
 
 #[derive(serde::Deserialize, utoipa::ToSchema)]
 pub struct UpdateReviewRequest {
+    pub reviewer_name: Option<String>,
     pub rating: Option<i32>,
     pub content: Option<String>,
 }
@@ -111,6 +113,7 @@ async fn create(
         .ok_or(HttpError::NotFound)?;
 
     let mut model = review::Def! {
+        reviewer_name: req.reviewer_name,
         rating: req.rating,
         content: req.content,
         book: FullRelation::Loaded(book),
@@ -141,6 +144,10 @@ async fn update(
     let mut model = review::Model::find_by_key(&tx, id)
         .await?
         .ok_or(HttpError::NotFound)?;
+
+    if let Some(reviewer_name) = req.reviewer_name {
+        model.reviewer_name = reviewer_name;
+    }
 
     if let Some(rating) = req.rating {
         model.rating = rating;

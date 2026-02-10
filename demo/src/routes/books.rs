@@ -12,6 +12,7 @@ pub struct CreateBookRequest {
     pub title: String,
     pub isbn: String,
     pub published_year: i32,
+    pub page_count: i32,
     pub author_id: i64,
 }
 
@@ -20,6 +21,7 @@ pub struct UpdateBookRequest {
     pub title: Option<String>,
     pub isbn: Option<String>,
     pub published_year: Option<i32>,
+    pub page_count: Option<i32>,
     pub author_id: Option<i64>,
 }
 
@@ -117,6 +119,7 @@ async fn create(
         title: req.title,
         isbn: req.isbn,
         published_year: req.published_year,
+        page_count: req.page_count,
         author: FullRelation::ForeignKey(req.author_id),
     };
 
@@ -156,6 +159,10 @@ async fn update(
 
     if let Some(year) = req.published_year {
         model.published_year = year;
+    }
+
+    if let Some(page_count) = req.page_count {
+        model.page_count = page_count;
     }
 
     if let Some(author_id) = req.author_id {

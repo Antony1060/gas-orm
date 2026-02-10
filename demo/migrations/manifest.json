@@ -24,13 +24,23 @@
       },
       {
         "table_name": "authors",
+        "name": "email",
+        "pg_type": {
+          "Raw": "TEXT"
+        },
+        "default_sql": "''",
+        "flags": 0,
+        "index": 2
+      },
+      {
+        "table_name": "authors",
         "name": "bio",
         "pg_type": {
           "Raw": "TEXT"
         },
         "default_sql": null,
         "flags": 0,
-        "index": 2
+        "index": 3
       }
     ],
     "books": [
@@ -76,6 +86,16 @@
       },
       {
         "table_name": "books",
+        "name": "page_count",
+        "pg_type": {
+          "Raw": "INTEGER"
+        },
+        "default_sql": "0",
+        "flags": 0,
+        "index": 4
+      },
+      {
+        "table_name": "books",
         "name": "author_fk",
         "pg_type": {
           "ForeignKey": {
@@ -86,7 +106,7 @@
         },
         "default_sql": null,
         "flags": 32,
-        "index": 4
+        "index": 5
       }
     ],
     "categories": [
@@ -134,13 +154,23 @@
       },
       {
         "table_name": "reviews",
+        "name": "reviewer_name",
+        "pg_type": {
+          "Raw": "TEXT"
+        },
+        "default_sql": "''",
+        "flags": 0,
+        "index": 1
+      },
+      {
+        "table_name": "reviews",
         "name": "rating",
         "pg_type": {
           "Raw": "INTEGER"
         },
         "default_sql": null,
         "flags": 0,
-        "index": 1
+        "index": 2
       },
       {
         "table_name": "reviews",
@@ -150,7 +180,7 @@
         },
         "default_sql": null,
         "flags": 0,
-        "index": 2
+        "index": 3
       },
       {
         "table_name": "reviews",
@@ -164,7 +194,7 @@
         },
         "default_sql": null,
         "flags": 32,
-        "index": 3
+        "index": 4
       }
     ]
   }
