@@ -16,6 +16,12 @@ mod sync;
 pub struct SyncOptions {
     #[arg(long, default_value = "false", help = "generate a manual migration")]
     manual: bool,
+
+    #[arg(
+        long,
+        help = "specify the migration name ahead of time and skip the prompt"
+    )]
+    name: Option<String>,
 }
 
 #[derive(Debug, Clone, clap::Parser)]

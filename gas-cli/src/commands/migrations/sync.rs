@@ -60,11 +60,15 @@ pub async fn handle_sync(
     }
     println!();
 
-    let name: String = Input::new()
-        .with_prompt("Migration script name")
-        .interact_text_on(&Term::stdout())?;
+    let name = if let Some(ref name) = options.name {
+        name
+    } else {
+        &Input::new()
+            .with_prompt("Migration script name")
+            .interact_text_on(&Term::stdout())?
+    };
 
-    let script_path = controller.save_script(&name, &script).await?;
+    let script_path = controller.save_script(name, &script).await?;
 
     let _ = controller.save_fields(state.fields).await?;
 
