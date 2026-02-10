@@ -13,6 +13,8 @@ struct ModelArgs {
     #[allow(dead_code)]
     table_name: String,
     mod_name: Option<String>,
+    #[allow(dead_code)]
+    exclude_link_meta: Option<bool>,
 }
 
 #[derive(Debug, FromMeta)]

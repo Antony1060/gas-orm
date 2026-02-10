@@ -22,8 +22,7 @@ pub struct ddcc {
     #[primary_key]
     #[serial]
     pub id: i64,
-    #[unique]
-    pub var1: String,
+    pub var1: i64,
     #[default(fn = String::new(), sql = r#"''"#)]
     pub var2: String,
     #[default(fn = Some(0), sql = r#"0"#)]
@@ -38,6 +37,7 @@ pub struct ccdd {
     #[primary_key]
     pub id: i64,
     pub var: String,
+    pub var2: i64,
 }
 
 #[gas::model(table_name = "aa")]

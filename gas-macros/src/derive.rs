@@ -16,9 +16,9 @@ use syn::{Field, Index, Meta, MetaList};
 #[darling(attributes(__gas_meta))]
 struct ModelArgs {
     table_name: String,
-
     #[allow(dead_code)]
     mod_name: Option<String>,
+    exclude_link_meta: Option<bool>,
 }
 
 #[derive(Debug, FromMeta)]
@@ -36,6 +36,7 @@ pub fn model_impl(_input: TokenStream) -> Result<proc_macro2::TokenStream, syn::
     // TODO (low priority): extract these magic string constants to some module
     let virtuals =
         find_fields_with_attr(&input.fields.iter().cloned().collect_vec(), "__gas_virtual");
+
     let real_fields = input
         .fields
         .iter()
@@ -96,6 +97,16 @@ pub fn model_impl(_input: TokenStream) -> Result<proc_macro2::TokenStream, syn::
 
     let from_row_impl = generate_from_row(&ctx)?;
 
+    let exclude_link_meta = meta.exclude_link_meta.unwrap_or(false);
+    let link_meta_fields = (!exclude_link_meta).then(|| {
+        quote! {
+            #[unsafe(link_section = ".__gas_internals,__fields")]
+            #[used]
+            static FIELDS: [gas::link::PortableFieldMeta; #field_list_len] =
+                [#(gas::link::PortableFieldMeta::from_unchecked(#field_list.meta)),*];
+        }
+    });
+
     Ok(quote! {
         #(#field_consts)*
 
@@ -148,10 +159,7 @@ pub fn model_impl(_input: TokenStream) -> Result<proc_macro2::TokenStream, syn::
             #[doc(hidden)]
             pub struct Inner;
 
-            #[unsafe(link_section = ".__gas_internals,__fields")]
-            #[used]
-            static FIELDS: [gas::link::PortableFieldMeta; #field_list_len] =
-                [#(gas::link::PortableFieldMeta::from_unchecked(#field_list.meta)),*];
+            #link_meta_fields
 
             impl gas::ModelSidecar for Inner {}
 

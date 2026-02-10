@@ -59,7 +59,11 @@ mod gas {
 
 // visibility of Model struct is a little weird so we pub(super)
 // NOTE: maybe add some hashing things idk
-#[gas_macros::model(table_name = "__gas_orm_migrations_meta", mod_name = "meta")]
+#[gas_macros::model(
+    table_name = "__gas_orm_migrations_meta",
+    mod_name = "meta",
+    exclude_link_meta = true
+)]
 pub(super) struct MigrationsMeta {
     pub(super) count: i64,
 }

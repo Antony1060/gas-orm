@@ -131,6 +131,16 @@
         "default_sql": null,
         "flags": 0,
         "index": 1
+      },
+      {
+        "table_name": "ccdd",
+        "name": "var2",
+        "pg_type": {
+          "Raw": "BIGINT"
+        },
+        "default_sql": null,
+        "flags": 0,
+        "index": 2
       }
     ],
     "ddcc": [
@@ -148,10 +158,10 @@
         "table_name": "ddcc",
         "name": "var1",
         "pg_type": {
-          "Raw": "TEXT"
+          "Raw": "BIGINT"
         },
         "default_sql": null,
-        "flags": 8,
+        "flags": 0,
         "index": 1
       },
       {

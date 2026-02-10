@@ -28,13 +28,17 @@ struct ColumnSplit<'a> {
     old: Vec<&'a PortableFieldMeta>,
 }
 
+// returns true if try_type actually changed the type (i.e. dropped the column and added it)
+//  e.g. user removes unique property and changes type
+//  the add column will already apply the new properties when adding the column
+//  so further try_* calls don't need to happend
 fn try_type<'a>(
     diffs: &mut Vec<Box<dyn ModelChangeActor + 'a>>,
     old: &'a PortableFieldMeta,
     new: &'a PortableFieldMeta,
-) {
+) -> bool {
     if old.pg_type == new.pg_type {
-        return;
+        return false;
     }
 
     // promotion to a foreign key
@@ -42,7 +46,7 @@ fn try_type<'a>(
         && key_sql_type.as_ref() == old.pg_type.as_sql_type(false)
     {
         diffs.push(AddForeignKeyModelActor::new_boxed(new));
-        return;
+        return false;
     }
 
     // demotion from foreign key
@@ -52,7 +56,7 @@ fn try_type<'a>(
         diffs.push(helpers::diff::invert(AddForeignKeyModelActor::new_boxed(
             old,
         )));
-        return;
+        return false;
     }
 
     if new.flags.has_flag(FieldFlag::PrimaryKey) || old.flags.has_flag(FieldFlag::PrimaryKey) {
@@ -67,7 +71,8 @@ fn try_type<'a>(
         )
     }
 
-    diffs.push(UpdateColumnTypeModelActor::new_boxed(old, new))
+    diffs.push(UpdateColumnTypeModelActor::new_boxed(old, new));
+    true
 }
 
 fn try_default<'a>(
@@ -199,7 +204,10 @@ fn handle_common_column<'a>(
 ) {
     assert_eq!(old_column.name, new_column.name);
 
-    try_type(diffs, old_column, new_column);
+    if try_type(diffs, old_column, new_column) {
+        return;
+    }
+
     try_default(diffs, old_column, new_column);
     try_nullable(diffs, old_column, new_column);
     try_serial(diffs, old_column, new_column);
