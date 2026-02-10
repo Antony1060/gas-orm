@@ -53,6 +53,14 @@ pub fn model_impl(_input: TokenStream) -> Result<proc_macro2::TokenStream, syn::
     let serials = find_fields_with_attr(&real_fields, "serial");
     let uniques = find_fields_with_attr(&real_fields, "unique");
 
+    // TODO: fields with only primary keys will error here
+    if primary_keys.len() == real_fields.len() {
+        return Err(syn::Error::new(
+            Span::call_site(),
+            "The struct is either empty or only made from primary keys, not supported fow now",
+        ));
+    }
+
     let table_name = meta.table_name;
 
     let ctx = ModelCtx {

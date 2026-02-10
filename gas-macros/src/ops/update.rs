@@ -1,9 +1,7 @@
 use crate::ops::{make_all_returning, make_params};
 use crate::{FieldNames, ModelCtx};
-use proc_macro2::Span;
 use quote::quote;
 
-// TODO: fields with only primary keys will error here
 pub(crate) fn gen_update_sql_fn_tokens(
     ctx: &ModelCtx,
 ) -> Result<proc_macro2::TokenStream, syn::Error> {
@@ -14,13 +12,6 @@ pub(crate) fn gen_update_sql_fn_tokens(
                 .map(|it| it.to_string())
                 .any(|it| *field_name == it)
         });
-
-    if normal_fields.is_empty() {
-        return Err(syn::Error::new(
-            Span::call_site(),
-            "The struct is only made from primary keys",
-        ));
-    }
 
     let where_statement: Option<String> = pk_fields
         .iter()
