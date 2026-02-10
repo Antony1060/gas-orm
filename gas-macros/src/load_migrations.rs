@@ -28,7 +28,7 @@ pub fn load_migrations_impl(input: TokenStream) -> Result<proc_macro2::TokenStre
             })
         }
         Err(GasSharedError::MigrationsNotDefined) => Ok(quote! {
-            Err::<gas::migrations::Migrator<0>, gas::error::GasError>(
+            Err::<gas::migrations::Migrator, gas::error::GasError>(
                 gas::error::GasError::SharedError(gas::error::GasSharedError::MigrationsNotDefined)
             )
         }),

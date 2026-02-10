@@ -36,6 +36,10 @@ pub enum GasError {
 
     #[error(transparent)]
     SharedError(GasSharedError),
+
+    #[cfg(feature = "axum")]
+    #[error("axum extension: perhaps you forgot layer(gas::extra::axum::extension())")]
+    AxumNoConnectionExtensionSet,
 }
 
 impl From<GasSharedError> for GasError {

@@ -1,27 +1,24 @@
 use tracing::Level;
-use tracing_subscriber::{EnvFilter, FmtSubscriber};
+use tracing_subscriber::layer::SubscriberExt;
+use tracing_subscriber::util::SubscriberInitExt;
+use tracing_subscriber::EnvFilter;
 
-pub fn setup_tracing(log_lib: bool) {
-    let filter = if log_lib {
-        EnvFilter::new(format!("demo={},gas={}", Level::DEBUG, Level::TRACE))
+pub fn setup_tracing(log_gas: bool) {
+    let base_log = format!(
+        "{}={},tower_http={}",
+        env!("CARGO_CRATE_NAME"),
+        Level::DEBUG,
+        Level::DEBUG,
+    );
+
+    let filter = if log_gas {
+        EnvFilter::new(format!("{base_log},gas={}", Level::TRACE))
     } else {
-        EnvFilter::new(format!("demo={},gas={}", Level::DEBUG, Level::INFO))
+        EnvFilter::new(format!("{base_log},gas={}", Level::INFO))
     };
 
-    let subscriber = FmtSubscriber::builder()
-        .with_env_filter(filter)
-        // .pretty()
-        .finish();
-
-    tracing::subscriber::set_global_default(subscriber).expect("setting default subscriber failed");
-}
-
-#[macro_export]
-macro_rules! tracing_dbg {
-    ($ex:expr) => {
-        tracing::debug!(value = %format!("{:#?}", $ex), "dbg");
-    };
-    ($prefix:literal, $ex:expr) => {
-        tracing::debug!(value = %format!("{:#?}", $ex), $prefix);
-    };
+    tracing_subscriber::registry()
+        .with(filter)
+        .with(tracing_subscriber::fmt::layer())
+        .init();
 }

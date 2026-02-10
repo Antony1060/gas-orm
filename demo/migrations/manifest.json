@@ -1,9 +1,9 @@
 {
   "version": "V1_0_0",
   "state": {
-    "aa": [
+    "authors": [
       {
-        "table_name": "aa",
+        "table_name": "authors",
         "name": "id",
         "pg_type": {
           "Raw": "BIGINT"
@@ -13,33 +13,29 @@
         "index": 0
       },
       {
-        "table_name": "aa",
-        "name": "first_name",
+        "table_name": "authors",
+        "name": "name",
         "pg_type": {
           "Raw": "TEXT"
         },
-        "default_sql": "'unknown'",
+        "default_sql": null,
         "flags": 0,
         "index": 1
       },
       {
-        "table_name": "aa",
-        "name": "bb_fk",
+        "table_name": "authors",
+        "name": "bio",
         "pg_type": {
-          "ForeignKey": {
-            "key_sql_type": "BIGINT",
-            "target_table_name": "bb",
-            "target_column_name": "id"
-          }
+          "Raw": "TEXT"
         },
         "default_sql": null,
-        "flags": 32,
+        "flags": 0,
         "index": 2
       }
     ],
-    "audit_logs": [
+    "books": [
       {
-        "table_name": "audit_logs",
+        "table_name": "books",
         "name": "id",
         "pg_type": {
           "Raw": "BIGINT"
@@ -49,291 +45,7 @@
         "index": 0
       },
       {
-        "table_name": "audit_logs",
-        "name": "created_at",
-        "pg_type": {
-          "Raw": "TIMESTAMP_TZ"
-        },
-        "default_sql": "NOW() at time zone 'utc'",
-        "flags": 0,
-        "index": 1
-      },
-      {
-        "table_name": "audit_logs",
-        "name": "updated_at",
-        "pg_type": {
-          "Raw": "TIMESTAMP"
-        },
-        "default_sql": null,
-        "flags": 0,
-        "index": 2
-      },
-      {
-        "table_name": "audit_logs",
-        "name": "random_date",
-        "pg_type": {
-          "Raw": "DATE"
-        },
-        "default_sql": null,
-        "flags": 0,
-        "index": 3
-      },
-      {
-        "table_name": "audit_logs",
-        "name": "random_time",
-        "pg_type": {
-          "Raw": "TIME"
-        },
-        "default_sql": null,
-        "flags": 0,
-        "index": 4
-      }
-    ],
-    "bb": [
-      {
-        "table_name": "bb",
-        "name": "id",
-        "pg_type": {
-          "Raw": "BIGINT"
-        },
-        "default_sql": null,
-        "flags": 2,
-        "index": 0
-      },
-      {
-        "table_name": "bb",
-        "name": "created_at",
-        "pg_type": {
-          "Raw": "DATE"
-        },
-        "default_sql": null,
-        "flags": 0,
-        "index": 1
-      }
-    ],
-    "ccdd": [
-      {
-        "table_name": "ccdd",
-        "name": "id",
-        "pg_type": {
-          "Raw": "BIGINT"
-        },
-        "default_sql": null,
-        "flags": 2,
-        "index": 0
-      },
-      {
-        "table_name": "ccdd",
-        "name": "var",
-        "pg_type": {
-          "Raw": "TEXT"
-        },
-        "default_sql": null,
-        "flags": 0,
-        "index": 1
-      },
-      {
-        "table_name": "ccdd",
-        "name": "var2",
-        "pg_type": {
-          "Raw": "BIGINT"
-        },
-        "default_sql": null,
-        "flags": 0,
-        "index": 2
-      }
-    ],
-    "ddcc": [
-      {
-        "table_name": "ddcc",
-        "name": "id",
-        "pg_type": {
-          "Raw": "BIGINT"
-        },
-        "default_sql": null,
-        "flags": 18,
-        "index": 0
-      },
-      {
-        "table_name": "ddcc",
-        "name": "var1",
-        "pg_type": {
-          "Raw": "BIGINT"
-        },
-        "default_sql": null,
-        "flags": 0,
-        "index": 1
-      },
-      {
-        "table_name": "ddcc",
-        "name": "var2",
-        "pg_type": {
-          "Raw": "TEXT"
-        },
-        "default_sql": "''",
-        "flags": 0,
-        "index": 2
-      },
-      {
-        "table_name": "ddcc",
-        "name": "var3",
-        "pg_type": {
-          "Raw": "BIGINT"
-        },
-        "default_sql": "0",
-        "flags": 1,
-        "index": 3
-      },
-      {
-        "table_name": "ddcc",
-        "name": "var6",
-        "pg_type": {
-          "Raw": "TEXT"
-        },
-        "default_sql": null,
-        "flags": 0,
-        "index": 4
-      },
-      {
-        "table_name": "ddcc",
-        "name": "var5",
-        "pg_type": {
-          "ForeignKey": {
-            "key_sql_type": "BIGINT",
-            "target_table_name": "bb",
-            "target_column_name": "id"
-          }
-        },
-        "default_sql": null,
-        "flags": 32,
-        "index": 5
-      }
-    ],
-    "orders": [
-      {
-        "table_name": "orders",
-        "name": "id",
-        "pg_type": {
-          "Raw": "BIGINT"
-        },
-        "default_sql": null,
-        "flags": 18,
-        "index": 0
-      },
-      {
-        "table_name": "orders",
-        "name": "quantity",
-        "pg_type": {
-          "Raw": "INTEGER"
-        },
-        "default_sql": null,
-        "flags": 0,
-        "index": 1
-      },
-      {
-        "table_name": "orders",
-        "name": "user_fk",
-        "pg_type": {
-          "ForeignKey": {
-            "key_sql_type": "BIGINT",
-            "target_table_name": "users",
-            "target_column_name": "id"
-          }
-        },
-        "default_sql": null,
-        "flags": 32,
-        "index": 2
-      },
-      {
-        "table_name": "orders",
-        "name": "product_fk",
-        "pg_type": {
-          "ForeignKey": {
-            "key_sql_type": "BIGINT",
-            "target_table_name": "products",
-            "target_column_name": "id"
-          }
-        },
-        "default_sql": null,
-        "flags": 33,
-        "index": 3
-      }
-    ],
-    "persons": [
-      {
-        "table_name": "persons",
-        "name": "id",
-        "pg_type": {
-          "Raw": "BIGINT"
-        },
-        "default_sql": null,
-        "flags": 18,
-        "index": 0
-      },
-      {
-        "table_name": "persons",
-        "name": "first_name",
-        "pg_type": {
-          "Raw": "TEXT"
-        },
-        "default_sql": null,
-        "flags": 0,
-        "index": 1
-      },
-      {
-        "table_name": "persons",
-        "name": "last_name",
-        "pg_type": {
-          "Raw": "TEXT"
-        },
-        "default_sql": null,
-        "flags": 0,
-        "index": 2
-      },
-      {
-        "table_name": "persons",
-        "name": "email",
-        "pg_type": {
-          "Raw": "TEXT"
-        },
-        "default_sql": null,
-        "flags": 8,
-        "index": 3
-      },
-      {
-        "table_name": "persons",
-        "name": "phone_number",
-        "pg_type": {
-          "Raw": "TEXT"
-        },
-        "default_sql": null,
-        "flags": 1,
-        "index": 4
-      },
-      {
-        "table_name": "persons",
-        "name": "bank_balance",
-        "pg_type": {
-          "Raw": "DECIMAL"
-        },
-        "default_sql": null,
-        "flags": 0,
-        "index": 5
-      }
-    ],
-    "posts": [
-      {
-        "table_name": "posts",
-        "name": "id",
-        "pg_type": {
-          "Raw": "BIGINT"
-        },
-        "default_sql": null,
-        "flags": 18,
-        "index": 0
-      },
-      {
-        "table_name": "posts",
+        "table_name": "books",
         "name": "title",
         "pg_type": {
           "Raw": "TEXT"
@@ -343,23 +55,75 @@
         "index": 1
       },
       {
-        "table_name": "posts",
-        "name": "user_fk",
+        "table_name": "books",
+        "name": "isbn",
+        "pg_type": {
+          "Raw": "TEXT"
+        },
+        "default_sql": null,
+        "flags": 8,
+        "index": 2
+      },
+      {
+        "table_name": "books",
+        "name": "published_year",
+        "pg_type": {
+          "Raw": "INTEGER"
+        },
+        "default_sql": null,
+        "flags": 0,
+        "index": 3
+      },
+      {
+        "table_name": "books",
+        "name": "author_fk",
         "pg_type": {
           "ForeignKey": {
             "key_sql_type": "BIGINT",
-            "target_table_name": "users",
+            "target_table_name": "authors",
             "target_column_name": "id"
           }
         },
         "default_sql": null,
         "flags": 32,
+        "index": 4
+      }
+    ],
+    "categories": [
+      {
+        "table_name": "categories",
+        "name": "id",
+        "pg_type": {
+          "Raw": "BIGINT"
+        },
+        "default_sql": null,
+        "flags": 18,
+        "index": 0
+      },
+      {
+        "table_name": "categories",
+        "name": "name",
+        "pg_type": {
+          "Raw": "TEXT"
+        },
+        "default_sql": null,
+        "flags": 8,
+        "index": 1
+      },
+      {
+        "table_name": "categories",
+        "name": "description",
+        "pg_type": {
+          "Raw": "TEXT"
+        },
+        "default_sql": null,
+        "flags": 0,
         "index": 2
       }
     ],
-    "products": [
+    "reviews": [
       {
-        "table_name": "products",
+        "table_name": "reviews",
         "name": "id",
         "pg_type": {
           "Raw": "BIGINT"
@@ -369,36 +133,38 @@
         "index": 0
       },
       {
-        "table_name": "products",
-        "name": "name",
+        "table_name": "reviews",
+        "name": "rating",
         "pg_type": {
-          "Raw": "TEXT"
+          "Raw": "INTEGER"
         },
         "default_sql": null,
         "flags": 0,
         "index": 1
-      }
-    ],
-    "users": [
-      {
-        "table_name": "users",
-        "name": "id",
-        "pg_type": {
-          "Raw": "BIGINT"
-        },
-        "default_sql": null,
-        "flags": 18,
-        "index": 0
       },
       {
-        "table_name": "users",
-        "name": "name",
+        "table_name": "reviews",
+        "name": "content",
         "pg_type": {
           "Raw": "TEXT"
         },
         "default_sql": null,
         "flags": 0,
-        "index": 1
+        "index": 2
+      },
+      {
+        "table_name": "reviews",
+        "name": "book_fk",
+        "pg_type": {
+          "ForeignKey": {
+            "key_sql_type": "BIGINT",
+            "target_table_name": "books",
+            "target_column_name": "id"
+          }
+        },
+        "default_sql": null,
+        "flags": 32,
+        "index": 3
       }
     ]
   }

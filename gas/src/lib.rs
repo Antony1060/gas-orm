@@ -5,6 +5,7 @@ pub mod condition;
 pub mod connection;
 pub mod eq;
 pub mod error;
+pub mod extra;
 pub mod field;
 pub mod group;
 pub mod helpers;

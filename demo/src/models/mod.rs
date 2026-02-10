@@ -1,121 +1,53 @@
-use gas::types::{DateTime, Decimal, NaiveDate, NaiveDateTime, NaiveTime, Utc};
 use gas::Relation;
 
-#[gas::model(table_name = "persons")]
-#[derive(Debug)]
-pub struct Person {
-    #[primary_key]
-    #[serial]
-    pub id: i64,
-    pub first_name: String,
-    pub last_name: String,
-    #[unique]
-    pub email: String,
-    pub phone_number: Option<String>,
-    #[default(fn = Decimal::from(100))]
-    #[column(name = "bank_balance")]
-    pub bank_account_balance: Decimal,
-}
-
-#[gas::model(table_name = "ddcc")]
-pub struct ddcc {
-    #[primary_key]
-    #[serial]
-    pub id: i64,
-    pub var1: i64,
-    #[default(fn = String::new(), sql = r#"''"#)]
-    pub var2: String,
-    #[default(fn = Some(0), sql = r#"0"#)]
-    pub var3: Option<i64>,
-    pub var6: String,
-    #[relation(field = bb::id)]
-    pub var5: Relation<i64, bb::Model>,
-}
-
-#[gas::model(table_name = "ccdd")]
-pub struct ccdd {
-    #[primary_key]
-    pub id: i64,
-    pub var: String,
-    pub var2: i64,
-}
-
-#[gas::model(table_name = "aa")]
-pub struct aa {
-    #[primary_key]
-    #[serial]
-    pub id: i64,
-    #[default(fn = String::from("unknown"), sql = r#"'unknown'"#)]
-    pub first_name: String,
-    #[column(name = "bb_fk")]
-    #[relation(field = bb::id)]
-    pub foreign: Relation<i64, bb::Model>,
-}
-
-#[gas::model(table_name = "bb")]
-pub struct bb {
-    #[primary_key]
-    pub id: i64,
-    pub created_at: NaiveDate,
-}
-
-#[gas::model(table_name = "audit_logs", mod_name = "audit_logs")]
-#[derive(Debug)]
-pub struct AuditLog {
-    #[primary_key]
-    #[serial]
-    pub id: i64,
-    #[default(fn = Utc::now(), sql = r#"NOW() at time zone 'utc'"#)]
-    pub created_at: DateTime<Utc>,
-    pub updated_at: NaiveDateTime,
-    pub random_date: NaiveDate,
-    pub random_time: NaiveTime,
-}
-
-#[gas::model(table_name = "users")]
-#[derive(Debug)]
-pub struct User {
+#[gas::model(table_name = "authors")]
+#[derive(Debug, serde::Serialize, serde::Deserialize, utoipa::ToSchema)]
+pub struct Author {
     #[primary_key]
     #[serial]
     pub id: i64,
     pub name: String,
-    #[relation(inverse = post::user)]
-    pub posts: Vec<post::Model>,
+    pub bio: String,
 }
 
-#[gas::model(table_name = "posts")]
-#[derive(Debug)]
-pub struct Post {
+#[gas::model(table_name = "categories")]
+#[derive(Debug, serde::Serialize, serde::Deserialize, utoipa::ToSchema)]
+pub struct Category {
+    #[primary_key]
+    #[serial]
+    pub id: i64,
+    #[unique]
+    pub name: String,
+    pub description: String,
+}
+
+#[gas::model(table_name = "books")]
+#[derive(Debug, serde::Serialize, serde::Deserialize, utoipa::ToSchema)]
+pub struct Book {
     #[primary_key]
     #[serial]
     pub id: i64,
     pub title: String,
-    // TODO: references to itself or multiple others
-    #[column(name = "user_fk")]
-    #[relation(field = user::id)]
-    pub user: Relation<i64, user::Model>,
+    #[unique]
+    pub isbn: String,
+    pub published_year: i32,
+    #[column(name = "author_fk")]
+    #[relation(field = author::id)]
+    // TODO: serde compatibility for relations
+    #[serde(skip)]
+    pub author: Relation<i64, author::Model>,
 }
 
-#[gas::model(table_name = "products")]
-#[derive(Debug)]
-pub struct Product {
+#[gas::model(table_name = "reviews")]
+#[derive(Debug, serde::Serialize, serde::Deserialize, utoipa::ToSchema)]
+pub struct Review {
     #[primary_key]
     #[serial]
     pub id: i64,
-    pub name: String,
-}
-
-#[gas::model(table_name = "orders")]
-#[derive(Debug)]
-pub struct Order {
-    #[primary_key]
-    #[serial]
-    pub id: i64,
-    pub quantity: i32,
-    #[column(name = "user_fk")]
-    #[relation(field = user::id)]
-    pub user: Relation<i64, user::Model>,
-    #[column(name = "product_fk")]
-    #[relation(field = product::id)]
-    pub product: Option<Relation<i64, product::Model>>,
+    pub rating: i32,
+    pub content: String,
+    #[column(name = "book_fk")]
+    #[relation(field = book::id)]
+    #[serde(skip)]
+    pub book: Relation<i64, book::Model>,
 }
