@@ -48,10 +48,3 @@ fn main() {
     println!("cargo:rerun-if-changed=migrations/");
 }
 ```
-
-### Very short term todo
-
-- [x] Migrations diff ordering
-- [x] Implement all diffs for migrations
-- [x] Mirations cli `migrate` command
-- [x] Migrations on library side
