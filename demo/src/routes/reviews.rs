@@ -35,7 +35,7 @@ pub fn router() -> Router {
     tag = "Reviews",
     operation_id = "list_reviews",
     responses(
-        (status = 200, description = "List all reviews", body = Vec<review::Model>)
+        // (status = 200, description = "List all reviews", body = Vec<review::Model>)
     )
 )]
 async fn list(Transaction(tx): Transaction) -> DemoResult<Json<Vec<review::Model>>> {
@@ -55,7 +55,7 @@ async fn list(Transaction(tx): Transaction) -> DemoResult<Json<Vec<review::Model
     operation_id = "list_reviews_by_book",
     params(("book_id" = i64, Path, description = "Book ID")),
     responses(
-        (status = 200, description = "List reviews for book", body = Vec<review::Model>)
+        // (status = 200, description = "List reviews for book", body = Vec<review::Model>)
     )
 )]
 async fn list_by_book(
@@ -79,7 +79,7 @@ async fn list_by_book(
     operation_id = "get_review",
     params(("id" = i64, Path, description = "Review ID")),
     responses(
-        (status = 200, description = "Review found", body = review::Model),
+        // (status = 200, description = "Review found", body = review::Model),
         (status = 404, description = "Review not found")
     )
 )]
@@ -101,7 +101,7 @@ async fn get_one(
     operation_id = "create_review",
     request_body = CreateReviewRequest,
     responses(
-        (status = 201, description = "Review created", body = review::Model)
+        // (status = 201, description = "Review created", body = review::Model)
     )
 )]
 async fn create(
@@ -132,7 +132,7 @@ async fn create(
     params(("id" = i64, Path, description = "Review ID")),
     request_body = UpdateReviewRequest,
     responses(
-        (status = 200, description = "Review updated", body = review::Model),
+        // (status = 200, description = "Review updated", body = review::Model),
         (status = 404, description = "Review not found")
     )
 )]

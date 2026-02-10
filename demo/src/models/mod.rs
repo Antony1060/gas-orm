@@ -25,9 +25,9 @@ pub struct Category {
     pub description: String,
 }
 
+// utoipa seems to buchet my types, so deriving ToSchema breaks compilation
 #[gas::model(table_name = "books")]
-#[derive(Debug, serde::Serialize, serde::Deserialize, utoipa::ToSchema)]
-#[schema(as = Book)]
+#[derive(Debug, serde::Serialize, serde::Deserialize)]
 pub struct Book {
     #[primary_key]
     #[serial]
@@ -40,14 +40,11 @@ pub struct Book {
     pub page_count: i32,
     #[column(name = "author_fk")]
     #[relation(field = author::id)]
-    // TODO: serde compatibility for relations
-    #[serde(skip)]
     pub author: Relation<i64, author::Model>,
 }
 
 #[gas::model(table_name = "reviews")]
-#[derive(Debug, serde::Serialize, serde::Deserialize, utoipa::ToSchema)]
-#[schema(as = Review)]
+#[derive(Debug, serde::Serialize, serde::Deserialize)]
 pub struct Review {
     #[primary_key]
     #[serial]

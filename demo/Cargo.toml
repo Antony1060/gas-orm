@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-gas = { path = "../gas", features = ["axum"] }
+gas = { path = "../gas", features = ["axum", "serde"] }
 serde = { version = "1.0.228", features = ["derive"] }
 tokio = { version = "1.49.0", features = ["full"] }
 axum = "0.8.8"
