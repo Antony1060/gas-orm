@@ -1,14 +1,15 @@
 use crate::connection::{PgConnection, PgTransaction};
 use crate::error::GasError;
 use axum::extract::FromRequestParts;
-use axum::http::request::Parts;
-use axum::http::StatusCode;
 use axum::response::{IntoResponse, Response};
-use axum::Extension;
+use http::request::Parts;
+use http::StatusCode;
+
+pub struct Connection(pub PgConnection);
 
 pub struct Transaction(pub PgTransaction);
 
-impl<S> FromRequestParts<S> for Transaction
+impl<S> FromRequestParts<S> for Connection
 where
     S: Send + Sync,
 {
@@ -18,9 +19,25 @@ where
         let connection = parts
             .extensions
             .get::<PgConnection>()
-            .ok_or_else(|| GasError::AxumNoConnectionExtensionSet)?;
+            .ok_or_else(|| GasError::AxumMissingExtension)?;
 
-        connection.transaction().await.map(Transaction)
+        Ok(Connection(connection.clone()))
+    }
+}
+
+impl<S> FromRequestParts<S> for Transaction
+where
+    S: Send + Sync,
+{
+    type Rejection = GasError;
+
+    async fn from_request_parts(parts: &mut Parts, _state: &S) -> Result<Self, Self::Rejection> {
+        let tx = parts
+            .extensions
+            .get::<PgTransaction>()
+            .ok_or_else(|| GasError::AxumMissingExtension)?;
+
+        Ok(Transaction(tx.clone()))
     }
 }
 
@@ -28,8 +45,4 @@ impl IntoResponse for GasError {
     fn into_response(self) -> Response {
         (StatusCode::INTERNAL_SERVER_ERROR, self.to_string()).into_response()
     }
-}
-
-pub fn extension(connection: &PgConnection) -> Extension<PgConnection> {
-    Extension(connection.clone())
 }

@@ -168,7 +168,7 @@ impl<'a> MigrationStep<'a> {
         meta::Model {
             count: self.update_count,
         }
-        .update(&mut transaction)
+        .update(&transaction)
         .await?;
 
         transaction.save().await?;

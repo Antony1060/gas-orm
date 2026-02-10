@@ -35,10 +35,10 @@ pub fn router() -> Router {
         (status = 200, description = "List all reviews", body = Vec<review::Model>)
     )
 )]
-async fn list(Transaction(mut tx): Transaction) -> DemoResult<Json<Vec<review::Model>>> {
+async fn list(Transaction(tx): Transaction) -> DemoResult<Json<Vec<review::Model>>> {
     let reviews = review::Model::query()
         .sort(review::id.asc())
-        .find_all(&mut tx)
+        .find_all(&tx)
         .await?;
 
     Ok(Json(reviews))
@@ -55,14 +55,14 @@ async fn list(Transaction(mut tx): Transaction) -> DemoResult<Json<Vec<review::M
     )
 )]
 async fn list_by_book(
-    Transaction(mut tx): Transaction,
+    Transaction(tx): Transaction,
     Path(book_id): Path<i64>,
 ) -> DemoResult<Json<Vec<review::Model>>> {
     let reviews = review::Model::query()
         .include(review::book)
         .filter(|| book::id.eq(book_id))
         .sort(review::id.asc())
-        .find_all(&mut tx)
+        .find_all(&tx)
         .await?;
 
     Ok(Json(reviews))
@@ -79,10 +79,10 @@ async fn list_by_book(
     )
 )]
 async fn get_one(
-    Transaction(mut tx): Transaction,
+    Transaction(tx): Transaction,
     Path(id): Path<i64>,
 ) -> DemoResult<Json<review::Model>> {
-    let model = review::Model::find_by_key(&mut tx, id)
+    let model = review::Model::find_by_key(&tx, id)
         .await?
         .ok_or(HttpError::NotFound)?;
 
@@ -99,10 +99,10 @@ async fn get_one(
     )
 )]
 async fn create(
-    Transaction(mut tx): Transaction,
+    Transaction(tx): Transaction,
     Json(req): Json<CreateReviewRequest>,
 ) -> DemoResult<(axum::http::StatusCode, Json<review::Model>)> {
-    let book = book::Model::find_by_key(&mut tx, req.book_id)
+    let book = book::Model::find_by_key(&tx, req.book_id)
         .await?
         .ok_or(HttpError::NotFound)?;
 
@@ -112,7 +112,7 @@ async fn create(
         book: FullRelation::Loaded(book),
     };
 
-    model.insert(&mut tx).await?;
+    model.insert(&tx).await?;
 
     Ok((axum::http::StatusCode::CREATED, Json(model.into_model())))
 }
@@ -129,11 +129,11 @@ async fn create(
     )
 )]
 async fn update(
-    Transaction(mut tx): Transaction,
+    Transaction(tx): Transaction,
     Path(id): Path<i64>,
     Json(req): Json<UpdateReviewRequest>,
 ) -> DemoResult<Json<review::Model>> {
-    let mut model = review::Model::find_by_key(&mut tx, id)
+    let mut model = review::Model::find_by_key(&tx, id)
         .await?
         .ok_or(HttpError::NotFound)?;
 
@@ -145,7 +145,7 @@ async fn update(
         model.content = content;
     }
 
-    model.update(&mut tx).await?;
+    model.update(&tx).await?;
 
     Ok(Json(model))
 }
@@ -161,14 +161,14 @@ async fn update(
     )
 )]
 async fn delete(
-    Transaction(mut tx): Transaction,
+    Transaction(tx): Transaction,
     Path(id): Path<i64>,
 ) -> DemoResult<axum::http::StatusCode> {
-    let model = review::Model::find_by_key(&mut tx, id)
+    let model = review::Model::find_by_key(&tx, id)
         .await?
         .ok_or(HttpError::NotFound)?;
 
-    model.delete(&mut tx).await?;
+    model.delete(&tx).await?;
 
     Ok(axum::http::StatusCode::NO_CONTENT)
 }

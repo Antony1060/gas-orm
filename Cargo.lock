@@ -821,12 +821,14 @@ dependencies = [
  "chrono",
  "gas-macros",
  "gas-shared",
+ "http",
  "lazy_static",
  "regex",
  "rust_decimal",
  "sqlx",
  "thiserror",
  "tokio",
+ "tower",
  "tracing",
 ]
 

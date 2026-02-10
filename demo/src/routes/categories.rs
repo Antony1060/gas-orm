@@ -35,10 +35,10 @@ pub fn router() -> Router {
         (status = 200, description = "List all categories", body = Vec<category::Model>)
     )
 )]
-async fn list(Transaction(mut tx): Transaction) -> DemoResult<Json<Vec<category::Model>>> {
+async fn list(Transaction(tx): Transaction) -> DemoResult<Json<Vec<category::Model>>> {
     let categories = category::Model::query()
         .sort(category::id.asc())
-        .find_all(&mut tx)
+        .find_all(&tx)
         .await?;
 
     Ok(Json(categories))
@@ -55,10 +55,10 @@ async fn list(Transaction(mut tx): Transaction) -> DemoResult<Json<Vec<category:
     )
 )]
 async fn get_one(
-    Transaction(mut tx): Transaction,
+    Transaction(tx): Transaction,
     Path(id): Path<i64>,
 ) -> DemoResult<Json<category::Model>> {
-    let category = category::Model::find_by_key(&mut tx, id)
+    let category = category::Model::find_by_key(&tx, id)
         .await?
         .ok_or(HttpError::NotFound)?;
 
@@ -75,7 +75,7 @@ async fn get_one(
     )
 )]
 async fn create(
-    Transaction(mut tx): Transaction,
+    Transaction(tx): Transaction,
     Json(req): Json<CreateCategoryRequest>,
 ) -> DemoResult<(axum::http::StatusCode, Json<category::Model>)> {
     let mut model = category::Def! {
@@ -83,7 +83,7 @@ async fn create(
         description: req.description,
     };
 
-    model.insert(&mut tx).await?;
+    model.insert(&tx).await?;
 
     Ok((axum::http::StatusCode::CREATED, Json(model.into_model())))
 }
@@ -100,11 +100,11 @@ async fn create(
     )
 )]
 async fn update(
-    Transaction(mut tx): Transaction,
+    Transaction(tx): Transaction,
     Path(id): Path<i64>,
     Json(req): Json<UpdateCategoryRequest>,
 ) -> DemoResult<Json<category::Model>> {
-    let mut model = category::Model::find_by_key(&mut tx, id)
+    let mut model = category::Model::find_by_key(&tx, id)
         .await?
         .ok_or(HttpError::NotFound)?;
 
@@ -116,7 +116,7 @@ async fn update(
         model.description = desc;
     }
 
-    model.update(&mut tx).await?;
+    model.update(&tx).await?;
 
     Ok(Json(model))
 }
@@ -132,14 +132,14 @@ async fn update(
     )
 )]
 async fn delete(
-    Transaction(mut tx): Transaction,
+    Transaction(tx): Transaction,
     Path(id): Path<i64>,
 ) -> DemoResult<axum::http::StatusCode> {
-    let model = category::Model::find_by_key(&mut tx, id)
+    let model = category::Model::find_by_key(&tx, id)
         .await?
         .ok_or(HttpError::NotFound)?;
 
-    model.delete(&mut tx).await?;
+    model.delete(&tx).await?;
 
     Ok(axum::http::StatusCode::NO_CONTENT)
 }

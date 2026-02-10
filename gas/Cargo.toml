@@ -3,6 +3,10 @@ name = "gas"
 version = "0.1.0"
 edition = "2024"
 
+[features]
+axum = ["dep:axum", "tower"]
+tower = ["dep:tower", "http"]
+
 [dependencies]
 gas-macros = { path = "../gas-macros" }
 gas-shared = { path = "../gas-shared" }
@@ -15,3 +19,5 @@ tracing = "0.1.41"
 chrono = "0.4.42"
 tokio = { version = "1.48.0" }
 axum = { version = "0.8.8", optional = true }
+tower = { version = "0.5.3", optional = true }
+http = { version = "1.4.0", optional = true }

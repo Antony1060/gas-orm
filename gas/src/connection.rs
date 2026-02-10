@@ -8,15 +8,19 @@ use sqlx::Arguments;
 use sqlx::PgPool;
 use std::mem;
 use std::sync::Arc;
+use tokio::sync::Mutex;
 
 #[derive(Clone)]
 pub struct PgConnection {
     pool: Arc<PgPool>,
 }
 
+#[derive(Clone)]
 pub struct PgTransaction {
     connection: PgConnection,
-    transaction: sqlx::postgres::PgTransaction<'static>,
+    // eeh, I don't like this, kinda forces tokio and also arc + mutex overhead
+    //  fine for now
+    transaction: Arc<Mutex<sqlx::postgres::PgTransaction<'static>>>,
 }
 
 impl PgConnection {
@@ -31,26 +35,37 @@ impl PgConnection {
     }
 
     pub async fn transaction(&self) -> GasResult<PgTransaction> {
-        let tx = self.pool.begin().await?;
-
         Ok(PgTransaction {
             connection: self.clone(),
-            transaction: tx,
+            transaction: Arc::from(Mutex::from(self.transaction_raw().await?)),
         })
+    }
+
+    async fn transaction_raw(&self) -> GasResult<sqlx::postgres::PgTransaction<'static>> {
+        Ok(self.pool.begin().await?)
     }
 }
 
 impl PgTransaction {
-    pub async fn save(&mut self) -> GasResult<()> {
-        let tx = mem::replace(self, self.connection.transaction().await?);
-        tx.transaction.commit().await?;
+    async fn replace_tx(&self) -> GasResult<sqlx::postgres::PgTransaction<'static>> {
+        let new_tx = self.connection.transaction_raw().await?;
+        let mut curr_tx = self.transaction.lock().await;
+
+        let tx = mem::replace(&mut *curr_tx, new_tx);
+
+        Ok(tx)
+    }
+
+    pub async fn save(&self) -> GasResult<()> {
+        let tx = self.replace_tx().await?;
+        tx.commit().await?;
 
         Ok(())
     }
 
-    pub async fn discard(&mut self) -> GasResult<()> {
-        let tx = mem::replace(self, self.connection.transaction().await?);
-        tx.transaction.rollback().await?;
+    pub async fn discard(&self) -> GasResult<()> {
+        let tx = self.replace_tx().await?;
+        tx.rollback().await?;
 
         Ok(())
     }
@@ -118,12 +133,14 @@ impl PgExecutor for &PgConnection {
     }
 }
 
-impl PgExecutor for &mut PgTransaction {
+impl PgExecutor for &PgTransaction {
     async fn execute(self, sql: SqlQuery<'_>, params: &[PgParam]) -> GasResult<Vec<Row>> {
         let (query, arguments) = Self::prepare_query(sql, params)?;
 
+        let mut tx = self.transaction.lock().await;
+
         let rows = sqlx::query_with(&query, arguments)
-            .fetch_all(&mut *self.transaction)
+            .fetch_all(&mut **tx)
             .await?;
 
         Ok(rows.into_iter().map(Row::from).collect())

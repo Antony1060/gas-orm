@@ -32,10 +32,10 @@ pub fn router() -> Router {
         (status = 200, description = "List all authors", body = Vec<author::Model>)
     )
 )]
-async fn list(Transaction(mut tx): Transaction) -> DemoResult<Json<Vec<author::Model>>> {
+async fn list(Transaction(tx): Transaction) -> DemoResult<Json<Vec<author::Model>>> {
     let authors = author::Model::query()
         .sort(author::id.asc())
-        .find_all(&mut tx)
+        .find_all(&tx)
         .await?;
 
     Ok(Json(authors))
@@ -52,10 +52,10 @@ async fn list(Transaction(mut tx): Transaction) -> DemoResult<Json<Vec<author::M
     )
 )]
 async fn get_one(
-    Transaction(mut tx): Transaction,
+    Transaction(tx): Transaction,
     Path(id): Path<i64>,
 ) -> DemoResult<Json<author::Model>> {
-    let author = author::Model::find_by_key(&mut tx, id)
+    let author = author::Model::find_by_key(&tx, id)
         .await?
         .ok_or(HttpError::NotFound)?;
 
@@ -72,7 +72,7 @@ async fn get_one(
     )
 )]
 async fn create(
-    Transaction(mut tx): Transaction,
+    Transaction(tx): Transaction,
     Json(req): Json<CreateAuthorRequest>,
 ) -> DemoResult<(axum::http::StatusCode, Json<author::Model>)> {
     let mut new_author = author::Def! {
@@ -80,7 +80,7 @@ async fn create(
         bio: req.bio,
     };
 
-    new_author.insert(&mut tx).await?;
+    new_author.insert(&tx).await?;
 
     Ok((
         axum::http::StatusCode::CREATED,
@@ -100,11 +100,11 @@ async fn create(
     )
 )]
 async fn update(
-    Transaction(mut tx): Transaction,
+    Transaction(tx): Transaction,
     Path(id): Path<i64>,
     Json(req): Json<UpdateAuthorRequest>,
 ) -> DemoResult<Json<author::Model>> {
-    let mut model = author::Model::find_by_key(&mut tx, id)
+    let mut model = author::Model::find_by_key(&tx, id)
         .await?
         .ok_or(HttpError::NotFound)?;
 
@@ -116,7 +116,7 @@ async fn update(
         model.bio = bio;
     }
 
-    model.update(&mut tx).await?;
+    model.update(&tx).await?;
 
     Ok(Json(model))
 }
@@ -132,14 +132,14 @@ async fn update(
     )
 )]
 async fn delete(
-    Transaction(mut tx): Transaction,
+    Transaction(tx): Transaction,
     Path(id): Path<i64>,
 ) -> DemoResult<axum::http::StatusCode> {
-    let model = author::Model::find_by_key(&mut tx, id)
+    let model = author::Model::find_by_key(&tx, id)
         .await?
         .ok_or(HttpError::NotFound)?;
 
-    model.delete(&mut tx).await?;
+    model.delete(&tx).await?;
 
     Ok(axum::http::StatusCode::NO_CONTENT)
 }

@@ -82,7 +82,7 @@ async fn main() -> DemoResult<()> {
     let db_connection = init_db().await?;
 
     let app = routes::api()
-        .layer(gas::extra::axum::extension(&db_connection))
+        .layer(gas::extra::tower::layer(&db_connection))
         .merge(SwaggerUi::new("/swagger-ui").url("/api-docs/openapi.json", ApiDoc::openapi()))
         .layer(TraceLayer::new_for_http());
 

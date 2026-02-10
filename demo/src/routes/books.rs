@@ -38,10 +38,10 @@ pub fn router() -> Router {
         (status = 200, description = "List all books", body = Vec<book::Model>)
     )
 )]
-async fn list(Transaction(mut tx): Transaction) -> DemoResult<Json<Vec<book::Model>>> {
+async fn list(Transaction(tx): Transaction) -> DemoResult<Json<Vec<book::Model>>> {
     let books = book::Model::query()
         .sort(book::id.asc())
-        .find_all(&mut tx)
+        .find_all(&tx)
         .await?;
 
     Ok(Json(books))
@@ -58,10 +58,10 @@ async fn list(Transaction(mut tx): Transaction) -> DemoResult<Json<Vec<book::Mod
     )
 )]
 async fn get_one(
-    Transaction(mut tx): Transaction,
+    Transaction(tx): Transaction,
     Path(id): Path<i64>,
 ) -> DemoResult<Json<book::Model>> {
-    let model = book::Model::find_by_key(&mut tx, id)
+    let model = book::Model::find_by_key(&tx, id)
         .await?
         .ok_or(HttpError::NotFound)?;
 
@@ -79,13 +79,13 @@ async fn get_one(
     )
 )]
 async fn get_detail(
-    Transaction(mut tx): Transaction,
+    Transaction(tx): Transaction,
     Path(id): Path<i64>,
 ) -> DemoResult<Json<book::Model>> {
     let book = book::Model::query()
         .include(book::author)
         .filter(|| book::id.eq(id))
-        .find_one(&mut tx)
+        .find_one(&tx)
         .await?
         .ok_or(HttpError::NotFound)?;
 
@@ -102,10 +102,10 @@ async fn get_detail(
     )
 )]
 async fn create(
-    Transaction(mut tx): Transaction,
+    Transaction(tx): Transaction,
     Json(req): Json<CreateBookRequest>,
 ) -> DemoResult<(axum::http::StatusCode, Json<book::Model>)> {
-    author::Model::find_by_key(&mut tx, req.author_id)
+    author::Model::find_by_key(&tx, req.author_id)
         .await?
         .ok_or(HttpError::NotFound)?;
 
@@ -116,7 +116,7 @@ async fn create(
         author: FullRelation::ForeignKey(req.author_id),
     };
 
-    model.insert(&mut tx).await?;
+    model.insert(&tx).await?;
 
     Ok((axum::http::StatusCode::CREATED, Json(model.into_model())))
 }
@@ -133,11 +133,11 @@ async fn create(
     )
 )]
 async fn update(
-    Transaction(mut tx): Transaction,
+    Transaction(tx): Transaction,
     Path(id): Path<i64>,
     Json(req): Json<UpdateBookRequest>,
 ) -> DemoResult<Json<book::Model>> {
-    let mut model = book::Model::find_by_key(&mut tx, id)
+    let mut model = book::Model::find_by_key(&tx, id)
         .await?
         .ok_or(HttpError::NotFound)?;
 
@@ -154,14 +154,14 @@ async fn update(
     }
 
     if let Some(author_id) = req.author_id {
-        let author = author::Model::find_by_key(&mut tx, author_id)
+        let author = author::Model::find_by_key(&tx, author_id)
             .await?
             .ok_or(HttpError::NotFound)?;
 
         model.author = FullRelation::Loaded(author);
     }
 
-    model.update(&mut tx).await?;
+    model.update(&tx).await?;
 
     Ok(Json(model))
 }
@@ -177,14 +177,14 @@ async fn update(
     )
 )]
 async fn delete(
-    Transaction(mut tx): Transaction,
+    Transaction(tx): Transaction,
     Path(id): Path<i64>,
 ) -> DemoResult<axum::http::StatusCode> {
-    let model = book::Model::find_by_key(&mut tx, id)
+    let model = book::Model::find_by_key(&tx, id)
         .await?
         .ok_or(HttpError::NotFound)?;
 
-    model.delete(&mut tx).await?;
+    model.delete(&tx).await?;
 
     Ok(axum::http::StatusCode::NO_CONTENT)
 }
