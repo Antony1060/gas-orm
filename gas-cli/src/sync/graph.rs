@@ -49,14 +49,8 @@ fn make_graph<'a>(
 
     for (index, diff) in diffs.iter().enumerate() {
         for field in diff.depends_on() {
-            let Some(val) = provides_map.get(&field) else {
-                return Err(GasCliError::MigrationsGenerationError {
-                    reason: Cow::from("failed to change graph: required dependency missing"),
-                });
-            };
-
-            match field.state {
-                FieldState::Existing => {
+            match provides_map.get(&field) {
+                Some(val) if field.state == FieldState::Existing => {
                     // current node depends on all nodes that provide this field
                     graph.incoming[index].extend(val);
 
@@ -73,7 +67,7 @@ fn make_graph<'a>(
                 //  which doesn't make much sense because the field that drops the field should
                 //  depend on the current diff, so we swap
                 // i.e. all providers depend on current index
-                FieldState::InverseDropped => {
+                Some(val) if field.state == FieldState::InverseDropped => {
                     if let Some(it) = graph.outgoing[index].as_mut() {
                         it.extend(val)
                     }
@@ -81,6 +75,12 @@ fn make_graph<'a>(
                     for it in val {
                         graph.incoming[*it].push(index)
                     }
+                }
+                None if field.state == FieldState::InverseDropped => {}
+                _ => {
+                    return Err(GasCliError::MigrationsGenerationError {
+                        reason: Cow::from("failed to change graph: required dependency missing"),
+                    });
                 }
             }
         }
