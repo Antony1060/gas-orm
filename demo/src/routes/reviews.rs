@@ -31,6 +31,7 @@ pub fn router() -> Router {
     get,
     path = "/api/reviews",
     tag = "Reviews",
+    operation_id = "list_reviews",
     responses(
         (status = 200, description = "List all reviews", body = Vec<review::Model>)
     )
@@ -49,6 +50,7 @@ async fn list(Transaction(tx): Transaction) -> DemoResult<Json<Vec<review::Model
     get,
     path = "/api/books/{book_id}/reviews",
     tag = "Reviews",
+    operation_id = "list_reviews_by_book",
     params(("book_id" = i64, Path, description = "Book ID")),
     responses(
         (status = 200, description = "List reviews for book", body = Vec<review::Model>)
@@ -72,6 +74,7 @@ async fn list_by_book(
     get,
     path = "/api/reviews/{id}",
     tag = "Reviews",
+    operation_id = "get_review",
     params(("id" = i64, Path, description = "Review ID")),
     responses(
         (status = 200, description = "Review found", body = review::Model),
@@ -93,6 +96,7 @@ async fn get_one(
     post,
     path = "/api/reviews",
     tag = "Reviews",
+    operation_id = "create_review",
     request_body = CreateReviewRequest,
     responses(
         (status = 201, description = "Review created", body = review::Model)
@@ -121,6 +125,7 @@ async fn create(
     put,
     path = "/api/reviews/{id}",
     tag = "Reviews",
+    operation_id = "update_review",
     params(("id" = i64, Path, description = "Review ID")),
     request_body = UpdateReviewRequest,
     responses(
@@ -154,6 +159,7 @@ async fn update(
     delete,
     path = "/api/reviews/{id}",
     tag = "Reviews",
+    operation_id = "delete_review",
     params(("id" = i64, Path, description = "Review ID")),
     responses(
         (status = 204, description = "Review deleted"),

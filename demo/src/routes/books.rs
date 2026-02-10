@@ -34,6 +34,7 @@ pub fn router() -> Router {
     get,
     path = "/api/books",
     tag = "Books",
+    operation_id = "list_books",
     responses(
         (status = 200, description = "List all books", body = Vec<book::Model>)
     )
@@ -51,6 +52,7 @@ async fn list(Transaction(tx): Transaction) -> DemoResult<Json<Vec<book::Model>>
     get,
     path = "/api/books/{id}",
     tag = "Books",
+    operation_id = "get_book",
     params(("id" = i64, Path, description = "Book ID")),
     responses(
         (status = 200, description = "Book found", body = book::Model),
@@ -72,6 +74,7 @@ async fn get_one(
     get,
     path = "/api/books/{id}/detail",
     tag = "Books",
+    operation_id = "get_book_detail",
     params(("id" = i64, Path, description = "Book ID")),
     responses(
         (status = 200, description = "Book with author detail", body = book::Model),
@@ -96,6 +99,7 @@ async fn get_detail(
     post,
     path = "/api/books",
     tag = "Books",
+    operation_id = "create_book",
     request_body = CreateBookRequest,
     responses(
         (status = 201, description = "Book created", body = book::Model)
@@ -125,6 +129,7 @@ async fn create(
     put,
     path = "/api/books/{id}",
     tag = "Books",
+    operation_id = "update_book",
     params(("id" = i64, Path, description = "Book ID")),
     request_body = UpdateBookRequest,
     responses(
@@ -170,6 +175,7 @@ async fn update(
     delete,
     path = "/api/books/{id}",
     tag = "Books",
+    operation_id = "delete_book",
     params(("id" = i64, Path, description = "Book ID")),
     responses(
         (status = 204, description = "Book deleted"),

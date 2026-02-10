@@ -31,6 +31,7 @@ pub fn router() -> Router {
     get,
     path = "/api/categories",
     tag = "Categories",
+    operation_id = "list_categories",
     responses(
         (status = 200, description = "List all categories", body = Vec<category::Model>)
     )
@@ -48,6 +49,7 @@ async fn list(Transaction(tx): Transaction) -> DemoResult<Json<Vec<category::Mod
     get,
     path = "/api/categories/{id}",
     tag = "Categories",
+    operation_id = "get_category",
     params(("id" = i64, Path, description = "Category ID")),
     responses(
         (status = 200, description = "Category found", body = category::Model),
@@ -69,6 +71,7 @@ async fn get_one(
     post,
     path = "/api/categories",
     tag = "Categories",
+    operation_id = "create_category",
     request_body = CreateCategoryRequest,
     responses(
         (status = 201, description = "Category created", body = category::Model)
@@ -92,6 +95,7 @@ async fn create(
     put,
     path = "/api/categories/{id}",
     tag = "Categories",
+    operation_id = "update_category",
     params(("id" = i64, Path, description = "Category ID")),
     request_body = UpdateCategoryRequest,
     responses(
@@ -125,6 +129,7 @@ async fn update(
     delete,
     path = "/api/categories/{id}",
     tag = "Categories",
+    operation_id = "delete_category",
     params(("id" = i64, Path, description = "Category ID")),
     responses(
         (status = 204, description = "Category deleted"),

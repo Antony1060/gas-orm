@@ -28,6 +28,7 @@ pub fn router() -> Router {
     get,
     path = "/api/authors",
     tag = "Authors",
+    operation_id = "list_authors",
     responses(
         (status = 200, description = "List all authors", body = Vec<author::Model>)
     )
@@ -45,6 +46,7 @@ async fn list(Transaction(tx): Transaction) -> DemoResult<Json<Vec<author::Model
     get,
     path = "/api/authors/{id}",
     tag = "Authors",
+    operation_id = "get_author",
     params(("id" = i64, Path, description = "Author ID")),
     responses(
         (status = 200, description = "Author found", body = author::Model),
@@ -66,6 +68,7 @@ async fn get_one(
     post,
     path = "/api/authors",
     tag = "Authors",
+    operation_id = "create_author",
     request_body = CreateAuthorRequest,
     responses(
         (status = 201, description = "Author created", body = author::Model)
@@ -92,6 +95,7 @@ async fn create(
     put,
     path = "/api/authors/{id}",
     tag = "Authors",
+    operation_id = "update_author",
     params(("id" = i64, Path, description = "Author ID")),
     request_body = UpdateAuthorRequest,
     responses(
@@ -125,6 +129,7 @@ async fn update(
     delete,
     path = "/api/authors/{id}",
     tag = "Authors",
+    operation_id = "delete_author",
     params(("id" = i64, Path, description = "Author ID")),
     responses(
         (status = 204, description = "Author deleted"),
