@@ -33,7 +33,7 @@ pub fn router() -> Router {
     tag = "Categories",
     operation_id = "list_categories",
     responses(
-        (status = 200, description = "List all categories", body = Vec<category::Model>)
+        // (status = 200, description = "List all categories", body = Vec<category::Model>)
     )
 )]
 async fn list(Transaction(tx): Transaction) -> DemoResult<Json<Vec<category::Model>>> {
@@ -52,7 +52,7 @@ async fn list(Transaction(tx): Transaction) -> DemoResult<Json<Vec<category::Mod
     operation_id = "get_category",
     params(("id" = i64, Path, description = "Category ID")),
     responses(
-        (status = 200, description = "Category found", body = category::Model),
+        // (status = 200, description = "Category found", body = category::Model),
         (status = 404, description = "Category not found")
     )
 )]
@@ -74,7 +74,7 @@ async fn get_one(
     operation_id = "create_category",
     request_body = CreateCategoryRequest,
     responses(
-        (status = 201, description = "Category created", body = category::Model)
+        // (status = 201, description = "Category created", body = category::Model)
     )
 )]
 async fn create(
@@ -99,7 +99,7 @@ async fn create(
     params(("id" = i64, Path, description = "Category ID")),
     request_body = UpdateCategoryRequest,
     responses(
-        (status = 200, description = "Category updated", body = category::Model),
+        // (status = 200, description = "Category updated", body = category::Model),
         (status = 404, description = "Category not found")
     )
 )]

@@ -1,8 +1,7 @@
 use gas::Relation;
 
 #[gas::model(table_name = "authors")]
-#[derive(Debug, serde::Serialize, serde::Deserialize, utoipa::ToSchema)]
-#[schema(as = Author)]
+#[derive(Debug, serde::Serialize, serde::Deserialize)]
 pub struct Author {
     #[primary_key]
     #[serial]
@@ -11,11 +10,13 @@ pub struct Author {
     #[default(fn = String::new(), sql = r#"''"#)]
     pub email: String,
     pub bio: String,
+
+    #[relation(inverse = book::author)]
+    pub books: Vec<book::Model>,
 }
 
 #[gas::model(table_name = "categories")]
-#[derive(Debug, serde::Serialize, serde::Deserialize, utoipa::ToSchema)]
-#[schema(as = Category)]
+#[derive(Debug, serde::Serialize, serde::Deserialize)]
 pub struct Category {
     #[primary_key]
     #[serial]

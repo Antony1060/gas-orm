@@ -40,12 +40,10 @@ mod tracing_util;
         routes::reviews::delete,
     ),
     components(schemas(
-        models::author::Model,
         routes::authors::CreateAuthorRequest,
         routes::authors::UpdateAuthorRequest,
         routes::books::CreateBookRequest,
         routes::books::UpdateBookRequest,
-        models::category::Model,
         routes::categories::CreateCategoryRequest,
         routes::categories::UpdateCategoryRequest,
         routes::reviews::CreateReviewRequest,

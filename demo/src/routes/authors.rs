@@ -32,7 +32,7 @@ pub fn router() -> Router {
     tag = "Authors",
     operation_id = "list_authors",
     responses(
-        (status = 200, description = "List all authors", body = Vec<author::Model>)
+        // (status = 200, description = "List all authors", body = Vec<author::Model>)
     )
 )]
 async fn list(Transaction(tx): Transaction) -> DemoResult<Json<Vec<author::Model>>> {
@@ -51,7 +51,7 @@ async fn list(Transaction(tx): Transaction) -> DemoResult<Json<Vec<author::Model
     operation_id = "get_author",
     params(("id" = i64, Path, description = "Author ID")),
     responses(
-        (status = 200, description = "Author found", body = author::Model),
+        // (status = 200, description = "Author found", body = author::Model),
         (status = 404, description = "Author not found")
     )
 )]
@@ -73,7 +73,7 @@ async fn get_one(
     operation_id = "create_author",
     request_body = CreateAuthorRequest,
     responses(
-        (status = 201, description = "Author created", body = author::Model)
+        // (status = 201, description = "Author created", body = author::Model)
     )
 )]
 async fn create(
@@ -102,7 +102,7 @@ async fn create(
     params(("id" = i64, Path, description = "Author ID")),
     request_body = UpdateAuthorRequest,
     responses(
-        (status = 200, description = "Author updated", body = author::Model),
+        // (status = 200, description = "Author updated", body = author::Model),
         (status = 404, description = "Author not found")
     )
 )]

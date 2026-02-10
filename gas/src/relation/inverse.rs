@@ -11,6 +11,7 @@ use std::ops::Deref;
 use tokio::runtime::Handle;
 
 #[derive(Debug, Clone, Default)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct InverseRelation<
     SelfModel: ModelMeta,
     Fk: AsPgType,
@@ -20,9 +21,12 @@ pub struct InverseRelation<
 > where
     PgParam: From<Fk>,
 {
+    #[serde(skip)]
     parent_fk: Fk,
+    #[serde(skip)]
     loaded: bool,
     items: Ret,
+    #[serde(skip)]
     _marker: PhantomData<SelfModel>,
 }
 
