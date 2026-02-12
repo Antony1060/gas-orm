@@ -1,25 +1,34 @@
-CREATE TABLE IF NOT EXISTS authors(
+CREATE TABLE IF NOT EXISTS addresses(
 	id BIGSERIAL NOT NULL,
-	name TEXT NOT NULL,
-	bio TEXT NOT NULL,
+	address TEXT NOT NULL,
 	PRIMARY KEY (id)
 );
 CREATE TABLE IF NOT EXISTS categories(
 	id BIGSERIAL NOT NULL,
 	name TEXT NOT NULL UNIQUE,
-	description TEXT NOT NULL,
+	description TEXT NOT NULL UNIQUE,
+	PRIMARY KEY (id)
+);
+CREATE TABLE IF NOT EXISTS authors(
+	id BIGSERIAL NOT NULL,
+	name TEXT NOT NULL,
+	email TEXT NOT NULL DEFAULT (''),
+	bio TEXT NOT NULL,
+	address_fk BIGINT REFERENCES addresses(id) NOT NULL,
 	PRIMARY KEY (id)
 );
 CREATE TABLE IF NOT EXISTS books(
 	id BIGSERIAL NOT NULL,
 	title TEXT NOT NULL,
-	isbn TEXT NOT NULL UNIQUE,
+	isbn TEXT NOT NULL,
 	published_year INTEGER NOT NULL,
+	page_count INTEGER NOT NULL DEFAULT (0),
 	author_fk BIGINT REFERENCES authors(id) NOT NULL,
 	PRIMARY KEY (id)
 );
 CREATE TABLE IF NOT EXISTS reviews(
 	id BIGSERIAL NOT NULL,
+	reviewer_name TEXT NOT NULL DEFAULT (''),
 	rating INTEGER NOT NULL,
 	content TEXT NOT NULL,
 	book_fk BIGINT REFERENCES books(id) NOT NULL,
@@ -28,5 +37,6 @@ CREATE TABLE IF NOT EXISTS reviews(
 -- GAS_ORM(forward_backward_separator)
 DROP TABLE reviews;
 DROP TABLE books;
-DROP TABLE categories;
 DROP TABLE authors;
+DROP TABLE categories;
+DROP TABLE addresses;

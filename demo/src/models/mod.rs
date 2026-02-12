@@ -1,7 +1,16 @@
 use gas::Relation;
 
+#[gas::model(table_name = "addresses")]
+#[derive(Debug, serde::Serialize)]
+pub struct Address {
+    #[primary_key]
+    #[serial]
+    pub id: i64,
+    pub address: String,
+}
+
 #[gas::model(table_name = "authors")]
-#[derive(Debug, serde::Serialize, serde::Deserialize)]
+#[derive(Debug, serde::Serialize)]
 pub struct Author {
     #[primary_key]
     #[serial]
@@ -11,33 +20,36 @@ pub struct Author {
     pub email: String,
     pub bio: String,
 
-    // since this is always eager (and also always O(n) queries for n returned entries),
-    //  consider not including in most structs; here just for demo purposes
-    #[serde(skip_deserializing)]
-    #[relation(inverse = book::author)]
-    pub books: Vec<book::Model>,
+    #[column(name = "address_fk")]
+    #[relation(field = address::id)]
+    pub address: Relation<i64, address::Model>,
+    // // since this is always eager (and also always O(n) queries for n returned entries),
+    // //  consider not including in most structs; here just for demo purposes
+    // #[serde(skip_deserializing)]
+    // #[relation(inverse = book::author)]
+    // pub books: Vec<book::Model>,
 }
 
 #[gas::model(table_name = "categories")]
-#[derive(Debug, serde::Serialize, serde::Deserialize)]
+#[derive(Debug, serde::Serialize)]
 pub struct Category {
     #[primary_key]
     #[serial]
     pub id: i64,
     #[unique]
     pub name: String,
+    #[unique]
     pub description: String,
 }
 
 // utoipa seems to bucher my types, so deriving ToSchema breaks compilation
 #[gas::model(table_name = "books")]
-#[derive(Debug, serde::Serialize, serde::Deserialize)]
+#[derive(Debug, serde::Serialize)]
 pub struct Book {
     #[primary_key]
     #[serial]
     pub id: i64,
     pub title: String,
-    #[unique]
     pub isbn: String,
     pub published_year: i32,
     #[default(fn = 0, sql = r#"0"#)]
@@ -49,7 +61,7 @@ pub struct Book {
 }
 
 #[gas::model(table_name = "reviews")]
-#[derive(Debug, serde::Serialize, serde::Deserialize)]
+#[derive(Debug, serde::Serialize)]
 pub struct Review {
     #[primary_key]
     #[serial]

@@ -1,6 +1,28 @@
 {
   "version": "V1_0_0",
   "state": {
+    "addresses": [
+      {
+        "table_name": "addresses",
+        "name": "id",
+        "pg_type": {
+          "Raw": "BIGINT"
+        },
+        "default_sql": null,
+        "flags": 18,
+        "index": 0
+      },
+      {
+        "table_name": "addresses",
+        "name": "address",
+        "pg_type": {
+          "Raw": "TEXT"
+        },
+        "default_sql": null,
+        "flags": 0,
+        "index": 1
+      }
+    ],
     "authors": [
       {
         "table_name": "authors",
@@ -41,6 +63,20 @@
         "default_sql": null,
         "flags": 0,
         "index": 3
+      },
+      {
+        "table_name": "authors",
+        "name": "address_fk",
+        "pg_type": {
+          "ForeignKey": {
+            "key_sql_type": "BIGINT",
+            "target_table_name": "addresses",
+            "target_column_name": "id"
+          }
+        },
+        "default_sql": null,
+        "flags": 32,
+        "index": 4
       }
     ],
     "books": [
@@ -71,7 +107,7 @@
           "Raw": "TEXT"
         },
         "default_sql": null,
-        "flags": 8,
+        "flags": 0,
         "index": 2
       },
       {
@@ -137,7 +173,7 @@
           "Raw": "TEXT"
         },
         "default_sql": null,
-        "flags": 0,
+        "flags": 8,
         "index": 2
       }
     ],

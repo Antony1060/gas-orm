@@ -89,6 +89,7 @@ async fn get_detail(
 ) -> DemoResult<Json<book::Model>> {
     let book = book::Model::query()
         .include(book::author)
+        .include(author::address)
         .filter(|| book::id.eq(id))
         .find_one(&tx)
         .await?

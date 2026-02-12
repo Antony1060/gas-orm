@@ -46,9 +46,9 @@ impl<M: ModelMeta> SelectBuilder<M> {
         self
     }
 
-    pub fn include<RFk, RModel, const R_FIELD_INDEX: usize, Ty>(
+    pub fn include<RFk, RModel, const R_FIELD_INDEX: usize, Ty, Sidecar: ModelSidecar>(
         mut self,
-        field: Field<Ty, M::Id>,
+        field: Field<Ty, Sidecar>,
     ) -> Self
     where
         RFk: AsPgType + NaiveDecodable + 'static,
