@@ -29,7 +29,7 @@ pub struct Category {
     pub description: String,
 }
 
-// utoipa seems to buchet my types, so deriving ToSchema breaks compilation
+// utoipa seems to bucher my types, so deriving ToSchema breaks compilation
 #[gas::model(table_name = "books")]
 #[derive(Debug, serde::Serialize, serde::Deserialize)]
 pub struct Book {

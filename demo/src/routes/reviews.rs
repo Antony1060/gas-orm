@@ -47,7 +47,6 @@ async fn list(Transaction(tx): Transaction) -> DemoResult<Json<Vec<review::Model
     Ok(Json(reviews))
 }
 
-/// List all reviews for a specific book.
 #[utoipa::path(
     get,
     path = "/api/books/{book_id}/reviews",
