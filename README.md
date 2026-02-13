@@ -13,6 +13,7 @@ pub struct Person {
     pub id: i64,
     pub first_name: String,
     pub last_name: String,
+    #[unique]
     pub email: String,
     pub phone_number: Option<String>,
     #[column(name = "bank_balance")]
