@@ -1,6 +1,6 @@
 # gas-orm
 
-A very simple Postgres ORM in Rust, made as a University project. Not production ready, still work in progress.
+A very simple Postgres ORM in Rust, made as a University project. Not production ready.
 
 ### Basic usage for now
 
