@@ -58,7 +58,7 @@ impl PgType {
             PgType::BIGINT if is_serial => "BIGSERIAL",
             PgType::BIGINT => "BIGINT",
             PgType::REAL => "REAL",
-            PgType::DOUBLE => "DOUBLE",
+            PgType::DOUBLE => "DOUBLE PRECISION",
             PgType::DECIMAL => "DECIMAL",
             PgType::TIMESTAMP => "TIMESTAMP",
             PgType::TIMESTAMP_TZ => "TIMESTAMP WITH TIME ZONE",

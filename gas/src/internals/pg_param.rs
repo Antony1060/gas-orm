@@ -34,7 +34,7 @@ macro_rules! pg_param_all {
             PgParam::INTEGER(value) => $ex("INTEGER", value),
             PgParam::BIGINT(value) => $ex("BIGINT", value),
             PgParam::REAL(value) => $ex("REAL", value),
-            PgParam::DOUBLE(value) => $ex("DOUBLE", value),
+            PgParam::DOUBLE(value) => $ex("DOUBLE PRECISION", value),
             PgParam::DECIMAL(value) => $ex("DECIMAL", value),
             PgParam::TIMESTAMP(value) => $ex("TIMESTAMP", value),
             PgParam::TIMESTAMP_TZ_UTC(value) => $ex("TIMESTAMP_TZ_UTC", value),
