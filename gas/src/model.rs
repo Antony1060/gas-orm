@@ -43,7 +43,6 @@ pub trait ModelOps: ModelMeta {
         SelectBuilder::new()
     }
 
-    // some trait bounds cannot be enforced if I just do `async fn` here
     fn create_table<E: PgExecutor>(
         ctx: E,
         ignore_existing: bool,
@@ -51,13 +50,31 @@ pub trait ModelOps: ModelMeta {
         CreateTableOp::<Self>::new(ignore_existing).run(ctx)
     }
 
-    // consume self and return an entry that is inserted
     fn insert<E: PgExecutor>(&mut self, ctx: E) -> impl Future<Output = GasResult<()>> {
         InsertOp::<Self>::new(self).run(ctx)
     }
 
+    // eh, IDK how I feel about the name
+    fn inserted<E: PgExecutor>(&self, ctx: E) -> impl Future<Output = GasResult<Self>> {
+        async {
+            let mut cloned = self.clone();
+            InsertOp::<Self>::new(&mut cloned).run(ctx).await?;
+
+            Ok(cloned)
+        }
+    }
+
     fn update<E: PgExecutor>(&mut self, ctx: E) -> impl Future<Output = GasResult<()>> {
         UpdateOp::<Self>::new(self).run(ctx)
+    }
+
+    fn updated<E: PgExecutor>(&self, ctx: E) -> impl Future<Output = GasResult<Self>> {
+        async {
+            let mut cloned = self.clone();
+            UpdateOp::<Self>::new(&mut cloned).run(ctx).await?;
+
+            Ok(cloned)
+        }
     }
 
     fn delete<E: PgExecutor>(self, ctx: E) -> impl Future<Output = GasResult<()>> {
