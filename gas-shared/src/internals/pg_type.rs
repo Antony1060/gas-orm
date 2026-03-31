@@ -16,6 +16,7 @@ pub enum PgType {
     TIMESTAMP_TZ,
     DATE,
     TIME,
+    JSONB,
     // we can skip this for serde
     //  every time serde is needed, it should go through the PortablePgType type
     //  which handles the FOREIGN_KEY variant differently
@@ -64,6 +65,7 @@ impl PgType {
             PgType::TIMESTAMP_TZ => "TIMESTAMP WITH TIME ZONE",
             PgType::DATE => "DATE",
             PgType::TIME => "TIME",
+            PgType::JSONB => "JSONB",
             PgType::IGNORED => "",
         }
     }

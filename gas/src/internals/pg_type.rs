@@ -66,3 +66,5 @@ pg_type_impl!(DateTime<FixedOffset> as PgType::TIMESTAMP_TZ, PgParam::TIMESTAMP_
 
 pg_type_impl!(NaiveDate as PgType::DATE, PgParam::DATE);
 pg_type_impl!(NaiveTime as PgType::TIME, PgParam::TIME);
+
+pg_type_impl!(serde_json::Value as PgType::JSONB, |value: Option<serde_json::Value>|{ PgParam::JSONB(value.map(sqlx::types::Json)) });

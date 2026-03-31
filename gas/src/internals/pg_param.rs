@@ -21,6 +21,7 @@ pub enum PgParam {
     TIMESTAMP_TZ_FIXED_OFFSET(Option<DateTime<FixedOffset>>),
     DATE(Option<NaiveDate>),
     TIME(Option<NaiveTime>),
+    JSONB(Option<sqlx::types::Json<serde_json::Value>>),
     RAW(Option<&'static str>),
     IGNORED,
 }
@@ -42,6 +43,7 @@ macro_rules! pg_param_all {
             PgParam::TIMESTAMP_TZ_FIXED_OFFSET(value) => $ex("TIMESTAMP_TZ_FIXED_OFFSET", value),
             PgParam::DATE(value) => $ex("DATE", value),
             PgParam::TIME(value) => $ex("TIME", value),
+            PgParam::JSONB(value) => $ex("JSONB", value),
             PgParam::RAW(value) => $ex("RAW", value),
             PgParam::IGNORED => $ex("IGNORED", Option::<i8>::None),
         }
