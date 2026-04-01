@@ -124,6 +124,7 @@ macro_rules! pg_eq_impl {
 
 // text
 pg_eq_impl!(String as &str, PgParam::TEXT);
+pg_eq_impl!(String as &String, PgParam::TEXT);
 impl<M: ModelSidecar> PgEq<String> for Field<String, M> {
     fn eq(&self, other: String) -> EqExpression {
         EqExpression::new(
