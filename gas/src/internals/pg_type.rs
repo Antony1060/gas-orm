@@ -17,9 +17,7 @@ impl<T: AsPgType> IsOptional for Option<T> {
     const FACTOR: u8 = 1;
 }
 
-pub trait NaiveDecodable: for<'a> Decode<'a, Postgres> + Type<Postgres> {}
-
-impl<T: NaiveDecodable> NaiveDecodable for Option<T> {}
+pub(crate) trait NaiveDecodable: for<'a> Decode<'a, Postgres> + Type<Postgres> {}
 
 macro_rules! pg_type_impl {
     ($field_type:ty as $pg_type:expr, $pg_param_conv:expr) => {
@@ -32,6 +30,7 @@ macro_rules! pg_type_impl {
         }
 
         impl NaiveDecodable for $field_type {}
+        impl NaiveDecodable for Option<$field_type> {}
 
         // default to 0, blanked implemented to 1 for all Option<T: AsPgType>
         impl IsOptional for $field_type {
