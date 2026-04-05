@@ -18,9 +18,9 @@ impl<Fk: AsPgType + 'static, Model: ModelMeta> Relation<Fk, Model> {
     }
 
     pub fn key<const FIELD_INDEX: usize>(
-        key: impl AsRef<Fk>,
+        key: &Fk,
     ) -> <Self as RelationTypeOps>::ToFull<FIELD_INDEX> {
-        FullRelation::ForeignKey(key.as_ref().clone())
+        FullRelation::ForeignKey(key.clone())
     }
 }
 
