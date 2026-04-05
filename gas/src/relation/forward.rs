@@ -10,6 +10,20 @@ pub struct Relation<Fk: AsPgType + 'static, Model: ModelMeta> {
     _model_marker: PhantomData<Model>,
 }
 
+impl<Fk: AsPgType + 'static, Model: ModelMeta> Relation<Fk, Model> {
+    pub fn model<const FIELD_INDEX: usize>(
+        model: &Model,
+    ) -> <Self as RelationTypeOps>::ToFull<FIELD_INDEX> {
+        FullRelation::Loaded(model.clone())
+    }
+
+    pub fn key<const FIELD_INDEX: usize>(
+        key: impl AsRef<Fk>,
+    ) -> <Self as RelationTypeOps>::ToFull<FIELD_INDEX> {
+        FullRelation::ForeignKey(key.as_ref().clone())
+    }
+}
+
 pub trait RelationTypeOps {
     type ToFull<const FIELD_INDEX: usize>;
     type ToField;
