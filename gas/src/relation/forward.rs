@@ -98,6 +98,7 @@ pub trait RelationOps<M: ModelMeta> {
     fn model(&mut self) -> Option<&M>;
 }
 
+// TODO: if must exist, maybe remove Option??
 impl<Fk: AsPgType, Model: ModelMeta, const FIELD_INDEX: usize> RelationOps<Model>
     for FullRelation<Fk, Model, FIELD_INDEX>
 where
