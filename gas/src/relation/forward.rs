@@ -87,6 +87,13 @@ where
 
 pub trait RelationOps<M: ModelMeta> {
     // will try to lazy load
+    fn load_mut<'a, E: PgExecutor>(
+        &'a mut self,
+        ctx: E,
+    ) -> impl Future<Output = GasResult<Option<&'a mut M>>>
+    where
+        M: 'a;
+
     fn load<'a, E: PgExecutor>(
         &'a mut self,
         ctx: E,
@@ -95,7 +102,9 @@ pub trait RelationOps<M: ModelMeta> {
         M: 'a;
 
     // explicit method to get the eagerly loaded variant
-    fn model(&mut self) -> Option<&M>;
+    fn model_mut(&mut self) -> Option<&mut M>;
+
+    fn model(&self) -> Option<&M>;
 }
 
 // TODO: if must exist, maybe remove Option??
@@ -104,7 +113,7 @@ impl<Fk: AsPgType, Model: ModelMeta, const FIELD_INDEX: usize> RelationOps<Model
 where
     PgParam: From<Fk>,
 {
-    async fn load<'a, E: PgExecutor>(&'a mut self, ctx: E) -> GasResult<Option<&'a Model>>
+    async fn load_mut<'a, E: PgExecutor>(&'a mut self, ctx: E) -> GasResult<Option<&'a mut Model>>
     where
         Model: 'a,
     {
@@ -125,7 +134,24 @@ where
         }
     }
 
-    fn model(&mut self) -> Option<&Model> {
+    async fn load<'a, E: PgExecutor>(&'a mut self, ctx: E) -> GasResult<Option<&'a Model>>
+    where
+        Model: 'a,
+    {
+        match self.load_mut(ctx).await? {
+            Some(val) => Ok(Some(val)),
+            None => Ok(None),
+        }
+    }
+
+    fn model_mut(&mut self) -> Option<&mut Model> {
+        match self {
+            FullRelation::Loaded(model) => Some(model),
+            _ => None,
+        }
+    }
+
+    fn model(&self) -> Option<&Model> {
         match self {
             FullRelation::Loaded(model) => Some(model),
             _ => None,
@@ -139,6 +165,16 @@ impl<Fk: AsPgType, Model: ModelMeta, const FIELD_INDEX: usize> RelationOps<Model
 where
     PgParam: From<Fk>,
 {
+    async fn load_mut<'a, E: PgExecutor>(&'a mut self, ctx: E) -> GasResult<Option<&'a mut Model>>
+    where
+        Model: 'a,
+    {
+        match self {
+            Some(relation) => relation.load_mut(ctx).await,
+            None => Ok(None),
+        }
+    }
+
     async fn load<'a, E: PgExecutor>(&'a mut self, ctx: E) -> GasResult<Option<&'a Model>>
     where
         Model: 'a,
@@ -149,7 +185,14 @@ where
         }
     }
 
-    fn model(&mut self) -> Option<&Model> {
+    fn model_mut(&mut self) -> Option<&mut Model> {
+        match self {
+            Some(relation) => relation.model_mut(),
+            None => None,
+        }
+    }
+
+    fn model(&self) -> Option<&Model> {
         match self {
             Some(relation) => relation.model(),
             None => None,
