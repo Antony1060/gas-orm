@@ -95,7 +95,7 @@ impl<M: ModelMeta, G: AsPgType + 'static> Group<M, G> {
 
         if let Some(ref filter) = self.select.filter {
             sql.append_str(" WHERE ");
-            sql.append_query(filter.condition.as_sql());
+            sql.append_query(&filter.condition.as_sql());
         }
 
         sql.append_str(&format!(" GROUP BY {}", self.field.full_name));
@@ -104,7 +104,7 @@ impl<M: ModelMeta, G: AsPgType + 'static> Group<M, G> {
             && let Some(sort_sql) = sort.as_sql()
         {
             sql.append_str(" ORDER BY ");
-            sql.append_query(sort_sql);
+            sql.append_query(&sort_sql);
         }
 
         if let Some(limit) = self.limit {

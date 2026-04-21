@@ -71,7 +71,7 @@ impl PgTransaction {
     }
 }
 
-pub(crate) trait PgExecutor: Sized {
+pub(crate) trait PgExecutor: Copy + Sized {
     async fn execute(self, sql: SqlQuery, params: &[PgParam]) -> GasResult<Vec<Row>>;
 
     fn get_backing_connection(&self) -> PgConnection;

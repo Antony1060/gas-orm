@@ -125,7 +125,7 @@ pub fn model_impl(_input: TokenStream) -> Result<proc_macro2::TokenStream, syn::
                 #insert_parts_fn
             }
 
-            fn gen_insert_values_sql(&self) -> gas::internals::SqlStatement {
+            fn gen_insert_values_sql(&self) -> gas::internals::SqlStatement<'static> {
                 #insert_values_fn
             }
 

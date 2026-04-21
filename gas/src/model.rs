@@ -27,7 +27,7 @@ pub trait ModelMeta: Sized + Default + Clone + FromRow {
 
     fn gen_insert_parts_sql() -> (SqlQuery<'static>, SqlQuery<'static>);
 
-    fn gen_insert_values_sql(&self) -> SqlStatement<'_>;
+    fn gen_insert_values_sql(&self) -> SqlStatement<'static>;
 
     fn gen_update_sql(&self) -> SqlStatement<'_>;
 
@@ -57,7 +57,7 @@ pub trait ModelOps: ModelMeta {
     }
 
     fn inserted<E: PgExecutor>(&self, ctx: E) -> impl Future<Output = GasResult<Self>> {
-        async {
+        async move {
             let mut cloned = self.clone();
 
             cloned.insert(ctx).await?;
@@ -73,7 +73,7 @@ pub trait ModelOps: ModelMeta {
         ctx: E,
         iter: &[Self],
     ) -> impl Future<Output = GasResult<Box<[Self]>>> {
-        async {
+        async move {
             let mut cloned = iter.iter().map(Clone::clone).collect::<Vec<_>>();
 
             Self::insert_all(ctx, &mut cloned).await?;
@@ -86,7 +86,7 @@ pub trait ModelOps: ModelMeta {
     }
 
     fn updated<E: PgExecutor>(&self, ctx: E) -> impl Future<Output = GasResult<Self>> {
-        async {
+        async move {
             let mut cloned = self.clone();
             UpdateOp::<Self>::new(&mut cloned).run(ctx).await?;
 

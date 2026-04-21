@@ -167,14 +167,14 @@ impl<M: ModelMeta> SelectBuilder<M> {
 
         if let Some(ref filter) = self.filter {
             sql.append_str(" WHERE ");
-            sql.append_query(filter.condition.as_sql());
+            sql.append_query(&filter.condition.as_sql());
         }
 
         if let Some(ref sort) = self.sort
             && let Some(sort_sql) = sort.as_sql()
         {
             sql.append_str(" ORDER BY ");
-            sql.append_query(sort_sql);
+            sql.append_query(&sort_sql);
         }
 
         if include_limit && let Some(limit) = self.limit {
@@ -205,7 +205,7 @@ impl<M: ModelMeta> SelectBuilder<M> {
 
         if let Some(ref filter) = self.filter {
             sql.append_str(" WHERE ");
-            sql.append_query(filter.condition.as_sql());
+            sql.append_query(&filter.condition.as_sql());
         }
 
         // params

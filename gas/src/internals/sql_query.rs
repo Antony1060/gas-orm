@@ -9,7 +9,7 @@ lazy_static! {
 }
 
 // eh
-#[derive(Debug, Default)]
+#[derive(Debug, Clone, Default)]
 pub struct SqlQuery<'a> {
     query: Cow<'a, str>,
 }
@@ -23,7 +23,7 @@ impl<'a> SqlQuery<'a> {
         }
     }
 
-    pub fn append_query(&mut self, other: SqlQuery) {
+    pub fn append_query(&mut self, other: &SqlQuery) {
         self.query.to_mut().push_str(&other.query);
     }
 

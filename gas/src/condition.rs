@@ -72,16 +72,16 @@ impl Condition {
             Condition::Basic(s) => sql.append_str(s),
             Condition::And { lhs, rhs } => {
                 sql.append_str("(");
-                sql.append_query(lhs.as_sql());
+                sql.append_query(&lhs.as_sql());
                 sql.append_str(") AND (");
-                sql.append_query(rhs.as_sql());
+                sql.append_query(&rhs.as_sql());
                 sql.append_str(")");
             }
             Condition::Or { lhs, rhs } => {
                 sql.append_str("(");
-                sql.append_query(lhs.as_sql());
+                sql.append_query(&lhs.as_sql());
                 sql.append_str(") OR (");
-                sql.append_query(rhs.as_sql());
+                sql.append_query(&rhs.as_sql());
                 sql.append_str(")");
             }
         };
