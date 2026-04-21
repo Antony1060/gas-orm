@@ -17,6 +17,7 @@ pub mod relation;
 pub mod row;
 pub mod sort;
 pub mod types;
+pub(crate) mod util;
 
 pub use field::*;
 pub use gas_macros::*;

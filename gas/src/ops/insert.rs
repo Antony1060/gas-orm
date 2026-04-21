@@ -1,7 +1,8 @@
 use crate::connection::PgExecutor;
+use crate::error::GasError;
 use crate::internals::{PgParam, SqlQuery};
 use crate::model::ModelMeta;
-use crate::GasResult;
+use crate::{util, GasResult};
 use tokio::task::JoinSet;
 
 pub(crate) struct InsertOp<'a, T: ModelMeta> {
@@ -10,7 +11,7 @@ pub(crate) struct InsertOp<'a, T: ModelMeta> {
 }
 
 // i16::MAX - a little bit
-const MAX_POSITIONAL_ARGS_LIMIT: usize = 30000;
+const MAX_POSITIONAL_ARGS_LIMIT: usize = 10;
 
 impl<'a, T: ModelMeta> InsertOp<'a, T> {
     pub(crate) fn new(object: &'a mut [T]) -> Self {
@@ -55,19 +56,36 @@ impl<'a, T: ModelMeta> InsertOp<'a, T> {
             full_query.append_query(&sql);
             full_query.append_query(&returning);
 
-            join_set.spawn(async move {
-                let rows = ctx.execute_parsed::<T>(full_query, &params).await?;
+            // we lie
+            // but is okay, it's joined before anything expired (I hope)
+            let static_task = unsafe {
+                util::async_lies::into_static(async move {
+                    let rows = ctx.execute_parsed::<T>(full_query, &params).await?;
 
-                // NOTE: ordering should be same in practice, this might break sometime in the future
-                for (object, row) in self.objects[index..index + rows.len()].iter_mut().zip(rows) {
-                    *object = row;
-                }
-            });
+                    Ok::<_, GasError>((rows, index))
+                })
+            };
+
+            join_set.spawn(static_task);
 
             index += count;
         }
 
-        join_set.join_all().await;
+        let results = join_set.join_all().await;
+
+        // NOTE: ordering should be same in practice, this might break sometime in the future
+        for result in results {
+            let Ok((rows, start_index)) = result else {
+                return result.map(|_| ());
+            };
+
+            for (object, row) in self.objects[start_index..start_index + rows.len()]
+                .iter_mut()
+                .zip(rows)
+            {
+                *object = row;
+            }
+        }
 
         Ok(())
     }

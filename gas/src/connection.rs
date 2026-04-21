@@ -71,32 +71,38 @@ impl PgTransaction {
     }
 }
 
-pub(crate) trait PgExecutor: Copy + Sized {
-    async fn execute(self, sql: SqlQuery, params: &[PgParam]) -> GasResult<Vec<Row>>;
+pub(crate) trait PgExecutor: Copy + Sized + Send + Sync {
+    fn execute(
+        self,
+        sql: SqlQuery,
+        params: &[PgParam],
+    ) -> impl Future<Output = GasResult<Vec<Row>>> + Send;
 
     fn get_backing_connection(&self) -> PgConnection;
 
-    async fn execute_parsed<T: FromRow>(
+    fn execute_parsed<T: FromRow>(
         self,
         sql: SqlQuery<'_>,
         params: &[PgParam],
-    ) -> GasResult<Vec<T>> {
-        let connection = self.get_backing_connection();
+    ) -> impl Future<Output = GasResult<Vec<T>>> + Send {
+        async move {
+            let connection = self.get_backing_connection();
 
-        let rows = self.execute(sql, params).await?;
+            let rows = self.execute(sql, params).await?;
 
-        tokio::task::spawn_blocking(move || {
-            let ctx = ResponseCtx {
-                all_rows: &rows,
-                connection,
-            };
+            tokio::task::spawn_blocking(move || {
+                let ctx = ResponseCtx {
+                    all_rows: &rows,
+                    connection,
+                };
 
-            rows.iter()
-                .map(|row| FromRow::from_row(&ctx, row))
-                .collect::<Result<Vec<T>, _>>()
-        })
-        .await
-        .unwrap()
+                rows.iter()
+                    .map(|row| FromRow::from_row(&ctx, row))
+                    .collect::<Result<Vec<T>, _>>()
+            })
+            .await
+            .unwrap()
+        }
     }
 
     fn prepare_query(sql: SqlQuery, params: &[PgParam]) -> GasResult<(String, PgArguments)> {
