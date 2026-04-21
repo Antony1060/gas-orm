@@ -1,6 +1,6 @@
 use crate::attribute::DefaultArgs;
 use crate::ops::delete::gen_delete_sql_fn_tokens;
-use crate::ops::insert::gen_insert_sql_fn_tokens;
+use crate::ops::insert::{gen_insert_parts_sql_fn_tokens, gen_insert_values_sql_fn_tokens};
 use crate::ops::update::gen_update_sql_fn_tokens;
 use crate::ops::update_with_fields::gen_update_with_fields_sql_fn_tokens;
 use crate::{FieldNames, ModelCtx};
@@ -90,7 +90,9 @@ pub fn model_impl(_input: TokenStream) -> Result<proc_macro2::TokenStream, syn::
 
     let key_tokens = gen_key_tokens(&ctx, &real_fields);
 
-    let insert_fn = gen_insert_sql_fn_tokens(&ctx)?;
+    let insert_parts_fn = gen_insert_parts_sql_fn_tokens(&ctx)?;
+    let insert_values_fn = gen_insert_values_sql_fn_tokens(&ctx)?;
+
     let update_fn = gen_update_sql_fn_tokens(&ctx)?;
     let update_with_fields_fn = gen_update_with_fields_sql_fn_tokens(&ctx)?;
     let delete_fn = gen_delete_sql_fn_tokens(&ctx)?;
@@ -119,8 +121,12 @@ pub fn model_impl(_input: TokenStream) -> Result<proc_macro2::TokenStream, syn::
 
             #key_tokens
 
-            fn gen_insert_sql(&self) -> gas::internals::SqlStatement {
-                #insert_fn
+            fn gen_insert_parts_sql() -> (gas::internals::SqlQuery<'static>, gas::internals::SqlQuery<'static>) {
+                #insert_parts_fn
+            }
+
+            fn gen_insert_values_sql(&self) -> gas::internals::SqlStatement {
+                #insert_values_fn
             }
 
             fn gen_update_sql(&self) -> gas::internals::SqlStatement {

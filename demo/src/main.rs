@@ -1,9 +1,11 @@
 use crate::error::DemoResult;
+use crate::models::author;
 use crate::tracing_util::setup_tracing;
 use gas::connection::PgConnection;
-use gas::load_migrations;
 use gas::migrations::{MigrateCount, MigrateDirection};
+use gas::{load_migrations, ModelOps};
 use std::env;
+use std::ops::DerefMut;
 use tower_http::trace::TraceLayer;
 use utoipa::OpenApi;
 use utoipa_swagger_ui::SwaggerUi;

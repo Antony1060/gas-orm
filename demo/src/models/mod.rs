@@ -19,10 +19,6 @@ pub struct Author {
     #[default(fn = String::new(), sql = r#"''"#)]
     pub email: String,
     pub bio: String,
-
-    #[column(name = "address_fk")]
-    #[relation(field = address::id)]
-    pub address: Relation<i64, address::Model>,
     // // since this is always eager (and also always O(n) queries for n returned entries),
     // //  consider not including in most structs; here just for demo purposes
     // #[serde(skip_deserializing)]

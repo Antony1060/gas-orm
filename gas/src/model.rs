@@ -1,7 +1,7 @@
 use crate::condition::EqExpression;
 use crate::connection::PgExecutor;
 use crate::field::FieldMeta;
-use crate::internals::{AsPgType, SqlStatement};
+use crate::internals::{AsPgType, SqlQuery, SqlStatement};
 use crate::ops::create_table::CreateTableOp;
 use crate::ops::delete::DeleteOp;
 use crate::ops::insert::InsertOp;
@@ -25,7 +25,9 @@ pub trait ModelMeta: Sized + Default + Clone + FromRow {
 
     fn filter_with_key(key: Self::Key) -> EqExpression;
 
-    fn gen_insert_sql(&self) -> SqlStatement<'_>;
+    fn gen_insert_parts_sql() -> (SqlQuery<'static>, SqlQuery<'static>);
+
+    fn gen_insert_values_sql(&self) -> SqlStatement<'_>;
 
     fn gen_update_sql(&self) -> SqlStatement<'_>;
 
@@ -51,16 +53,31 @@ pub trait ModelOps: ModelMeta {
     }
 
     fn insert<E: PgExecutor>(&mut self, ctx: E) -> impl Future<Output = GasResult<()>> {
-        InsertOp::<Self>::new(self).run(ctx)
+        InsertOp::<Self>::new(std::slice::from_mut(self)).run(ctx)
     }
 
-    // eh, IDK how I feel about the name
     fn inserted<E: PgExecutor>(&self, ctx: E) -> impl Future<Output = GasResult<Self>> {
         async {
             let mut cloned = self.clone();
-            InsertOp::<Self>::new(&mut cloned).run(ctx).await?;
 
+            cloned.insert(ctx).await?;
             Ok(cloned)
+        }
+    }
+
+    fn insert_all<E: PgExecutor>(ctx: E, iter: &mut [Self]) -> impl Future<Output = GasResult<()>> {
+        InsertOp::<Self>::new(iter).run(ctx)
+    }
+
+    fn inserted_all<E: PgExecutor>(
+        ctx: E,
+        iter: &[Self],
+    ) -> impl Future<Output = GasResult<Box<[Self]>>> {
+        async {
+            let mut cloned = iter.iter().map(Clone::clone).collect::<Vec<_>>();
+
+            Self::insert_all(ctx, &mut cloned).await?;
+            Ok(cloned.into_boxed_slice())
         }
     }
 

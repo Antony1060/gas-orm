@@ -1,27 +1,42 @@
 use crate::connection::PgExecutor;
-use crate::error::GasError;
 use crate::model::ModelMeta;
 use crate::GasResult;
 
 pub(crate) struct InsertOp<'a, T: ModelMeta> {
     // object will be replaced with the inserted one
-    object: &'a mut T,
+    objects: &'a mut [T],
 }
 
 impl<'a, T: ModelMeta> InsertOp<'a, T> {
-    pub(crate) fn new(object: &'a mut T) -> Self {
-        Self { object }
+    pub(crate) fn new(object: &'a mut [T]) -> Self {
+        Self { objects: object }
     }
 
     pub(crate) async fn run<E: PgExecutor>(self, ctx: E) -> GasResult<()> {
-        let (sql, params) = self.object.gen_insert_sql();
+        let (insert, returning) = T::gen_insert_parts_sql();
 
-        let mut rows = ctx.execute_parsed::<T>(sql, &params).await?;
-        let inserted = rows
-            .pop()
-            .ok_or_else(|| GasError::UnexpectedResponse("no returned row on insert".into()))?;
+        let mut full_query = insert;
+        let mut full_params = Vec::new();
 
-        *self.object = inserted;
+        for (index, object) in self.objects.iter().enumerate() {
+            let (sql, params) = object.gen_insert_values_sql();
+            full_query.append_query(sql);
+
+            if index < self.objects.len() - 1 {
+                full_query.append_str(",");
+            }
+
+            full_params.extend(params);
+        }
+
+        full_query.append_query(returning);
+
+        let rows = ctx.execute_parsed::<T>(full_query, &full_params).await?;
+
+        // NOTE: ordering should be same in practice, this might break sometime in the future
+        for (object, row) in self.objects.iter_mut().zip(rows) {
+            *object = row;
+        }
 
         Ok(())
     }
