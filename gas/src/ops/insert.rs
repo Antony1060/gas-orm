@@ -26,7 +26,7 @@ impl<'a, T: ModelMeta> InsertOp<'a, T> {
 
         let mut values_chunks: Vec<(SqlQuery, Vec<PgParam>)> = vec![(SqlQuery::new(), vec![])];
 
-        for object in self.objects.iter() {
+        for (index, object) in self.objects.iter().enumerate() {
             let (last_sql, last_params) = values_chunks.last_mut().expect("chunks are not empty");
 
             let (sql, params) = object.gen_insert_values_sql();
@@ -36,7 +36,10 @@ impl<'a, T: ModelMeta> InsertOp<'a, T> {
                 continue;
             }
 
-            last_sql.append_str(",");
+            if index != 0 {
+                last_sql.append_str(",");
+            }
+
             last_sql.append_query(&sql);
             last_params.extend(params);
         }
