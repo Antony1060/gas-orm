@@ -56,7 +56,7 @@ impl<'a, T: ModelMeta> InsertOp<'a, T> {
             let rows_len = rows.len();
 
             // NOTE: ordering should be same in practice, this might break sometime in the future
-            for (object, row) in self.objects[index..rows.len()].iter_mut().zip(rows) {
+            for (object, row) in self.objects[index..index + rows.len()].iter_mut().zip(rows) {
                 *object = row;
             }
 
