@@ -2,7 +2,6 @@ use crate::connection::PgExecutor;
 use crate::internals::{PgParam, SqlQuery};
 use crate::model::ModelMeta;
 use crate::GasResult;
-use tracing::info;
 
 pub(crate) struct InsertOp<'a, T: ModelMeta> {
     // object will be replaced with the inserted one
@@ -43,8 +42,6 @@ impl<'a, T: ModelMeta> InsertOp<'a, T> {
             last_sql.append_query(&sql);
             last_params.extend(params);
         }
-
-        info!(chunks = values_chunks.len(), "prepared insert chunks");
 
         let mut index = 0;
         for (sql, params) in values_chunks {
