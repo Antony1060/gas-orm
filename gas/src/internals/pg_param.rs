@@ -5,6 +5,7 @@ use std::fmt::{Display, Formatter};
 #[derive(Debug, Clone)]
 pub enum PgParam {
     TEXT(Option<String>),
+    BOOLEAN(Option<bool>),
     SMALLINT(Option<i16>),
     INTEGER(Option<i32>),
     BIGINT(Option<i64>),
@@ -31,6 +32,7 @@ macro_rules! pg_param_all {
     ($param:ident, $ex:expr) => {
         match $param {
             PgParam::TEXT(value) => $ex("TEXT", value),
+            PgParam::BOOLEAN(value) => $ex("BOOLEAN", value),
             PgParam::SMALLINT(value) => $ex("SMALLINT", value),
             PgParam::INTEGER(value) => $ex("INTEGER", value),
             PgParam::BIGINT(value) => $ex("BIGINT", value),

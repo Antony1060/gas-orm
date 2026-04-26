@@ -52,6 +52,7 @@ macro_rules! pg_type_impl {
 }
 
 pg_type_impl!(String as PgType::TEXT, PgParam::TEXT);
+pg_type_impl!(bool as PgType::BOOLEAN, PgParam::BOOLEAN);
 pg_type_impl!(i16 as PgType::SMALLINT, PgParam::SMALLINT);
 pg_type_impl!(i32 as PgType::INTEGER, PgParam::INTEGER);
 pg_type_impl!(i64 as PgType::BIGINT, PgParam::BIGINT);

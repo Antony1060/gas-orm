@@ -184,6 +184,10 @@ impl<M: ModelSidecar> PgEq<String> for Field<String, M> {
 
 pg_eq_impl!(Option<String> as &str, PgParam::TEXT);
 
+// boolean
+pg_eq_impl!(bool as bool, PgParam::BOOLEAN);
+pg_eq_impl!(Option<bool> as bool, PgParam::BOOLEAN);
+
 // smallint
 pg_eq_impl!(i16 as i8, PgParam::SMALLINT);
 pg_eq_impl!(i16 as i16, PgParam::SMALLINT);

@@ -5,6 +5,7 @@ use std::borrow::Cow;
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum PgType {
     TEXT,
+    BOOLEAN,
     SMALLINT,
     INTEGER,
     BIGINT,
@@ -52,6 +53,7 @@ impl PgType {
             PgType::FOREIGN_KEY { .. } => panic!("can not evaluate foreign key at const time"),
 
             PgType::TEXT => "TEXT",
+            PgType::BOOLEAN => "BOOLEAN",
             PgType::SMALLINT if is_serial => "SMALLSERIAL",
             PgType::SMALLINT => "SMALLINT",
             PgType::INTEGER if is_serial => "SERIAL",
