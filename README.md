@@ -1,17 +1,19 @@
 # gas
 
-A macro-driven PostgreSQL ORM for Rust, using [sqlx](https://github.com/launchbadge/sqlx) as a backing driver. I'm using it in production in some project but still working towards a v1.
+A macro-driven PostgreSQL ORM for Rust, using [sqlx](https://github.com/launchbadge/sqlx) as a backing driver. I'm using it in production in some projects but still working towards a v1.
 
 ## Getting started
-
+### Installing
 ```toml
 [dependencies]
+# not on crates.io yet, tags will come soon
 gas = { git = "https://github.com/antony1060/gas-orm" }
+# tokio is a hard dependency for now
 tokio = { version = "1", features = ["full"] }
 ```
 
-Define a model, and Gas generates a module with typed fields and full CRUD:
-
+### Basic usage
+Define a model, and `gas` generates a module for interacting with the database:
 ```rust
 use gas::connection::PgConnection;
 use gas::GasResult;
@@ -23,7 +25,7 @@ pub struct Todo {
     #[serial]
     pub id: i64,
     pub title: String,
-    pub done: bool,
+    pub done: i32,
 }
 
 #[tokio::main]
@@ -33,16 +35,18 @@ async fn main() -> GasResult<()> {
     todo::Model::create_table(&db, true).await?;
 
     // insert
-    let mut t = todo::Model {
+    let mut new_todo = todo::Model {
         title: "Write README".into(),
-        done: false,
+        done: 0,
         ..Default::default()
     };
-    t.insert(&db).await?;
+    // will mutate `new_todo` with the `id` from the database
+    new_todo.insert(&db).await?;
+    // `new_todo.inserted(&db)` can be used to return the database value instead of mutating it
 
     // query
     let pending = todo::Model::query()
-        .filter(|| todo::done.eq(false))
+        .filter(|| todo::done.eq(0))
         .sort(todo::id.desc())
         .limit(10)
         .find_all(&db)
@@ -50,7 +54,7 @@ async fn main() -> GasResult<()> {
 
     // update
     let mut first = todo::Model::find_by_key(&db, 1).await?.unwrap();
-    first.done = true;
+    first.done = 1;
     first.update(&db).await?;
 
     // delete
@@ -60,7 +64,10 @@ async fn main() -> GasResult<()> {
 }
 ```
 
-The `#[gas::model]` macro expands your struct into a module (here `todo`) containing a `Model` type and typed field statics like `todo::title`, `todo::done`, etc. These statics are what power the query builder.
+The `#[gas::model]` macro expands your struct into a module (here `todo`) containing a `Model` type and typed field statics like `todo::title`, `todo::done`, etc.
+
+> [!NOTE]
+> It's recommended to add additional attribute and derive macros below this one.
 
 ## Querying
 
@@ -69,7 +76,7 @@ Filters are type-safe and composable with `&` (AND) and `|` (OR):
 ```rust
 let results = todo::Model::query()
     .filter(|| {
-        (todo::title.eq("Important") & todo::done.eq(false))
+        (todo::title.eq("Important") & todo::done.eq(0))
             | todo::id.one_of(&[1, 2, 3])
     })
     .sort(todo::title.asc() >> todo::id.desc())
@@ -152,7 +159,7 @@ let author = b.author.load(&db).await?;
 
 ### Inverse relations
 
-You can also go the other direction — from a parent to its children — with `#[relation(inverse = ...)]`. Use `Vec<Model>` for has-many or `Option<Model>` for has-one:
+You can also go the other direction - from a parent to its children - with `#[relation(inverse = ...)]`. Use `Vec<Model>` for 1:N or `Option<Model>` for 1:1:
 
 ```rust
 #[gas::model(table_name = "authors")]
@@ -167,7 +174,7 @@ pub struct Author {
 }
 ```
 
-Inverse relations are eagerly loaded when the parent is queried. The field derefs to the inner type (`Vec` or `Option`), so you can iterate directly:
+Inverse relations are eagerly loaded when the parent is queried. The field implements a `Deref` to the inner type (`Vec` or `Option`), so you can iterate directly:
 
 ```rust
 let author = author::Model::find_by_key(&db, 1).await?.unwrap();
@@ -198,7 +205,6 @@ gas-cli migrations init                       # scaffold the migrations director
 gas-cli migrations sync                       # diff your models and generate a migration
 gas-cli migrations migrate                    # run all pending migrations
 gas-cli migrations migrate --back --count 1   # roll back one step
-gas-cli migrations info                       # show current status
 ```
 
 ### Runtime
@@ -226,7 +232,7 @@ migrator.run_migrations(&db, MigrateDirection::Forward, MigrateCount::All).await
 Enable the `axum` feature:
 
 ```toml
-gas = { git = "https://github.com/user/gas-orm", features = ["axum"] }
+gas = { git = "https://github.com/antony1060/gas-orm", features = ["axum"] }
 ```
 
 This gives you a Tower middleware layer that wraps each request in a transaction (auto-commits on 2xx, rolls back otherwise), plus extractors for your handlers:
@@ -241,6 +247,15 @@ let app = Router::new()
 async fn list_todos(Connection(db): Connection) -> impl IntoResponse {
     let todos = todo::Model::query().find_all(&db).await.unwrap();
     Json(todos)
+}
+
+async fn create_todo(
+    Transaction(tx): Transaction,
+    Json(req): Json<todo::Model>,
+) -> impl IntoResponse {
+    req.inserted(&tx).await.unwrap();
+
+    axum::http::StatusCode::CREATED
 }
 ```
 
