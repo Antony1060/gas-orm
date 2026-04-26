@@ -1,9 +1,12 @@
 # gas
 
-A macro-driven PostgreSQL ORM for Rust, using [sqlx](https://github.com/launchbadge/sqlx) as a backing driver. I'm using it in production in some projects but still working towards a v1.
+A macro-driven PostgreSQL ORM for Rust, using [sqlx](https://github.com/launchbadge/sqlx) as a backing driver. I'm using
+it in production in some projects but still working towards a v1.
 
 ## Getting started
+
 ### Installing
+
 ```toml
 [dependencies]
 # not on crates.io yet, tags will come soon
@@ -13,7 +16,9 @@ tokio = { version = "1", features = ["full"] }
 ```
 
 ### Basic usage
+
 Define a model, and `gas` generates a module for interacting with the database:
+
 ```rust
 use gas::connection::PgConnection;
 use gas::GasResult;
@@ -25,7 +30,7 @@ pub struct Todo {
     #[serial]
     pub id: i64,
     pub title: String,
-    pub done: i32,
+    pub done: bool,
 }
 
 #[tokio::main]
@@ -37,7 +42,7 @@ async fn main() -> GasResult<()> {
     // insert
     let mut new_todo = todo::Model {
         title: "Write README".into(),
-        done: 0,
+        done: false,
         ..Default::default()
     };
     // will mutate `new_todo` with the `id` from the database
@@ -46,7 +51,7 @@ async fn main() -> GasResult<()> {
 
     // query
     let pending = todo::Model::query()
-        .filter(|| todo::done.eq(0))
+        .filter(|| todo::done.eq(false))
         .sort(todo::id.desc())
         .limit(10)
         .find_all(&db)
@@ -54,7 +59,7 @@ async fn main() -> GasResult<()> {
 
     // update
     let mut first = todo::Model::find_by_key(&db, 1).await?.unwrap();
-    first.done = 1;
+    first.done = true;
     first.update(&db).await?;
 
     // delete
@@ -64,7 +69,8 @@ async fn main() -> GasResult<()> {
 }
 ```
 
-The `#[gas::model]` macro expands your struct into a module (here `todo`) containing a `Model` type and typed field statics like `todo::title`, `todo::done`, etc.
+The `#[gas::model]` macro expands your struct into a module (here `todo`) containing a `Model` type and typed field
+statics like `todo::title`, `todo::done`, etc.
 
 > [!NOTE]
 > It's recommended to add additional attribute and derive macros below this one.
@@ -75,41 +81,42 @@ Filters are type-safe and composable with `&` (AND) and `|` (OR):
 
 ```rust
 let results = todo::Model::query()
-    .filter(|| {
-        (todo::title.eq("Important") & todo::done.eq(0))
-            | todo::id.one_of(&[1, 2, 3])
-    })
-    .sort(todo::title.asc() >> todo::id.desc())
-    .limit(25)
-    .find_all(&db)
-    .await?;
+.filter(| | {
+(todo::title.eq("Important") & todo::done.eq(false))
+| todo::id.one_of( & [1, 2, 3])
+})
+.sort(todo::title.asc() > > todo::id.desc())
+.limit(25)
+.find_all( & db)
+.await?;
 
 // or just grab one
 let single = todo::Model::query()
-    .filter(|| todo::title.eq("Write README"))
-    .find_one(&db)
-    .await?; // Option<todo::Model>
+.filter( | | todo::title.eq("Write README"))
+.find_one( & db)
+.await?; // Option<todo::Model>
 ```
 
-Fields expose comparison methods depending on their type: `eq`, `neq`, `lt`, `lte`, `gt`, `gte`, `one_of` for values; `is_null`, `is_not_null` for optionals; and `is_before_now`, `is_after_now`, etc. for date/time fields.
+Fields expose comparison methods depending on their type: `eq`, `neq`, `lt`, `lte`, `gt`, `gte`, `one_of` for values;
+`is_null`, `is_not_null` for optionals; and `is_before_now`, `is_after_now`, etc. for date/time fields.
 
 ### Aggregates
 
 ```rust
 let total = order::Model::query()
-    .filter(|| order::status.eq("completed"))
-    .sum(&db, order::amount)
-    .await?;
+.filter( | | order::status.eq("completed"))
+.sum( & db, order::amount)
+.await?;
 
 let count = todo::Model::query()
-    .count(&db, todo::id)
-    .await?;
+.count( & db, todo::id)
+.await?;
 
 // group by
 let per_status = order::Model::query()
-    .group(order::status)
-    .count(&db, order::id)
-    .await?; // Vec<Counted<String>>
+.group(order::status)
+.count( & db, order::id)
+.await?; // Vec<Counted<String>>
 ```
 
 ## Relations
@@ -145,21 +152,22 @@ Eager load with `include` (LEFT JOIN):
 
 ```rust
 let books = book::Model::query()
-    .include(book::author)
-    .find_all(&db)
-    .await?;
+.include(book::author)
+.find_all( & db)
+.await?;
 ```
 
 Or lazy load on demand:
 
 ```rust
-let mut b = book::Model::find_by_key(&db, 1).await?.unwrap();
-let author = b.author.load(&db).await?;
+let mut b = book::Model::find_by_key( & db, 1).await?.unwrap();
+let author = b.author.load( & db).await?;
 ```
 
 ### Inverse relations
 
-You can also go the other direction - from a parent to its children - with `#[relation(inverse = ...)]`. Use `Vec<Model>` for 1:N or `Option<Model>` for 1:1:
+You can also go the other direction - from a parent to its children - with `#[relation(inverse = ...)]`. Use
+`Vec<Model>` for N:1 or `Option<Model>` for 1:1:
 
 ```rust
 #[gas::model(table_name = "authors")]
@@ -174,12 +182,13 @@ pub struct Author {
 }
 ```
 
-Inverse relations are eagerly loaded when the parent is queried. The field implements a `Deref` to the inner type (`Vec` or `Option`), so you can iterate directly:
+Inverse relations are eagerly loaded when the parent is queried. The field implements a `Deref` to the inner type (`Vec`
+or `Option`), so you can iterate directly:
 
 ```rust
-let author = author::Model::find_by_key(&db, 1).await?.unwrap();
+let author = author::Model::find_by_key( & db, 1).await?.unwrap();
 for book in author.books.iter() {
-    println!("{}", book.title);
+println ! ("{}", book.title);
 }
 ```
 
@@ -191,7 +200,8 @@ for book in author.books.iter() {
 Each migration is a `.sql` file with forward and backward sections split by a marker:
 
 ```sql
-CREATE TABLE todos( ... );
+CREATE TABLE todos
+(... );
 -- GAS_ORM(forward_backward_separator)
 DROP TABLE todos;
 ```
@@ -215,7 +225,7 @@ You can also run migrations from your app on startup:
 use gas::{load_migrations, migrations::{MigrateDirection, MigrateCount}};
 
 let migrator = load_migrations!("./migrations")?;
-migrator.run_migrations(&db, MigrateDirection::Forward, MigrateCount::All).await?;
+migrator.run_migrations( & db, MigrateDirection::Forward, MigrateCount::All).await?;
 ```
 
 > [!TIP]
@@ -235,14 +245,15 @@ Enable the `axum` feature:
 gas = { git = "https://github.com/antony1060/gas-orm", features = ["axum"] }
 ```
 
-This gives you a Tower middleware layer that wraps each request in a transaction (auto-commits on 2xx, rolls back otherwise), plus extractors for your handlers:
+This gives you a Tower middleware layer that wraps each request in a transaction (auto-commits on 2xx, rolls back
+otherwise), plus extractors for your handlers:
 
 ```rust
 use gas::extra::axum::{Connection, Transaction};
 
 let app = Router::new()
-    .route("/todos", get(list_todos))
-    .layer(gas::extra::tower::layer(&db));
+.route("/todos", get(list_todos))
+.layer(gas::extra::tower::layer( & db));
 
 async fn list_todos(Connection(db): Connection) -> impl IntoResponse {
     let todos = todo::Model::query().find_all(&db).await.unwrap();
@@ -261,9 +272,8 @@ async fn create_todo(
 
 ## Model attributes
 
-
 | Attribute                             | Level  | Description                                  |
-| ------------------------------------- | ------ | -------------------------------------------- |
+|---------------------------------------|--------|----------------------------------------------|
 | `#[gas::model(table_name = "...")]`   | Struct | Postgres table name                          |
 | `#[gas::model(mod_name = "...")]`     | Struct | Override generated module name               |
 | `#[primary_key]`                      | Field  | Primary key                                  |
@@ -274,13 +284,12 @@ async fn create_todo(
 | `#[relation(field = model::field)]`   | Field  | Forward foreign key                          |
 | `#[relation(inverse = model::field)]` | Field  | Inverse (has-many) relation                  |
 
-
 ## Supported types
 
-
 | Rust                              | PostgreSQL                        |
-| --------------------------------- | --------------------------------- |
+|-----------------------------------|-----------------------------------|
 | `String`                          | `TEXT`                            |
+| `bool`                            | `BOOLEAN`                         |
 | `i16` / `i32` / `i64`             | `SMALLINT` / `INTEGER` / `BIGINT` |
 | `f32` / `f64`                     | `REAL` / `DOUBLE PRECISION`       |
 | `Decimal`                         | `DECIMAL`                         |
@@ -291,18 +300,15 @@ async fn create_todo(
 | `Option<T>`                       | nullable variant                  |
 | `Relation<Fk, Model>`             | `FOREIGN KEY REFERENCES`          |
 
-
 ## Workspace crates
 
-
 | Crate        | Role                                          |
-| ------------ | --------------------------------------------- |
+|--------------|-----------------------------------------------|
 | `gas`        | Core ORM library                              |
 | `gas-macros` | Proc macros (`#[model]`, `load_migrations!`)  |
 | `gas-shared` | Shared types used by both the library and CLI |
 | `gas-cli`    | Migration CLI                                 |
 | `demo`       | Example bookstore API (Axum + Swagger UI)     |
-
 
 ## Demo
 
